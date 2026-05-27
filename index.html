@@ -1146,19 +1146,18 @@ function relCompleto(){
 function bSB(){
   var sb=document.getElementById('sb'); sb.innerHTML='';
   var badges=calcNavBadges();
+  var html='';
   for(var i=0;i<NAV.length;i++){
     var n=NAV[i];
-    if(n.s){ if(n.a&&!isA()) continue; sb.innerHTML+='<div class="ns">'+n.s+'</div>'; }
+    if(n.s){ if(n.a&&!isA()) continue; html+='<div class="ns">'+n.s+'</div>'; }
     else {
       if(n.a&&!isA()) continue;
       var bv=badges[n.id];
       var b=bv?'<span class="nb">'+bv+'</span>':'';
-      var ni=document.createElement('div');
-      ni.className='ni'; ni.id='n-'+n.id; ni.innerHTML=n.l+b;
-      ni.onclick=(function(id){return function(){gP(id);};})(n.id);
-      sb.appendChild(ni);
+      html+='<div class="ni" id="n-'+n.id+'" onclick="gP(this.dataset.id)" data-id="'+n.id+'">'+n.l+b+'</div>';
     }
   }
+  sb.innerHTML=html;
 }
 function pPermissoes(){
   var users = Object.keys(USR).filter(function(k){return (USR[k].role_key||'corretor')!=='admin';});

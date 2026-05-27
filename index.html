@@ -1,4 +1,4 @@
-H<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1153,7 +1153,10 @@ function bSB(){
       if(n.a&&!isA()) continue;
       var bv=badges[n.id];
       var b=bv?'<span class="nb">'+bv+'</span>':'';
-      sb.innerHTML+='<div class="ni" id="n-'+n.id+'" onclick="gP(''+n.id+'')">'+n.l+b+'</div>';
+      var ni=document.createElement('div');
+      ni.className='ni'; ni.id='n-'+n.id; ni.innerHTML=n.l+b;
+      ni.onclick=(function(id){return function(){gP(id);};})(n.id);
+      sb.appendChild(ni);
     }
   }
 }

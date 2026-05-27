@@ -497,11 +497,12 @@ var ctD = CT.map(function(c){
 var ivD = IV.map(function(i){ var o={}; for(var k in i) o[k]=i[k]; return o; });
 
 var ldD = [
-  {id:1,dt:'16/05',hr:'09:12',orig:'Meta Ads',tipo:'Casa',nome:'Fernanda Costa',tel:'(64)9 9876-5432',cor:'Meirielli',st:'Visita agendada',obs:'MCMV 3 quartos'},
-  {id:2,dt:'16/05',hr:'10:45',orig:'Instagram',tipo:'Lote',nome:'Carlos Henrique',tel:'(64)9 9111-2222',cor:'T. Basile',st:'Em contato',obs:''},
-  {id:3,dt:'15/05',hr:'14:20',orig:'ZAP Imoveis',tipo:'Apartamento',nome:'Patricia Lima',tel:'(64)9 9333-4444',cor:'Meirielli',st:'Novo',obs:''},
-  {id:4,dt:'14/05',hr:'08:30',orig:'Site RE/MAX',tipo:'Casa',nome:'Roberto Alves',tel:'(64)9 9555-6666',cor:'T. Moraes',st:'Proposta',obs:'Lago Sul'},
-  {id:5,dt:'13/05',hr:'16:00',orig:'Indicacao',tipo:'Chacara',nome:'Ana Beatriz',tel:'(64)9 9777-8888',cor:'T. Basile',st:'Fechado',obs:'Vendida'}
+  {id:1,dt:'16/05',hr:'09:12',orig:'Meta Ads',orig_cat:'Digital',tipo:'Casa',nome:'Fernanda Costa',tel:'(64)9 9876-5432',cor:'Meirielli',st:'Visita agendada',obs:'MCMV 3 quartos',renda:'2800',faixa:'R$ 180-250k',intencao:'Comprar',ref_remax:'',ref_cor:'',ia_score:0},
+  {id:2,dt:'16/05',hr:'10:45',orig:'Instagram Orgânico',orig_cat:'Digital',tipo:'Lote',nome:'Carlos Henrique',tel:'(64)9 9111-2222',cor:'T. Basile',st:'Em contato',obs:'',renda:'',faixa:'R$ 80-120k',intencao:'Comprar',ref_remax:'',ref_cor:'',ia_score:0},
+  {id:3,dt:'15/05',hr:'14:20',orig:'ZAP Imóveis',orig_cat:'Portal',tipo:'Apartamento',nome:'Patricia Lima',tel:'(64)9 9333-4444',cor:'Meirielli',st:'Novo',obs:'',renda:'',faixa:'',intencao:'Comprar',ref_remax:'',ref_cor:'',ia_score:0},
+  {id:4,dt:'14/05',hr:'08:30',orig:'Site RE/MAX',orig_cat:'Digital',tipo:'Casa',nome:'Roberto Alves',tel:'(64)9 9555-6666',cor:'T. Moraes',st:'Proposta',obs:'Lago Sul',renda:'8000',faixa:'R$ 400-600k',intencao:'Comprar',ref_remax:'',ref_cor:'',ia_score:0},
+  {id:5,dt:'13/05',hr:'16:00',orig:'Indicação / Boca a Boca',orig_cat:'Orgânico',tipo:'Chácara',nome:'Ana Beatriz',tel:'(64)9 9777-8888',cor:'T. Basile',st:'Fechado',obs:'Vendida',renda:'12000',faixa:'R$ 500k+',intencao:'Comprar',ref_remax:'',ref_cor:'',ia_score:0},
+  {id:6,dt:'12/05',hr:'11:00',orig:'Referenciamento RE/MAX',orig_cat:'Referenciamento',tipo:'Casa',nome:'Paulo Drummond',tel:'(11)9 9888-7777',cor:'T. Basile',st:'Em contato',obs:'Cliente de SP buscando imóvel em Caldas Novas para investimento',renda:'15000',faixa:'R$ 600k+',intencao:'Comprar',ref_remax:'RE/MAX Jardins - SP',ref_cor:'Carla Mendes',ia_score:0}
 ];
 var vD = [
   {id:1,dt:'2026-05-16',hr:'10:00',cor:'Meirielli',cli:'Fernanda Costa',end:'Av. das Palmeiras 430',st:'Confirmada'},
@@ -1294,46 +1295,321 @@ function pDash(){
 
 
 // ===== LEADS =====
+function iaScore(l){
+  // Calcula score 0-100 baseado em sinais de qualidade do lead
+  var score = 0;
+  // Origem (peso alto)
+  var origScore = {
+    'Referenciamento RE/MAX':30, 'Indicação / Boca a Boca':28, 'Imobiliária (walk-in)':25,
+    'Meta Ads':18, 'Google Ads':18, 'Site RE/MAX':16, 'ZAP Imóveis':14, 'OLX':10,
+    'Instagram Orgânico':12, 'Facebook Orgânico':10, 'Instagram Ads':18
+  };
+  score += origScore[l.orig] || 10;
+  // Status (peso alto)
+  var stScore = {Fechado:40,Proposta:30,'Visita agendada':22,'Em contato':12,Novo:5,Perdido:-10};
+  score += stScore[l.st] || 0;
+  // Renda informada
+  if(l.renda && parseInt(l.renda) > 0) score += 8;
+  // Faixa definida
+  if(l.faixa && l.faixa.length > 3) score += 5;
+  // Intenção clara
+  if(l.intencao === 'Comprar') score += 7;
+  else if(l.intencao === 'Alugar') score += 4;
+  // Obs preenchida (engajamento)
+  if(l.obs && l.obs.length > 5) score += 5;
+  return Math.min(100, Math.max(0, score));
+}
+
+function iaLabel(score){
+  if(score >= 60) return '<span style="background:#dcfce7;color:#166534;padding:2px 10px;border-radius:12px;font-size:10px;font-weight:700">🔥 QUENTE</span>';
+  if(score >= 35) return '<span style="background:#fef9c3;color:#92400e;padding:2px 10px;border-radius:12px;font-size:10px;font-weight:700">🌡️ MORNO</span>';
+  return '<span style="background:#f1f5f9;color:#64748b;padding:2px 10px;border-radius:12px;font-size:10px;font-weight:700">❄️ FRIO</span>';
+}
+
+var ORIGENS_CAT = {
+  'Digital': ['Meta Ads','Google Ads','Instagram Ads','Facebook Ads','Instagram Orgânico','Facebook Orgânico','Site RE/MAX','TikTok'],
+  'Portal': ['ZAP Imóveis','OLX','Viva Real','Imovelweb','Chaves na Mão'],
+  'Orgânico': ['Indicação / Boca a Boca','Imobiliária (walk-in)','Placa no imóvel'],
+  'Referenciamento': ['Referenciamento RE/MAX','Referenciamento Outra Imobiliária'],
+  'Outros': ['WhatsApp','Telefone','E-mail','Outros']
+};
+
 function pLeads(){
   document.getElementById('pa').innerHTML='<button class="btn btn-red" onclick="nLead()">+ Novo Lead</button>';
-  var tot=ldD.length, fec=ldD.filter(function(l){return l.st==='Fechado';}).length;
-  var po={}; ldD.forEach(function(l){po[l.orig]=(po[l.orig]||0)+1;});
-  var tr='', byO='', byC='';
-  ldD.forEach(function(l,i){
-    tr+='<tr><td>'+l.dt+' '+l.hr+'</td><td>'+l.orig+'</td><td>'+l.tipo+'</td>'+
-    '<td style="font-weight:600">'+l.nome+'</td><td>'+l.tel+'</td><td>'+l.cor+'</td>'+
-    '<td>'+sBadge(l.st)+'</td>'+
-    '<td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--lm)">'+l.obs+'</td>'+
-    '<td><button class="btn btn-sm" onclick="eLead('+i+')">Editar</button></td></tr>';
+  var tot=ldD.length;
+  var fec=ldD.filter(function(l){return l.st==='Fechado';}).length;
+  var quentes=ldD.filter(function(l){return iaScore(l)>=60&&l.st!=='Fechado'&&l.st!=='Perdido';}).length;
+  var refs=ldD.filter(function(l){return l.orig_cat==='Referenciamento';}).length;
+  var conv=tot>0?Math.round(fec/tot*100):0;
+
+  // Por categoria de origem
+  var catCount={};
+  ldD.forEach(function(l){catCount[l.orig_cat||'Outros']=(catCount[l.orig_cat||'Outros']||0)+1;});
+  var catCores={'Digital':'#003DA5','Portal':'#7c3aed','Orgânico':'#059669','Referenciamento':'#B9975B','Outros':'#64748b'};
+  var byCAT='';
+  Object.keys(catCount).sort(function(a,b){return catCount[b]-catCount[a];}).forEach(function(cat){
+    var pct=Math.round(catCount[cat]/tot*100);
+    byCAT+='<div style="margin-bottom:10px">'+
+      '<div style="display:flex;justify-content:space-between;margin-bottom:3px">'+
+        '<span style="font-size:11px;font-weight:700;color:'+(catCores[cat]||'#333')+'">'+cat+'</span>'+
+        '<span style="font-size:11px;font-weight:700">'+catCount[cat]+' ('+pct+'%)</span>'+
+      '</div>'+
+      '<div style="background:#f3f4f6;border-radius:4px;height:6px">'+
+        '<div style="background:'+(catCores[cat]||'#333')+';height:6px;border-radius:4px;width:'+pct+'%"></div>'+
+      '</div></div>';
   });
-  for(var o in po){ byO+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px"><span style="font-size:11px;font-weight:600;flex:1">'+o+'</span><span class="badge bb">'+po[o]+'</span></div>'; }
+
+  // Por corretor
+  var byC='';
   COR.forEach(function(c){
     var n=ldD.filter(function(l){return l.cor===c.nome;}).length; if(!n) return;
-    byC+='<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px"><div style="width:24px;height:24px;border-radius:50%;background:'+c.cor+';display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">'+c.initials+'</div><span style="font-size:11px;font-weight:600;flex:1">'+c.nome+'</span><span class="badge bb">'+n+'</span></div>';
+    var nf=ldD.filter(function(l){return l.cor===c.nome&&l.st==='Fechado';}).length;
+    var conv2=n>0?Math.round(nf/n*100):0;
+    byC+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'+
+      '<div style="width:28px;height:28px;border-radius:50%;background:'+c.cor+';display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">'+c.initials+'</div>'+
+      '<div style="flex:1"><div style="font-size:12px;font-weight:700">'+c.nome+'</div>'+
+      '<div style="font-size:10px;color:var(--lm)">'+n+' leads · '+nf+' fechados · '+conv2+'% conv.</div></div>'+
+      '<span class="badge bb">'+n+'</span></div>';
   });
+
+  // Referenciamentos
+  var refs_html='';
+  var refsData=ldD.filter(function(l){return l.orig_cat==='Referenciamento';});
+  if(refsData.length>0){
+    refs_html='<div class="card" style="border-left:4px solid #B9975B;margin-bottom:10px">'+
+      '<div class="chd"><h3 style="color:#B9975B">🤝 Referenciamentos RE/MAX ('+refsData.length+')</h3></div>'+
+      '<div class="tw"><table><thead><tr><th>Cliente</th><th>Tipo</th><th>Origem</th><th>Corretor Ref.</th><th>Faixa</th><th>Corretor</th><th>Status</th><th>IA</th></tr></thead><tbody>'+
+      refsData.map(function(l,idx){
+        var score=iaScore(l);
+        return '<tr>'+
+          '<td style="font-weight:700">'+l.nome+'</td>'+
+          '<td><span class="badge bgr" style="font-size:9px">'+l.tipo+'</span></td>'+
+          '<td style="font-size:11px">'+l.ref_remax+'</td>'+
+          '<td style="font-size:11px;color:var(--lm)">'+l.ref_cor+'</td>'+
+          '<td style="font-size:11px">'+l.faixa+'</td>'+
+          '<td style="font-size:11px">'+l.cor+'</td>'+
+          '<td>'+sBadge(l.st)+'</td>'+
+          '<td>'+iaLabel(score)+'</td>'+
+        '</tr>';
+      }).join('')+
+      '</tbody></table></div></div>';
+  }
+
+  // Tabela principal
+  var tr='';
+  var filtered=ldD.slice().sort(function(a,b){return iaScore(b)-iaScore(a);});
+  filtered.forEach(function(l,i){
+    var realIdx=ldD.indexOf(l);
+    var score=iaScore(l);
+    var isRef=l.orig_cat==='Referenciamento';
+    tr+='<tr data-sr="'+(l.nome+l.orig+(l.orig_cat||'')+l.cor+l.st+l.tipo+(l.ref_remax||'')).toLowerCase()+'">'+
+      '<td style="font-size:11px;white-space:nowrap">'+l.dt+' '+l.hr+'</td>'+
+      '<td>'+
+        '<div style="font-size:10px;font-weight:700;color:'+(catCores[l.orig_cat||'Outros']||'#333')+'">'+
+          (l.orig_cat||'Outros')+'</div>'+
+        '<div style="font-size:10px;color:var(--lm)">'+l.orig+'</div>'+
+        (isRef?'<div style="font-size:9px;color:#B9975B">🤝 '+l.ref_remax+'</div>':'')+
+      '</td>'+
+      '<td><span class="badge bgr" style="font-size:9px">'+l.tipo+'</span></td>'+
+      '<td style="font-weight:700">'+l.nome+'</td>'+
+      '<td><a href="tel:'+l.tel+'" style="color:var(--navy);font-size:11px;text-decoration:none">'+l.tel+'</a></td>'+
+      '<td style="font-size:11px">'+l.cor+'</td>'+
+      '<td style="font-size:11px;color:var(--lm)">'+l.faixa+'</td>'+
+      '<td>'+sBadge(l.st)+'</td>'+
+      '<td>'+iaLabel(score)+'<div style="font-size:9px;color:var(--lm);text-align:center">'+score+'pts</div></td>'+
+      '<td style="display:flex;gap:3px">'+
+        '<button class="btn btn-sm btn-blue" onclick="eLead('+realIdx+')">Editar</button>'+
+        '<button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5" onclick="delLead('+realIdx+')">Del</button>'+
+      '</td>'+
+    '</tr>';
+  });
+
   document.getElementById('pc').innerHTML=
-    '<div class="g4"><div class="kc"><div class="kc-l">Total</div><div class="kc-v">'+tot+'</div></div>'+
-    '<div class="kc red"><div class="kc-l">Novos</div><div class="kc-v">'+ldD.filter(function(l){return l.st==='Novo';}).length+'</div></div>'+
-    '<div class="kc green"><div class="kc-l">Fechados</div><div class="kc-v">'+fec+'</div></div>'+
-    '<div class="kc blue"><div class="kc-l">Conversao</div><div class="kc-v">'+Math.round(fec/tot*100)+'%</div></div></div>'+
-    '<div class="g2"><div class="card"><div class="chd"><h3>Por Origem</h3></div><div class="cbd">'+byO+'</div></div>'+
-    '<div class="card"><div class="chd"><h3>Por Corretor</h3></div><div class="cbd">'+byC+'</div></div></div>'+
-    '<div class="card"><div class="tw"><table><thead><tr><th>Data/Hora</th><th>Origem</th><th>Tipo</th><th>Nome</th><th>Tel</th><th>Corretor</th><th>Status</th><th>Obs</th><th></th></tr></thead><tbody>'+tr+'</tbody></table></div></div>';
+    '<div class="g4" style="margin-bottom:12px">'+
+      '<div class="kc blue"><div class="kc-l">Total</div><div class="kc-v">'+tot+'</div></div>'+
+      '<div class="kc" style="border-left:3px solid #dc2626"><div class="kc-l">🔥 Quentes</div><div class="kc-v" style="color:#dc2626">'+quentes+'</div></div>'+
+      '<div class="kc green"><div class="kc-l">Fechados</div><div class="kc-v">'+fec+'</div></div>'+
+      '<div class="kc gold"><div class="kc-l">Conversão</div><div class="kc-v">'+conv+'%</div></div>'+
+    '</div>'+
+    (refs>0?'<div class="alt alt-y" style="margin-bottom:10px;cursor:pointer" onclick="document.getElementById(\'sec-refs\').scrollIntoView({behavior:\'smooth\'})">🤝 '+refs+' lead(s) por referenciamento RE/MAX — clique para ver</div>':'')+
+    '<div class="g2" style="margin-bottom:12px">'+
+      '<div class="card"><div class="chd"><h3>Por Canal de Origem</h3></div><div class="cbd">'+byCAT+'</div></div>'+
+      '<div class="card"><div class="chd"><h3>Por Corretor</h3></div><div class="cbd">'+byC+'</div></div>'+
+    '</div>'+
+    '<div id="sec-refs">'+refs_html+'</div>'+
+    '<div class="card">'+
+      '<div class="fbar">'+
+        '<input class="sinp" id="ld-s" placeholder="Buscar nome, origem, tipo..." style="flex:2">'+
+        '<select class="sinp" id="ld-fc" style="width:150px"><option value="">Todos corretores</option>'+COR.map(function(c){return '<option>'+c.nome+'</option>';}).join('')+'</select>'+
+        '<select class="sinp" id="ld-fo" style="width:140px"><option value="">Todos canais</option><option>Digital</option><option>Portal</option><option>Orgânico</option><option>Referenciamento</option><option>Outros</option></select>'+
+        '<select class="sinp" id="ld-fs" style="width:130px"><option value="">Todos status</option><option>Novo</option><option>Em contato</option><option>Visita agendada</option><option>Proposta</option><option>Fechado</option><option>Perdido</option></select>'+
+        '<select class="sinp" id="ld-fia" style="width:110px"><option value="">Todos IA</option><option value="quente">🔥 Quente</option><option value="morno">🌡️ Morno</option><option value="frio">❄️ Frio</option></select>'+
+      '</div>'+
+      '<div class="tw"><table><thead><tr><th>Data/Hora</th><th>Canal / Origem</th><th>Tipo</th><th>Nome</th><th>Tel</th><th>Corretor</th><th>Faixa</th><th>Status</th><th>IA Score</th><th>Ações</th></tr></thead><tbody id="ld-b">'+tr+'</tbody></table></div>'+
+    '</div>';
+
+  function filtLD(){
+    var q=document.getElementById('ld-s').value.toLowerCase();
+    var fc=document.getElementById('ld-fc').value.toLowerCase();
+    var fo=document.getElementById('ld-fo').value.toLowerCase();
+    var fs=document.getElementById('ld-fs').value.toLowerCase();
+    var fia=document.getElementById('ld-fia').value;
+    document.querySelectorAll('#ld-b tr').forEach(function(tr){
+      var sr=tr.dataset.sr||'';
+      var score=parseInt(tr.querySelector('td:nth-child(9) div')&&tr.querySelector('td:nth-child(9) div').textContent)||0;
+      var iaOk=true;
+      if(fia==='quente') iaOk=score>=60;
+      else if(fia==='morno') iaOk=score>=35&&score<60;
+      else if(fia==='frio') iaOk=score<35;
+      var ok=(!q||sr.indexOf(q)>=0)&&(!fc||sr.indexOf(fc)>=0)&&(!fo||sr.indexOf(fo)>=0)&&(!fs||sr.indexOf(fs)>=0)&&iaOk;
+      tr.style.display=ok?'':'none';
+    });
+  }
+  document.getElementById('ld-s').oninput=filtLD;
+  document.getElementById('ld-fc').onchange=filtLD;
+  document.getElementById('ld-fo').onchange=filtLD;
+  document.getElementById('ld-fs').onchange=filtLD;
+  document.getElementById('ld-fia').onchange=filtLD;
 }
+
 function nLead(){
-  oM('Novo Lead','<div class="fg3"><div class="fg"><label>Data</label><input type="date" id="nl-d"></div><div class="fg"><label>Hora</label><input type="time" id="nl-h"></div><div class="fg"><label>Tipo</label><select id="nl-t"><option>Casa</option><option>Apartamento</option><option>Lote</option><option>Chacara</option><option>Sala Comercial</option></select></div></div><div class="fg2"><div class="fg"><label>Origem</label><select id="nl-o"><option>Meta Ads</option><option>Instagram</option><option>Facebook</option><option>ZAP Imoveis</option><option>OLX</option><option>Site RE/MAX</option><option>Indicacao</option><option>Outros</option></select></div><div class="fg"><label>Corretor</label><select id="nl-c">'+corrSel()+'</select></div></div><div class="fg2"><div class="fg"><label>Nome</label><input id="nl-n"></div><div class="fg"><label>Tel</label><input id="nl-tel"></div></div><div class="fg"><label>Obs</label><textarea id="nl-obs"></textarea></div>',
-  function(){
-    var d=document.getElementById('nl-d').value, a=d?d.split('-'):['','',''];
-    ldD.unshift({id:ldD.length+1,dt:d?(a[2]+'/'+a[1]):'Hoje',hr:document.getElementById('nl-h').value||'--:--',orig:document.getElementById('nl-o').value,tipo:document.getElementById('nl-t').value,nome:document.getElementById('nl-n').value||'-',tel:document.getElementById('nl-tel').value||'-',cor:document.getElementById('nl-c').value,st:'Novo',obs:document.getElementById('nl-obs').value});
-    cM(); pLeads();
+  var origOpts='';
+  Object.keys(ORIGENS_CAT).forEach(function(cat){
+    origOpts+='<optgroup label="'+cat+'">';
+    ORIGENS_CAT[cat].forEach(function(o){ origOpts+='<option>'+o+'</option>'; });
+    origOpts+='</optgroup>';
   });
+  oM('+ Novo Lead',
+    '<div class="fg3">'+
+      '<div class="fg"><label>Data</label><input type="date" id="nl-d" value="'+new Date().toISOString().slice(0,10)+'"></div>'+
+      '<div class="fg"><label>Hora</label><input type="time" id="nl-h" value="'+new Date().toTimeString().slice(0,5)+'"></div>'+
+      '<div class="fg"><label>Tipo de Imóvel</label><select id="nl-t"><option>Casa</option><option>Apartamento</option><option>Lote</option><option>Chácara</option><option>Sala Comercial</option><option>Kitnet</option><option>Chalé</option></select></div>'+
+    '</div>'+
+    '<div class="fg2">'+
+      '<div class="fg"><label>Canal de Origem</label><select id="nl-o" onchange="toggleRefFields()">'+origOpts+'</select></div>'+
+      '<div class="fg"><label>Intenção</label><select id="nl-int"><option>Comprar</option><option>Alugar</option><option>Vender</option><option>Indefinido</option></select></div>'+
+    '</div>'+
+    '<div id="ref-fields" style="display:none;background:#fef9c3;border-radius:8px;padding:12px;margin:4px 0">'+
+      '<div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:8px">🤝 Dados do Referenciamento</div>'+
+      '<div class="fg2">'+
+        '<div class="fg"><label>Unidade RE/MAX que enviou</label><input id="nl-refr" placeholder="Ex: RE/MAX Jardins - SP"></div>'+
+        '<div class="fg"><label>Corretor que indicou</label><input id="nl-refc" placeholder="Nome do corretor"></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="fg2">'+
+      '<div class="fg"><label>Nome do Cliente</label><input id="nl-n" placeholder="Nome completo"></div>'+
+      '<div class="fg"><label>Telefone</label><input id="nl-tel" placeholder="(64)9 9000-0000"></div>'+
+    '</div>'+
+    '<div class="fg3">'+
+      '<div class="fg"><label>Faixa de Preço</label><input id="nl-faixa" placeholder="Ex: R$ 300-500k"></div>'+
+      '<div class="fg"><label>Renda Mensal</label><input id="nl-renda" placeholder="Ex: 5000"></div>'+
+      '<div class="fg"><label>Corretor</label><select id="nl-c">'+corrSel()+'</select></div>'+
+    '</div>'+
+    '<div class="fg"><label>Observação</label><textarea id="nl-obs" placeholder="Detalhes do lead..."></textarea></div>',
+    function(){
+      var orig=document.getElementById('nl-o').value;
+      var cat=Object.keys(ORIGENS_CAT).find(function(k){return ORIGENS_CAT[k].indexOf(orig)>=0;})||'Outros';
+      var d=document.getElementById('nl-d').value;
+      var a=d?d.split('-'):['','',''];
+      ldD.unshift({
+        id:ldD.length+1,
+        dt:d?(a[2]+'/'+a[1]):'Hoje',
+        hr:document.getElementById('nl-h').value||'--:--',
+        orig:orig, orig_cat:cat,
+        tipo:document.getElementById('nl-t').value,
+        nome:document.getElementById('nl-n').value||'-',
+        tel:document.getElementById('nl-tel').value||'-',
+        cor:document.getElementById('nl-c').value,
+        st:'Novo',
+        obs:document.getElementById('nl-obs').value,
+        renda:document.getElementById('nl-renda').value,
+        faixa:document.getElementById('nl-faixa').value,
+        intencao:document.getElementById('nl-int').value,
+        ref_remax:document.getElementById('nl-refr')?document.getElementById('nl-refr').value:'',
+        ref_cor:document.getElementById('nl-refc')?document.getElementById('nl-refc').value:'',
+        ia_score:0
+      });
+      cM(); salvarTudo(); pLeads();
+    }, 'Salvar Lead');
 }
+
+function toggleRefFields(){
+  var orig=document.getElementById('nl-o').value;
+  var cat=Object.keys(ORIGENS_CAT).find(function(k){return ORIGENS_CAT[k].indexOf(orig)>=0;})||'Outros';
+  var rf=document.getElementById('ref-fields');
+  if(rf) rf.style.display=(cat==='Referenciamento')?'block':'none';
+}
+
 function eLead(i){
   var l=ldD[i];
-  oM('Editar Lead','<div class="fg2"><div class="fg"><label>Nome</label><input id="el-n" value="'+l.nome+'"></div><div class="fg"><label>Tel</label><input id="el-t" value="'+l.tel+'"></div></div><div class="fg2"><div class="fg"><label>Corretor</label><select id="el-c">'+corrSel(l.cor)+'</select></div><div class="fg"><label>Status</label><select id="el-s"><option>Novo</option><option>Em contato</option><option>Visita agendada</option><option>Proposta</option><option>Fechado</option><option>Perdido</option></select></div></div><div class="fg"><label>Obs</label><textarea id="el-o">'+l.obs+'</textarea></div>',
-  function(){ ldD[i].nome=document.getElementById('el-n').value; ldD[i].tel=document.getElementById('el-t').value; ldD[i].cor=document.getElementById('el-c').value; ldD[i].st=document.getElementById('el-s').value; ldD[i].obs=document.getElementById('el-o').value; cM(); pLeads(); });
-  setTimeout(function(){document.getElementById('el-s').value=l.st;},50);
+  var origOpts='';
+  Object.keys(ORIGENS_CAT).forEach(function(cat){
+    origOpts+='<optgroup label="'+cat+'">';
+    ORIGENS_CAT[cat].forEach(function(o){ origOpts+='<option'+(o===l.orig?' selected':'')+'>'+o+'</option>'; });
+    origOpts+='</optgroup>';
+  });
+  var isRef=(l.orig_cat==='Referenciamento');
+  oM('Editar Lead — '+l.nome,
+    '<div class="fg2">'+
+      '<div class="fg"><label>Nome</label><input id="el-n" value="'+l.nome+'"></div>'+
+      '<div class="fg"><label>Telefone</label><input id="el-t" value="'+l.tel+'"></div>'+
+    '</div>'+
+    '<div class="fg2">'+
+      '<div class="fg"><label>Canal de Origem</label><select id="el-o" onchange="toggleRefFieldsE()">'+origOpts+'</select></div>'+
+      '<div class="fg"><label>Intenção</label><select id="el-int"><option'+(l.intencao==='Comprar'?' selected':'')+'>Comprar</option><option'+(l.intencao==='Alugar'?' selected':'')+'>Alugar</option><option'+(l.intencao==='Vender'?' selected':'')+'>Vender</option><option'+(l.intencao==='Indefinido'?' selected':'')+'>Indefinido</option></select></div>'+
+    '</div>'+
+    '<div id="ref-fields-e" style="'+(isRef?'':'display:none;')+'background:#fef9c3;border-radius:8px;padding:12px;margin:4px 0">'+
+      '<div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:8px">🤝 Referenciamento</div>'+
+      '<div class="fg2">'+
+        '<div class="fg"><label>Unidade RE/MAX</label><input id="el-refr" value="'+(l.ref_remax||'')+'"></div>'+
+        '<div class="fg"><label>Corretor</label><input id="el-refc" value="'+(l.ref_cor||'')+'"></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="fg3">'+
+      '<div class="fg"><label>Tipo</label><select id="el-tp"><option'+(l.tipo==='Casa'?' selected':'')+'>Casa</option><option'+(l.tipo==='Apartamento'?' selected':'')+'>Apartamento</option><option'+(l.tipo==='Lote'?' selected':'')+'>Lote</option><option'+(l.tipo==='Chácara'?' selected':'')+'>Chácara</option><option'+(l.tipo==='Sala Comercial'?' selected':'')+'>Sala Comercial</option><option'+(l.tipo==='Kitnet'?' selected':'')+'>Kitnet</option></select></div>'+
+      '<div class="fg"><label>Faixa</label><input id="el-faixa" value="'+(l.faixa||'')+'"></div>'+
+      '<div class="fg"><label>Renda</label><input id="el-renda" value="'+(l.renda||'')+'"></div>'+
+    '</div>'+
+    '<div class="fg2">'+
+      '<div class="fg"><label>Corretor</label><select id="el-c">'+corrSel(l.cor)+'</select></div>'+
+      '<div class="fg"><label>Status</label><select id="el-s"><option>Novo</option><option>Em contato</option><option>Visita agendada</option><option>Proposta</option><option>Fechado</option><option>Perdido</option></select></div>'+
+    '</div>'+
+    '<div class="fg"><label>Obs</label><textarea id="el-o">'+l.obs+'</textarea></div>',
+    function(){
+      var orig=document.getElementById('el-o2')||document.getElementById('el-o');
+      var origVal=document.getElementById('el-o').value;
+      var cat=Object.keys(ORIGENS_CAT).find(function(k){return ORIGENS_CAT[k].indexOf(origVal)>=0;})||'Outros';
+      ldD[i].nome=document.getElementById('el-n').value;
+      ldD[i].tel=document.getElementById('el-t').value;
+      ldD[i].orig=origVal; ldD[i].orig_cat=cat;
+      ldD[i].tipo=document.getElementById('el-tp').value;
+      ldD[i].faixa=document.getElementById('el-faixa').value;
+      ldD[i].renda=document.getElementById('el-renda').value;
+      ldD[i].intencao=document.getElementById('el-int').value;
+      ldD[i].ref_remax=document.getElementById('el-refr')?document.getElementById('el-refr').value:'';
+      ldD[i].ref_cor=document.getElementById('el-refc')?document.getElementById('el-refc').value:'';
+      ldD[i].cor=document.getElementById('el-c').value;
+      ldD[i].st=document.getElementById('el-s').value;
+      ldD[i].obs=document.getElementById('el-o').value;
+      cM(); salvarTudo(); pLeads();
+    }, 'Salvar');
+  setTimeout(function(){
+    document.getElementById('el-s').value=l.st;
+    toggleRefFieldsE();
+  },50);
 }
+
+function toggleRefFieldsE(){
+  var orig=document.getElementById('el-o').value;
+  var cat=Object.keys(ORIGENS_CAT).find(function(k){return ORIGENS_CAT[k].indexOf(orig)>=0;})||'Outros';
+  var rf=document.getElementById('ref-fields-e');
+  if(rf) rf.style.display=(cat==='Referenciamento')?'block':'none';
+}
+
+function delLead(i){
+  excluirComSenha('Lead — '+ldD[i].nome,'Remover lead de <b>'+ldD[i].nome+'</b>',function(){ldD.splice(i,1);salvarTudo();pLeads();});
+}
+
 
 // ===== PROSPECCAO =====
 function pProsp(){

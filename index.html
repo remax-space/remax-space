@@ -3675,6 +3675,11 @@ function aplicarReajuste(i, novoValor, pct){
 
 
 // ===== EXTRATO DO PROPRIETÁRIO =====
+function filtrarExtrato(){
+  selPropExtrato=document.getElementById('ext-p').value;
+  pExtrato(parseInt(document.getElementById('ext-m').value),parseInt(document.getElementById('ext-a').value));
+}
+
 function pExtrato(selMes, selAno){
   var hoje = new Date();
   var mesAtual = (selMes!==undefined) ? selMes : hoje.getMonth();
@@ -3769,7 +3774,7 @@ function pExtrato(selMes, selAno){
     +'<select class="sinp" id="ext-m" style="width:100px">'+mOpts+'</select>'
     +'<select class="sinp" id="ext-a" style="width:80px">'+aOpts+'</select>'
     +'<select class="sinp" id="ext-p" style="width:200px">'+propOpts+'</select>'
-    +'<button class="btn btn-primary" onclick="selPropExtrato=document.getElementById('ext-p').value;pExtrato(parseInt(document.getElementById('ext-m').value),parseInt(document.getElementById('ext-a').value))">Filtrar</button>'
+    +'<button class="btn btn-primary" onclick="filtrarExtrato()">Filtrar</button>'
     +'</div>'
     +'<div class="g3" style="margin-bottom:16px">'
     +'<div class="kc blue"><div class="kc-l">Proprietários</div><div class="kc-v">'+props.length+'</div></div>'

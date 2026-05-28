@@ -911,8 +911,7 @@ function msgCobranca(i){
     {label:'2ª Cobrança (3-5 dias de atraso)',
      txt:'Olá, '+c.inq+'. Tudo bem?\n\nNosso sistema ainda não identificou o pagamento do aluguel de '+mesRef+' (vencimento: '+c.venc+').\n\nValor: '+fmt(c.valor)+'\nPIX: [chave pix da imobiliária]\n\nPor favor, nos confirme quando efetuar o pagamento. Caso já tenha pago, desconsidere.\n\nRE/MAX Space'},
     {label:'3ª Cobrança — Formal (mais de 10 dias)',
-     txt:'Prezado(a) '+c.inq+',\n\nInformamos que o aluguel referente ao mês de '+mesRef+' encontra-se em aberto desde o dia '+c.venc+', totalizando '+diasAtraso+' dia(s) de atraso.\n\nValor em aberto: '+fmt(c.valor)+'\n\nSolicitamos a regularização do pagamento até 48 horas, a fim de evitar notificação formal e aplicação de multa contratual conforme previsto no contrato.\n\nRE/MAX Space Caldas Novas
-Tatiana Basile — Diretora'}
+     txt:'Prezado(a) '+c.inq+',\n\nInformamos que o aluguel referente ao mês de '+mesRef+' encontra-se em aberto desde o dia '+c.venc+', totalizando '+diasAtraso+' dia(s) de atraso.\n\nValor em aberto: '+fmt(c.valor)+'\n\nSolicitamos a regularização do pagamento até 48 horas, a fim de evitar notificação formal e aplicação de multa contratual conforme previsto no contrato.\n\nRE/MAX Space Caldas Novas\nTatiana Basile — Diretora'}
   ];
 
   var btns=msgs.map(function(m,idx){

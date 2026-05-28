@@ -321,6 +321,7 @@ function salvarTudo(){
         cp:cpD, mc:mcmvD, vs:vsD, iq:inqCad,
         pc:propCad, cc:corCad, sn:senhas,
         ll:(typeof llD!=='undefined'?llD:[]),
+        rc:(typeof recrutD!=='undefined'?recrutD:[]),
         ag:(typeof agD!=='undefined'?agD:[]),
         hi:(typeof histD!=='undefined'?histD:{}),
         mt:(typeof metasD!=='undefined'?metasD:{}),
@@ -360,6 +361,7 @@ async function carregarDados(){
       if(e.mc) mcmvD = e.mc;
       if(e.vs) vsD = e.vs;
       if(e.ll) llD = e.ll;
+      if(e.rc) recrutD = e.rc;
       if(e.ag) agD = e.ag;
       if(e.hi) histD = e.hi;
       if(e.mt) metasD = e.mt;
@@ -516,6 +518,12 @@ var agD = [
 ];
 var agNextId=5;
 var histD = {}; // {YYYY-MM: {snapshot}}
+var recrutD = [
+  {id:1,dt:'2026-05-10',nome:'Ana Paula Rodrigues',tel:'(64)9 9111-2222',email:'anapaula@email.com',creci:'',exp:'2 anos',origem:'Instagram',perfil:'Mulher, 32 anos, professora em transicao de carreira',interesse:'Alta',etapa:'Entrevista',reuniao:'2026-05-29T10:00',reuniao_local:'RE/MAX Space',notas:'Muito motivada, interesse genuino no mercado imobiliario',st:'Ativo',score:0,resp:'T. Basile'},
+  {id:2,dt:'2026-05-08',nome:'Marcos Silveira',tel:'(64)9 9333-4444',email:'marcos@email.com',creci:'GO-11111',exp:'5 anos',origem:'Indicacao',perfil:'Homem, 38 anos, corretor em outra imobiliaria',interesse:'Media',etapa:'Triagem',reuniao:'',reuniao_local:'',notas:'Vem de outra imobiliaria, quer mais comissao',st:'Ativo',score:0,resp:'T. Basile'},
+  {id:3,dt:'2026-05-05',nome:'Fernanda Lima',tel:'(64)9 9555-6666',email:'fernanda@email.com',creci:'',exp:'0',origem:'LinkedIn',perfil:'Mulher, 28 anos, recém formada, sem experiencia',interesse:'Alta',etapa:'Novo',reuniao:'',reuniao_local:'',notas:'Sem CRECI ainda, mas muito entusiasmada',st:'Ativo',score:0,resp:'Meirielli'}
+];
+var recrutNextId = 4;
 var vD = [
   {id:1,dt:'2026-05-16',hr:'10:00',cor:'Meirielli',cli:'Fernanda Costa',end:'Av. das Palmeiras 430',st:'Confirmada'},
   {id:2,dt:'2026-05-16',hr:'14:00',cor:'T. Moraes',cli:'Diego Santos',end:'Rua das Orquideas 210',st:'Realizada'},
@@ -974,6 +982,358 @@ function copiarMsg(idx, btnOrId){
     alert('Mensagem copiada!');
   });
 }
+
+// ===== RECRUTAMENTO DE CORRETORES =====
+
+var RECRUT_ETAPAS = [
+  {id:'Novo',       cor:'#64748b', icon:'🆕', desc:'Candidato identificado'},
+  {id:'Triagem',    cor:'#0891b2', icon:'📋', desc:'Análise de perfil e currículo'},
+  {id:'Contato',    cor:'#7c3aed', icon:'📞', desc:'Primeiro contato realizado'},
+  {id:'Entrevista', cor:'#d97706', icon:'🤝', desc:'Entrevista agendada/realizada'},
+  {id:'Proposta',   cor:'#059669', icon:'📄', desc:'Proposta de adesão enviada'},
+  {id:'Contratado', cor:'#003DA5', icon:'✅', desc:'Corretor integrado à equipe'},
+  {id:'Descartado', cor:'#dc2626', icon:'❌', desc:'Candidato não aprovado'}
+];
+
+var RECRUT_ORIGENS = ['Instagram','Facebook','LinkedIn','Indicação de corretor','Indicação de cliente','Site RE/MAX','Walk-in','WhatsApp','Evento','Anúncio emprego','Outro'];
+
+function iaScoreRecruit(r){
+  var score = 0;
+  if(r.creci && r.creci.length > 3) score += 25; // já tem CRECI
+  var exp = parseInt(r.exp)||0;
+  if(exp >= 5) score += 25;
+  else if(exp >= 2) score += 15;
+  else if(exp >= 1) score += 8;
+  var orig = {Indicacao:20,'Indicação de corretor':20,'Indicação de cliente':18,LinkedIn:15,Instagram:10,Facebook:10};
+  score += orig[r.origem] || 5;
+  var inter = {Alta:20,Media:10,Baixa:2};
+  score += inter[r.interesse] || 5;
+  if(r.reuniao) score += 10;
+  if(r.etapa==='Contratado') score = 100;
+  else if(r.etapa==='Descartado') score = 0;
+  return Math.min(100, Math.max(0, score));
+}
+
+function pRecrutar(){
+  document.getElementById('pa').innerHTML =
+    '<button class="btn btn-red" onclick="nRecruit()">+ Novo Candidato</button>'+
+    '<button class="btn btn-primary" style="margin-left:8px" onclick="verFunilRecruit()">📊 Ver Funil</button>'+
+    '<button class="btn btn-primary" style="margin-left:8px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none" onclick="analisarCandidatoIA(recrutD.indexOf(recrutD.find(function(r){return r.etapa!==\'Contratado\'&&r.etapa!==\'Descartado\';})))">🤖 Analisar com IA</button>';
+
+  // KPIs
+  var ativos    = recrutD.filter(function(r){ return r.st==='Ativo'; });
+  var contrat   = recrutD.filter(function(r){ return r.etapa==='Contratado'; }).length;
+  var entrevist = recrutD.filter(function(r){ return r.etapa==='Entrevista'; }).length;
+  var reunHoje  = recrutD.filter(function(r){
+    if(!r.reuniao) return false;
+    return r.reuniao.slice(0,10) === new Date().toISOString().slice(0,10);
+  });
+  var taxa = ativos.length>0 ? Math.round(contrat/recrutD.length*100) : 0;
+
+  // Funil resumido
+  var funilHtml = RECRUT_ETAPAS.filter(function(e){ return e.id!=='Descartado'; }).map(function(et){
+    var n = recrutD.filter(function(r){ return r.etapa===et.id; }).length;
+    return '<div style="text-align:center;flex:1">'+
+      '<div style="background:'+et.cor+';color:#fff;border-radius:8px;padding:8px 4px;margin:0 2px">'+
+        '<div style="font-size:16px">'+et.icon+'</div>'+
+        '<div style="font-size:18px;font-weight:800">'+n+'</div>'+
+        '<div style="font-size:9px;opacity:.85">'+et.id+'</div>'+
+      '</div></div>';
+  }).join('');
+
+  // Reuniões de hoje
+  var reunHojeHtml = reunHoje.length ? reunHoje.map(function(r){
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#f0fdf4;border-radius:8px;margin-bottom:6px;border-left:3px solid #059669">'+
+      '<div style="font-size:18px">🤝</div>'+
+      '<div style="flex:1"><div style="font-size:13px;font-weight:700">'+r.nome+'</div>'+
+      '<div style="font-size:11px;color:var(--lm)">'+r.reuniao.slice(11,16)+' — '+(r.reuniao_local||'A definir')+'</div></div>'+
+      '<button class="btn btn-sm btn-blue" onclick="pRecrutar();eRecruit('+recrutD.indexOf(r)+')">Ver</button>'+
+    '</div>';
+  }).join('') : '<div style="font-size:12px;color:var(--lm);padding:8px">Nenhuma reunião hoje</div>';
+
+  // Table
+  var tr = recrutD.filter(function(r){ return r.st!=='Arquivado'; })
+    .sort(function(a,b){ return iaScoreRecruit(b)-iaScoreRecruit(a); })
+    .map(function(r){
+      var i = recrutD.indexOf(r);
+      var score = iaScoreRecruit(r);
+      var et = RECRUT_ETAPAS.find(function(e){ return e.id===r.etapa; }) || RECRUT_ETAPAS[0];
+      var scoreLabel = score>=60?'🔥':score>=35?'🌡️':'❄️';
+      var temReuniao = r.reuniao ? '<span style="background:#dcfce7;color:#166534;font-size:9px;padding:1px 7px;border-radius:8px;font-weight:700">'+r.reuniao.slice(8,10)+'/'+r.reuniao.slice(5,7)+' '+r.reuniao.slice(11,16)+'</span>' : '<span style="color:var(--lm);font-size:10px">—</span>';
+      return '<tr>'+
+        '<td>'+scoreLabel+' <b style="font-size:11px">'+score+'</b></td>'+
+        '<td style="font-weight:700">'+r.nome+'</td>'+
+        '<td><a href="tel:'+r.tel+'" style="color:var(--navy);font-size:11px;text-decoration:none">'+r.tel+'</a></td>'+
+        '<td style="font-size:11px">'+(r.creci?'<span class="badge bg" style="font-size:9px">'+r.creci+'</span>':'<span class="badge br" style="font-size:9px">Sem CRECI</span>')+'</td>'+
+        '<td style="font-size:11px">'+(r.exp==='0'||!r.exp?'Sem exp.':r.exp+' anos')+'</td>'+
+        '<td style="font-size:11px;color:var(--lm)">'+r.origem+'</td>'+
+        '<td><span style="background:'+et.cor+';color:#fff;padding:2px 10px;border-radius:10px;font-size:10px;font-weight:700">'+et.icon+' '+r.etapa+'</span></td>'+
+        '<td>'+temReuniao+'</td>'+
+        '<td style="font-size:11px">'+r.resp+'</td>'+
+        '<td style="display:flex;gap:3px">'+
+          '<button class="btn btn-sm btn-blue" onclick="eRecruit('+i+')">Ver</button>'+
+          '<button class="btn btn-sm" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none" onclick="analisarCandidatoIA('+i+')">🤖</button>'+
+          '<button class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366" onclick="msgRecruit('+i+')">📱</button>'+
+        '</td>'+
+      '</tr>';
+    }).join('');
+
+  document.getElementById('pc').innerHTML =
+    '<div class="g4" style="margin-bottom:12px">'+
+      '<div class="kc blue"><div class="kc-l">Total Candidatos</div><div class="kc-v">'+recrutD.length+'</div></div>'+
+      '<div class="kc warn"><div class="kc-l">Entrevistas</div><div class="kc-v">'+entrevist+'</div></div>'+
+      '<div class="kc green"><div class="kc-l">Contratados</div><div class="kc-v">'+contrat+'</div></div>'+
+      '<div class="kc gold"><div class="kc-l">Taxa Conversão</div><div class="kc-v">'+taxa+'%</div></div>'+
+    '</div>'+
+    '<div class="g2" style="margin-bottom:12px">'+
+      '<div class="card"><div class="chd"><h3>🎯 Funil de Recrutamento</h3></div>'+
+        '<div style="display:flex;padding:10px 14px">'+funilHtml+'</div>'+
+      '</div>'+
+      '<div class="card"><div class="chd"><h3>📅 Reuniões Hoje</h3></div><div class="cbd">'+reunHojeHtml+'</div></div>'+
+    '</div>'+
+    '<div class="card">'+
+      '<div class="fbar">'+
+        '<input class="sinp" id="rc-s" placeholder="Buscar nome, telefone...">'+
+        '<select class="sinp" id="rc-fe" style="width:140px"><option value="">Todas etapas</option>'+RECRUT_ETAPAS.map(function(e){ return '<option>'+e.id+'</option>'; }).join('')+'</select>'+
+        '<select class="sinp" id="rc-fr" style="width:140px"><option value="">Todos resp.</option>'+COR.map(function(c){ return '<option>'+c.nome+'</option>'; }).join('')+'</select>'+
+      '</div>'+
+      '<div class="tw"><table><thead><tr>'+
+        '<th>Score</th><th>Nome</th><th>Tel</th><th>CRECI</th><th>Exp.</th><th>Origem</th><th>Etapa</th><th>Reunião</th><th>Resp.</th><th>Ações</th>'+
+      '</tr></thead><tbody id="rc-b">'+tr+'</tbody></table></div>'+
+    '</div>';
+
+  // Filters
+  function filtRC(){
+    var q=document.getElementById('rc-s').value.toLowerCase();
+    var fe=document.getElementById('rc-fe').value;
+    var fr=document.getElementById('rc-fr').value;
+    document.querySelectorAll('#rc-b tr').forEach(function(row){
+      var txt=row.textContent.toLowerCase();
+      var ok=(!q||txt.indexOf(q)>=0)&&(!fe||txt.indexOf(fe.toLowerCase())>=0)&&(!fr||txt.indexOf(fr.toLowerCase())>=0);
+      row.style.display=ok?'':'none';
+    });
+  }
+  document.getElementById('rc-s').oninput=filtRC;
+  document.getElementById('rc-fe').onchange=filtRC;
+  document.getElementById('rc-fr').onchange=filtRC;
+}
+
+function nRecruit(){
+  var origOpts = RECRUT_ORIGENS.map(function(o){ return '<option>'+o+'</option>'; }).join('');
+  var etOpts = RECRUT_ETAPAS.map(function(e){ return '<option>'+e.id+'</option>'; }).join('');
+  oM('+ Novo Candidato',
+    '<div class="fg2">'+
+      '<div class="fg"><label>Nome completo</label><input id="nr-n" placeholder="Nome do candidato"></div>'+
+      '<div class="fg"><label>Telefone</label><input id="nr-t" placeholder="(64)9 9000-0000"></div>'+
+    '</div>'+
+    '<div class="fg2">'+
+      '<div class="fg"><label>E-mail</label><input id="nr-e" placeholder="email@exemplo.com" type="email"></div>'+
+      '<div class="fg"><label>CRECI (se tiver)</label><input id="nr-creci" placeholder="GO-00000 ou vazio"></div>'+
+    '</div>'+
+    '<div class="fg3">'+
+      '<div class="fg"><label>Experiência (anos)</label><input id="nr-exp" type="number" min="0" placeholder="0" value="0"></div>'+
+      '<div class="fg"><label>Canal de origem</label><select id="nr-orig">'+origOpts+'</select></div>'+
+      '<div class="fg"><label>Interesse</label><select id="nr-int"><option>Alta</option><option>Media</option><option>Baixa</option></select></div>'+
+    '</div>'+
+    '<div class="fg"><label>Perfil / Observação inicial</label><textarea id="nr-perf" placeholder="Ex: Mulher, 30 anos, professora em transição de carreira..."></textarea></div>'+
+    '<div class="fg3">'+
+      '<div class="fg"><label>Etapa atual</label><select id="nr-et">'+etOpts+'</select></div>'+
+      '<div class="fg"><label>Responsável</label><select id="nr-resp">'+corrSel(U?U.nome:'')+'</select></div>'+
+      '<div class="fg"><label>Data de entrada</label><input type="date" id="nr-d" value="'+new Date().toISOString().slice(0,10)+'"></div>'+
+    '</div>',
+    function(){
+      var nome = document.getElementById('nr-n').value.trim();
+      if(!nome){ alert('Informe o nome.'); return; }
+      recrutD.unshift({
+        id: recrutNextId++,
+        dt: document.getElementById('nr-d').value,
+        nome: nome,
+        tel: document.getElementById('nr-t').value||'',
+        email: document.getElementById('nr-e').value||'',
+        creci: document.getElementById('nr-creci').value||'',
+        exp: document.getElementById('nr-exp').value||'0',
+        origem: document.getElementById('nr-orig').value,
+        interesse: document.getElementById('nr-int').value,
+        perfil: document.getElementById('nr-perf').value||'',
+        etapa: document.getElementById('nr-et').value,
+        resp: document.getElementById('nr-resp').value,
+        reuniao: '', reuniao_local: '', notas: '', st: 'Ativo', score: 0
+      });
+      cM(); salvarTudo(); pRecrutar();
+    }, 'Cadastrar Candidato');
+}
+
+function eRecruit(i){
+  var r = recrutD[i];
+  var origOpts = RECRUT_ORIGENS.map(function(o){ return '<option'+(o===r.origem?' selected':'')+'>'+o+'</option>'; }).join('');
+  var etOpts = RECRUT_ETAPAS.map(function(e){ return '<option'+(e.id===r.etapa?' selected':'')+'>'+e.id+'</option>'; }).join('');
+  var score = iaScoreRecruit(r);
+  var scoreColor = score>=60?'#059669':score>=35?'#d97706':'#dc2626';
+
+  oM('Candidato — '+r.nome,
+    '<div style="background:#f8fafc;border-radius:10px;padding:12px;margin-bottom:14px;display:flex;align-items:center;gap:12px">'+
+      '<div style="width:48px;height:48px;border-radius:50%;background:'+scoreColor+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff">'+score+'</div>'+
+      '<div><div style="font-size:14px;font-weight:700">'+r.nome+'</div>'+
+      '<div style="font-size:11px;color:var(--lm)">'+r.origem+' · '+r.dt+'</div></div>'+
+    '</div>'+
+    '<div class="fg2">'+
+      '<div class="fg"><label>Nome</label><input id="er-n" value="'+r.nome+'"></div>'+
+      '<div class="fg"><label>Telefone</label><input id="er-t" value="'+r.tel+'"></div>'+
+    '</div>'+
+    '<div class="fg2">'+
+      '<div class="fg"><label>E-mail</label><input id="er-e" value="'+r.email+'"></div>'+
+      '<div class="fg"><label>CRECI</label><input id="er-creci" value="'+r.creci+'"></div>'+
+    '</div>'+
+    '<div class="fg3">'+
+      '<div class="fg"><label>Experiência (anos)</label><input id="er-exp" type="number" value="'+r.exp+'"></div>'+
+      '<div class="fg"><label>Origem</label><select id="er-orig">'+origOpts+'</select></div>'+
+      '<div class="fg"><label>Interesse</label><select id="er-int"><option'+(r.interesse==='Alta'?' selected':'')+'>Alta</option><option'+(r.interesse==='Media'?' selected':'')+'>Media</option><option'+(r.interesse==='Baixa'?' selected':'')+'>Baixa</option></select></div>'+
+    '</div>'+
+    '<div class="fg2">'+
+      '<div class="fg"><label>Etapa</label><select id="er-et">'+etOpts+'</select></div>'+
+      '<div class="fg"><label>Responsável</label><select id="er-resp">'+corrSel(r.resp)+'</select></div>'+
+    '</div>'+
+    '<div style="background:#f0f9ff;border-radius:8px;padding:12px;margin:8px 0">'+
+      '<div style="font-size:11px;font-weight:700;color:#0369a1;margin-bottom:8px">📅 Agendamento de Reunião</div>'+
+      '<div class="fg3">'+
+        '<div class="fg"><label>Data e hora</label><input type="datetime-local" id="er-reu" value="'+r.reuniao+'"></div>'+
+        '<div class="fg"><label>Local</label><input id="er-reuL" value="'+(r.reuniao_local||'RE/MAX Space')+'" placeholder="RE/MAX Space ou Online"></div>'+
+        '<div class="fg"><label>Tipo</label><select id="er-reuT"><option value="Presencial">Presencial</option><option value="Online">Online</option><option value="Telefone">Telefone</option></select></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="fg"><label>Perfil do candidato</label><textarea id="er-perf">'+r.perfil+'</textarea></div>'+
+    '<div class="fg"><label>Notas internas</label><textarea id="er-notas">'+r.notas+'</textarea></div>',
+    function(){
+      recrutD[i].nome=document.getElementById('er-n').value;
+      recrutD[i].tel=document.getElementById('er-t').value;
+      recrutD[i].email=document.getElementById('er-e').value;
+      recrutD[i].creci=document.getElementById('er-creci').value;
+      recrutD[i].exp=document.getElementById('er-exp').value;
+      recrutD[i].origem=document.getElementById('er-orig').value;
+      recrutD[i].interesse=document.getElementById('er-int').value;
+      recrutD[i].etapa=document.getElementById('er-et').value;
+      recrutD[i].resp=document.getElementById('er-resp').value;
+      recrutD[i].reuniao=document.getElementById('er-reu').value;
+      recrutD[i].reuniao_local=document.getElementById('er-reuL').value;
+      recrutD[i].perfil=document.getElementById('er-perf').value;
+      recrutD[i].notas=document.getElementById('er-notas').value;
+      cM(); salvarTudo(); pRecrutar();
+    }, 'Salvar');
+}
+
+function verFunilRecruit(){
+  var cols = RECRUT_ETAPAS.map(function(et){
+    var cands = recrutD.filter(function(r){ return r.etapa===et.id; });
+    var cards = cands.map(function(r){
+      var i = recrutD.indexOf(r);
+      var score = iaScoreRecruit(r);
+      return '<div style="background:#fff;border:1px solid var(--lb);border-radius:8px;padding:10px;margin-bottom:8px;cursor:pointer" onclick="cM();eRecruit('+i+')">'+
+        '<div style="font-size:12px;font-weight:700;margin-bottom:4px">'+r.nome+'</div>'+
+        '<div style="font-size:10px;color:var(--lm)">'+r.origem+' · '+(r.exp==='0'?'sem exp.':r.exp+'a')+'</div>'+
+        (r.reuniao?'<div style="font-size:9px;background:#dcfce7;color:#166534;padding:2px 7px;border-radius:8px;margin-top:4px;display:inline-block">📅 '+r.reuniao.slice(8,10)+'/'+r.reuniao.slice(5,7)+' '+r.reuniao.slice(11,16)+'</div>':'')+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">'+
+          '<div style="font-size:10px;color:var(--lm)">'+r.resp+'</div>'+
+          '<div style="font-size:10px;font-weight:700;color:'+(score>=60?'#059669':score>=35?'#d97706':'#dc2626')+'">'+(score>=60?'🔥':score>=35?'🌡️':'❄️')+' '+score+'</div>'+
+        '</div>'+
+      '</div>';
+    }).join('') || '<div style="font-size:11px;color:var(--lm);padding:8px;text-align:center">Vazio</div>';
+
+    return '<div style="flex:1;min-width:140px">'+
+      '<div style="background:'+et.cor+';color:#fff;border-radius:8px;padding:7px 10px;margin-bottom:8px;text-align:center">'+
+        '<div style="font-size:12px">'+et.icon+' '+et.id+'</div>'+
+        '<div style="font-size:18px;font-weight:800">'+cands.length+'</div>'+
+      '</div>'+
+      cards+
+    '</div>';
+  }).join('');
+
+  oM('📊 Funil de Recrutamento — RE/MAX Space',
+    '<div style="overflow-x:auto"><div style="display:flex;gap:10px;min-width:900px;padding-bottom:10px">'+cols+'</div></div>',
+    null, null, true
+  );
+}
+
+async function analisarCandidatoIA(i){
+  if(i<0||i>=recrutD.length) return;
+  var r = recrutD[i];
+  var score = iaScoreRecruit(r);
+
+  oM('🤖 Análise IA — '+r.nome,
+    '<div id="ia-recrut-content" style="min-height:200px;display:flex;align-items:center;justify-content:center">'+
+      '<div style="text-align:center"><div style="font-size:32px;margin-bottom:12px">🧠</div>'+
+      '<div style="font-size:14px;font-weight:700;color:var(--navy)">Analisando perfil do candidato...</div></div>'+
+    '</div>',
+    null, null, true
+  );
+
+  var prompt = 'Analise este candidato a corretor de imóveis da RE/MAX Space (Caldas Novas - GO):\n\n'+
+    'Nome: '+r.nome+'\n'+
+    'Perfil: '+r.perfil+'\n'+
+    'Experiência: '+(r.exp==='0'?'Sem experiência':r.exp+' anos')+'\n'+
+    'CRECI: '+(r.creci||'Não possui ainda')+'\n'+
+    'Canal de origem: '+r.origem+'\n'+
+    'Interesse demonstrado: '+r.interesse+'\n'+
+    'Etapa atual: '+r.etapa+'\n'+
+    'Notas: '+(r.notas||'nenhuma')+'\n'+
+    'Score atual: '+score+'/100\n\n'+
+    'Forneça:\n'+
+    '1. ANÁLISE DO PERFIL (pontos fortes e fracos para o mercado imobiliário)\n'+
+    '2. POTENCIAL RE/MAX (se encaixa no perfil RE/MAX de corretor empreendedor)\n'+
+    '3. PRÓXIMOS PASSOS (o que fazer para avançar no funil)\n'+
+    '4. MENSAGEM DE ABORDAGEM (texto para WhatsApp convidando para reunião)\n'+
+    '5. PONTOS DE ATENÇÃO (riscos ou cuidados)\n\n'+
+    'Contexto: A RE/MAX Space em Caldas Novas é liderada por Tatiana Basile, advogada, especialista em contratos, focada em recrutar especialmente mulheres em transição de carreira.';
+
+  var system = 'Você é um especialista em recrutamento de corretores de imóveis para franquias RE/MAX no Brasil. Analise candidatos com base no perfil ideal RE/MAX: empreendedor, dedicado, orientado a resultados, com ou sem experiência. Seja direto e prático.';
+
+  try{
+    var analise = await callClaude(prompt, system, 1000);
+    var el5 = document.getElementById('ia-recrut-content');
+    if(el5){
+      el5.innerHTML =
+        '<div style="width:100%">'+
+          '<div style="background:#f8fafc;border-radius:8px;padding:10px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">'+
+            '<div><div style="font-size:13px;font-weight:700">'+r.nome+'</div>'+
+            '<div style="font-size:11px;color:var(--lm)">'+r.origem+' · '+r.etapa+'</div></div>'+
+            '<div style="font-size:28px;font-weight:800;color:'+(score>=60?'#059669':score>=35?'#d97706':'#dc2626')+'">'+score+'</div>'+
+          '</div>'+
+          '<div style="background:#f9fafb;border:1px solid var(--lb);border-radius:8px;padding:14px;font-size:12px;line-height:1.8;white-space:pre-wrap;max-height:350px;overflow-y:auto" id="ia-recrut-txt">'+analise+'</div>'+
+          '<div style="display:flex;gap:8px;margin-top:10px">'+
+            '<button class="btn btn-primary" onclick="navigator.clipboard.writeText(document.getElementById(\'ia-recrut-txt\').textContent).then(function(){alert(\'Copiado!\');})">📋 Copiar análise</button>'+
+            '<button class="btn btn-sm" style="background:#7c3aed;color:#fff;border-color:#7c3aed" onclick="analisarCandidatoIA('+i+')">🔄 Nova análise</button>'+
+          '</div>'+
+        '</div>';
+    }
+  } catch(e){
+    var el6 = document.getElementById('ia-recrut-content');
+    if(el6) el6.innerHTML = '<div style="color:#dc2626;text-align:center;padding:20px">Erro: '+e.message+'</div>';
+  }
+}
+
+function msgRecruit(i){
+  var r = recrutD[i];
+  var et = RECRUT_ETAPAS.find(function(e){ return e.id===r.etapa; }) || RECRUT_ETAPAS[0];
+  var msgs = {
+    'Novo': 'Olá, '+r.nome+'! Tudo bem?\n\nSou Tatiana Basile, diretora da RE/MAX Space em Caldas Novas.\n\nVi seu interesse em fazer parte da nossa equipe e adoraria conhecer mais sobre você.\n\nA RE/MAX Space é a imobiliária que mais cresce em Caldas Novas e estamos em busca de profissionais comprometidos com resultados.\n\nPodemos conversar? Qual o melhor horário para uma reunião rápida?\n\nRE/MAX Space — Caldas Novas',
+    'Contato': 'Olá, '+r.nome+'! Tudo bem?\n\nDando continuidade ao nosso contato sobre a oportunidade na RE/MAX Space...\n\nGostaria de agendar nossa reunião de apresentação. Temos horários disponíveis esta semana.\n\nQual dia e horário melhor para você?\n\nTatiana Basile — RE/MAX Space\n(64) 9 9123-4567',
+    'Entrevista': 'Olá, '+r.nome+'!\n\nEstou confirmando nossa reunião'+( r.reuniao?' no dia '+r.reuniao.slice(8,10)+'/'+r.reuniao.slice(5,7)+' às '+r.reuniao.slice(11,16)+' em '+( r.reuniao_local||'nossa sede'):'')+' .\n\nNossa conversa será sobre o modelo de negócio RE/MAX e as oportunidades disponíveis.\n\nQualquer dúvida, estou à disposição!\n\nTatiana Basile — RE/MAX Space',
+    'Proposta': 'Olá, '+r.nome+'!\n\nFoi um prazer nossa conversa! Como combinado, estou enviando os detalhes da proposta de associação à RE/MAX Space.\n\nPodemos marcar um retorno para esta semana para tirar suas últimas dúvidas?\n\nTatiana Basile — RE/MAX Space'
+  };
+  var txt = msgs[r.etapa] || msgs['Novo'];
+  var tel = r.tel.replace(/\D/g,'');
+  oM('📱 Mensagem — '+r.nome,
+    '<div style="background:#fef9c3;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px">'+
+      '<b>'+r.nome+'</b> · Etapa: '+et.icon+' '+r.etapa+' · Tel: '+r.tel+
+    '</div>'+
+    '<textarea id="msg-recrut" style="width:100%;height:180px;font-size:12px;line-height:1.6;border:1px solid var(--lb);border-radius:8px;padding:10px">'+txt+'</textarea>'+
+    '<div style="display:flex;gap:8px;margin-top:10px">'+
+      '<button class="btn btn-primary" onclick="navigator.clipboard.writeText(document.getElementById(\'msg-recrut\').value).then(function(){alert(\'Copiado!\');})">📋 Copiar</button>'+
+      (tel?'<a href="https://wa.me/55'+tel+'" target="_blank" class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366;text-decoration:none">📱 Abrir WhatsApp</a>':'')+
+    '</div>',
+    null, null, true
+  );
+}
+
 
 // ===== HISTÓRICO MENSAL =====
 function salvarSnapshotMes(){
@@ -1536,7 +1896,7 @@ function gP(id){
     iv:pIV, prop:pProp,
     fd:pFD, dre:pDRE, fr:pFR, fp:pFP,
     'cad-cor':pCadCor, 'cad-prop':pCadProp, 'cad-inq':pCadInq,
-    rank:pRank, metas:pMetas, historico:pHistorico, perms:pPermissoes,
+    rank:pRank, metas:pMetas, historico:pHistorico, recrut:pRecrutar, perms:pPermissoes,
     relat:pRelat
   };
   if(pages[id]) pages[id](); else pDash();

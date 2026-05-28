@@ -4561,7 +4561,7 @@ function removerFoto(ivId, idx){
 
 function eIV(i){
   var iv=ivD[i];
-  function ck(f,l){return '<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><input type="checkbox" id="ei-'+f+'"'+(iv[f]?' checked':'')+' onchange="ivD['+i+'].'+f+'=this.checked"><label for="ei-'+f+'" style="font-size:12px">'+l+'</label></div>';}
+  function ck(f,l){return '<label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:4px 8px;background:#fff;border:1px solid #e2e8f0;border-radius:6px"><input type="checkbox" id="ei-'+f+'"'+(iv[f]?' checked':'')+' onchange="ivD['+i+'].'+f+'=this.checked"> '+l+'</label>';}
   oM('Editar Imovel #'+iv.id,
     '<div class="fg2"><div class="fg"><label>Proprietario</label><input id="ei-p" value="'+iv.prop+'"></div><div class="fg"><label>Tel</label><input id="ei-t" value="'+(iv.tel||'')+'"></div></div>'+
     '<div class="fg"><label>Endereco</label><input id="ei-e" value="'+iv.end+'"></div>'+
@@ -4569,13 +4569,15 @@ function eIV(i){
     '<div class="fg"><label>Valor R$</label><input id="ei-v" type="number" value="'+iv.valor+'"></div>'+
     '<div class="fg"><label>Corretor</label><select id="ei-c">'+corrSel(iv.corretor)+'</select></div></div>'+
     '<div class="fg"><label>V/A</label><select id="ei-va"><option>VENDA</option><option>VENDA E ALUGUEL</option><option>VENDA AGIO</option></select></div>'+
-    '<div style="background:#f9fafb;border-radius:8px;padding:10px;margin-bottom:10px">'+
+    '<div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:10px">'+
     '<div style="font-size:11px;font-weight:700;color:var(--lm);margin-bottom:8px;text-transform:uppercase">Documentação e Divulgação</div>'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;font-size:12px">'+
-    ck('contrato','Contrato assinado')+ck('fotos','Fotos feitas')+ck('video','Vídeo')+
-    ck('acm','ACM feito')+ck('acm_apres','ACM apresentado')+ck('ilist','No iList')+
-    ck('site','Site RE/MAX')+ck('zap','ZAP Imóveis')+ck('olx','OLX')+
-    ck('ig','Instagram')+ck('trafego','Tráfego pago')+ck('gestao','Gestão RE/MAX')+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'+
+    ck('contrato','✅ Contrato assinado')+ck('fotos','📷 Fotos feitas')+
+    ck('video','🎥 Vídeo')+ck('acm','📊 ACM feito')+
+    ck('acm_apres','📊 ACM apresentado')+ck('ilist','🏠 No iList')+
+    ck('site','🌐 Site RE/MAX')+ck('zap','🔍 ZAP Imóveis')+
+    ck('olx','🔍 OLX')+ck('ig','📸 Instagram')+
+    ck('trafego','💰 Tráfego pago')+ck('gestao','⭐ Gestão RE/MAX')+
     '</div></div>'+
     '<div class="fg"><label>Fotos do Imóvel</label>'+
     '<div id="foto-preview-'+iv.id+'" style="margin-bottom:8px">'+mostrarFotosImovel(iv)+'</div>'+

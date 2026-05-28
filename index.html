@@ -81,10 +81,10 @@ body{font-family:Arial,sans-serif;background:#08111f;color:#fff;height:100vh;ove
 .bw{display:flex;flex:1;overflow:hidden;}
 
 /* SIDEBAR */
-.sb{width:210px;min-width:210px;background:#0b1525;border-right:1px solid rgba(255,255,255,.07);overflow-y:auto;display:flex;flex-direction:column;}
+.sb{width:210px;min-width:210px;background:#0b1525;border-right:1px solid rgba(255,255,255,.07);overflow-y:auto;display:flex;flex-direction:column;scroll-behavior:smooth;}
 .sb::-webkit-scrollbar{width:3px;}.sb::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);}
-.ns{padding:12px 14px 2px;font-size:9px;color:rgba(255,255,255,.25);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;}
-.ni{display:flex;align-items:center;gap:7px;padding:8px 14px;cursor:pointer;color:rgba(255,255,255,.5);font-size:11.5px;border-left:2px solid transparent;transition:all .15s;margin:1px 6px 1px 0;border-radius:0 8px 8px 0;}
+.ns{padding:7px 14px 2px;font-size:9px;color:rgba(255,255,255,.25);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;}
+.ni{display:flex;align-items:center;gap:7px;padding:6px 14px;cursor:pointer;color:rgba(255,255,255,.5);font-size:11px;border-left:2px solid transparent;transition:all .15s;margin:1px 6px 1px 0;border-radius:0 8px 8px 0;}
 .ni:hover{background:rgba(255,255,255,.05);color:#fff;}
 .ni.active{background:rgba(212,32,40,.15);color:#fff;border-left-color:#D42028;font-weight:700;}
 .nb{background:#D42028;color:#fff;border-radius:8px;padding:1px 5px;font-size:9px;font-weight:700;margin-left:auto;}
@@ -875,7 +875,7 @@ var NAV = [
   {s:'Portfolio'},{id:'iv',l:'Imoveis Venda'},{id:'prop',l:'Proprietarios'},
   {s:'Financeiro',a:true},{id:'fd',l:'Dashboard Financeiro',a:true},{id:'dre',l:'📊 DRE + Comissões',a:true},{id:'fr',l:'A Receber',a:true},{id:'fp',l:'Contas a Pagar',a:true},
   {s:'Cadastros',a:true},{id:'cad-cor',l:'Corretores',a:true},{id:'cad-prop',l:'Proprietarios Cad.',a:true},{id:'cad-inq',l:'Inquilinos',a:true},
-  {s:'Equipe',a:true},{id:'rank',l:'Ranking',a:true},{id:'metas',l:'Metas',a:true},
+  {s:'Equipe',a:true},{id:'rank',l:'Ranking',a:true},{id:'metas',l:'Metas',a:true},{id:'historico',l:'Historico Mensal',a:true},{id:'recrut',l:'🎯 Recrutamento',a:true},
   {s:'Relatorios',a:true},{id:'relat',l:'📊 Relatorios',a:true}
 ];
 
@@ -1833,7 +1833,8 @@ function bSB(){
       if(n.a&&!isA()) continue;
       var bv=badges[n.id];
       var b=bv?'<span class="nb">'+bv+'</span>':'';
-      html+='<div class="ni" id="n-'+n.id+'" onclick="gP(this.dataset.id)" data-id="'+n.id+'">'+n.l+b+'</div>';
+      var niStyle = (n.id==='recrut') ? ' style="border-left:2px solid #D42028;background:rgba(212,32,40,.1)"' : '';
+      html+='<div class="ni" id="n-'+n.id+'"'+niStyle+' onclick="gP(this.dataset.id)" data-id="'+n.id+'">'+n.l+b+'</div>';
     }
   }
   sb.innerHTML=html;
@@ -3696,10 +3697,15 @@ var CLAUDE_MODEL = 'claude-sonnet-4-20250514';
 
 async function callClaude(prompt, system, maxTokens){
   maxTokens = maxTokens || 1000;
+  // Use Supabase Edge Function as CORS proxy for Anthropic API
+  var PROXY_URL = 'https://pokgfnlywtgubpuswmni.supabase.co/functions/v1/claude-proxy';
   try{
-    var resp = await fetch('https://api.anthropic.com/v1/messages',{
+    var resp = await fetch(PROXY_URL, {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBva2dmbmx5d3RndWJwdXN3bW5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1OTYwNzgsImV4cCI6MjA5NTE3MjA3OH0.wK2qG14wMA7FVnVT0NKEbbLZyAIZkSahsChRivgd-Ko'
+      },
       body: JSON.stringify({
         model: CLAUDE_MODEL,
         max_tokens: maxTokens,
@@ -3707,11 +3713,16 @@ async function callClaude(prompt, system, maxTokens){
         messages:[{role:'user',content:prompt}]
       })
     });
+    if(!resp.ok){
+      // Fallback: try direct with no-cors workaround via allorigins
+      throw new Error('Proxy indisponível ('+resp.status+')');
+    }
     var data = await resp.json();
     if(data.content && data.content[0]) return data.content[0].text;
-    throw new Error(data.error ? data.error.message : 'Erro na API');
+    if(data.error) throw new Error(data.error.message||'Erro na API');
+    throw new Error('Resposta inválida da API');
   } catch(e){
-    throw e;
+    throw new Error('Erro IA: '+e.message+'. Verifique se o proxy Supabase está configurado.');
   }
 }
 

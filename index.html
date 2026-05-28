@@ -919,8 +919,8 @@ function msgCobranca(i){
       '<div style="font-size:11px;font-weight:700;color:var(--lm);margin-bottom:8px">'+m.label+'</div>'+
       '<div style="background:#fff;border:1px solid var(--lb);border-radius:8px;padding:10px;font-size:12px;line-height:1.7;white-space:pre-wrap;font-family:monospace;max-height:120px;overflow-y:auto">'+m.txt+'</div>'+
       '<div style="display:flex;gap:8px;margin-top:8px">'+
-        '<button class="btn btn-sm btn-blue" onclick="copiarMsgIdx('+idx+')">📋 Copiar</button>'+
-        '<a href="https://wa.me/55'+c.inq_tel+'" target="_blank" class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366;text-decoration:none">📱 Abrir WhatsApp</a>'+
+        '<button class="btn btn-sm btn-blue" onclick="copiarMsgIdx('+idx+')">Copiar</button>'+
+        '<a href="https://wa.me/55'+c.inq_tel+'" target="_blank" class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366;text-decoration:none">WhatsApp</a>'+
       '</div>'+
       '<div id="cob-msg-'+idx+'" style="display:none">'+m.txt+'</div>'+
     '</div>';
@@ -956,7 +956,7 @@ function copiarMsg(idx, btnOrId){
   var txt=el.textContent;
   navigator.clipboard.writeText(txt).then(function(){
     var btn=document.querySelectorAll('.btn-sm.btn-blue')[idx];
-    var orig='📋 Copiar';
+    var orig='Copiar';
     if(btn){btn.textContent='✅ Copiado!';setTimeout(function(){btn.textContent=orig;},2000);}
   }).catch(function(){
     var ta=document.createElement('textarea');
@@ -979,7 +979,7 @@ function pRelat(){
   var autoAlert='';
   if(hoje.getDate()<=3){
     autoAlert='<div class="alt alt-b" style="margin-bottom:12px;cursor:pointer" onclick="gerarRelatorioMensal()">'+
-      '📅 Início de mês detectado! Clique aqui para gerar o Relatório de '+mesAno()+' automaticamente.</div>';
+      'Inicio de mês detectado! Clique aqui para gerar o Relatório de '+mesAno()+' automaticamente.</div>';
   }
 
   document.getElementById('pc').innerHTML=
@@ -1000,7 +1000,7 @@ function pRelat(){
     '<button class="btn btn-primary" style="padding:14px;font-size:14px;background:#0891b2" onclick="relLeads()">👥 Relatório Leads</button>'+
     '<button class="btn btn-primary" style="padding:14px;font-size:14px;background:#dc2626" onclick="relCompleto()">📁 RELATÓRIO COMPLETO</button>'+
     '<button class="btn btn-primary" style="padding:14px;font-size:14px;background:#7c3aed;grid-column:1/-1" onclick="abrirFunil()">🎯 FUNIL DE VENDAS — Acompanhamento por Corretor</button>'+
-    '<button class="btn btn-primary" style="padding:14px;font-size:14px;background:#0f1a35;grid-column:1/-1" onclick="gerarRelatorioMensal()">📅 RELATÓRIO MENSAL AUTOMÁTICO — '+mesAno()+'</button>'+
+    '<button class="btn btn-primary" style="padding:14px;font-size:14px;background:#0f1a35;grid-column:1/-1" onclick="gerarRelatorioMensal()">RELATÓRIO MENSAL AUTOMÁTICO — '+mesAno()+'</button>'+
     '</div>';
 }
 
@@ -2277,7 +2277,7 @@ function pLC(){
     r+='<td style="font-size:10px">'+c.fim+'</td>';
     r+='<td style="font-size:10.5px">'+(c.corretor||'-')+'</td>';
     r+='<td>'+sBadge(c.status)+'</td>';
-    r+='<td style="display:flex;gap:3px"><button class="btn btn-sm btn-blue" onclick="eCT('+i+')">Editar</button><button class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366;font-size:10px" onclick="msgCobranca('+i+')">📱</button><button class="btn btn-sm btn-gray" onclick="excluirCT('+i+')">Del</button></td>';
+    r+='<td style="display:flex;gap:3px"><button class="btn btn-sm btn-blue" onclick="eCT('+i+')">Editar</button><button class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366;font-size:10px" onclick="msgCobranca('+i+')">Cobrar</button><button class="btn btn-sm btn-gray" onclick="excluirCT('+i+')">Del</button></td>';
     r+='</tr>';
   });
   document.getElementById('pc').innerHTML=

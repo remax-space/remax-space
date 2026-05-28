@@ -3328,6 +3328,406 @@ function nVistoria(){
 }
 
 // ===== IMOVEIS VENDA =====
+// ===== FICHA DO IMÓVEL — PDF IMPRIMÍVEL =====
+function fichaImovel(i){
+  var iv = ivD[i];
+  var cor2 = corCad.find(function(c){ return c.nome===iv.corretor; }) || {nome:iv.corretor||'RE/MAX Space',creci:'',tel:'(64)9 9000-0000',cargo:'Corretor',ini:'R'};
+  var tipo = iv.tipo||'Imóvel';
+  var preco = iv.valor ? fmt(iv.valor) : 'Consulte';
+  var dets = [];
+  if(iv.quartos) dets.push({l:'Quartos',v:iv.quartos,i:'🛏'});
+  if(iv.banheiros) dets.push({l:'Banheiros',v:iv.banheiros,i:'🚿'});
+  if(iv.vagas) dets.push({l:'Vagas',v:iv.vagas,i:'🚗'});
+  if(iv.area) dets.push({l:'Área',v:iv.area+'m²',i:'📐'});
+  var detsHtml = dets.map(function(d){
+    return '<div style="text-align:center;background:#f8fafc;border-radius:10px;padding:14px 8px;border:1px solid #e2e8f0">'+
+      '<div style="font-size:22px;margin-bottom:4px">'+d.i+'</div>'+
+      '<div style="font-size:20px;font-weight:800;color:#0f1a35">'+d.v+'</div>'+
+      '<div style="font-size:10px;color:#64748b;font-weight:600">'+d.l+'</div>'+
+    '</div>';
+  }).join('');
+  var qr = 'https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=' + encodeURIComponent('https://wa.me/556499000000?text=Interesse+no+imóvel+'+encodeURIComponent(tipo+' '+iv.end));
+  var w = window.open('','_blank');
+  w.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'+
+    '<title>Ficha do Imóvel — '+tipo+' | '+iv.end+'</title>'+
+    '<style>*{box-sizing:border-box;margin:0;padding:0}'+
+    'body{font-family:Arial,sans-serif;background:#fff;color:#1e293b;max-width:800px;margin:0 auto;padding:0}'+
+    '.header{background:#0f1a35;padding:20px 28px;display:flex;justify-content:space-between;align-items:center}'+
+    '.logo{color:#fff;font-size:24px;font-weight:900}.logo em{color:#D42028;font-style:normal}'+
+    '.tag{background:#D42028;color:#fff;font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px}'+
+    '.foto-area{background:linear-gradient(135deg,#0f1a35,#003DA5);height:280px;display:flex;align-items:center;justify-content:center}'+
+    '.foto-area img{width:100%;height:280px;object-fit:cover}'+
+    '.foto-placeholder{color:rgba(255,255,255,.3);font-size:48px;text-align:center}'+
+    '.preco-bar{background:#D42028;padding:14px 28px;display:flex;justify-content:space-between;align-items:center}'+
+    '.preco{font-size:28px;font-weight:900;color:#fff}'+
+    '.tipo{font-size:14px;color:rgba(255,255,255,.8);font-weight:600}'+
+    '.content{padding:24px 28px}'+
+    '.endereco{font-size:16px;color:#64748b;margin-bottom:20px;display:flex;align-items:center;gap:8px}'+
+    '.dets{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}'+
+    '.desc{background:#f8fafc;border-radius:10px;padding:16px;margin-bottom:20px;font-size:13px;line-height:1.7;color:#475569}'+
+    '.footer{background:#0f1a35;padding:16px 28px;display:flex;justify-content:space-between;align-items:center}'+
+    '.cor-info{display:flex;align-items:center;gap:12px}'+
+    '.cor-av{width:48px;height:48px;border-radius:50%;background:#D42028;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;flex-shrink:0}'+
+    '.cor-nome{font-size:14px;font-weight:700;color:#fff}'+
+    '.cor-sub{font-size:11px;color:rgba(255,255,255,.6)}'+
+    '.qr-block{text-align:center}'+
+    '.qr-label{font-size:10px;color:rgba(255,255,255,.6);margin-top:4px}'+
+    '.checklists{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}'+
+    '.checklist{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px}'+
+    '.ck-title{font-size:11px;font-weight:700;color:#0f1a35;text-transform:uppercase;margin-bottom:8px}'+
+    '.ck-item{font-size:12px;color:#475569;padding:4px 0;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:6px}'+
+    '.badge-ok{background:#dcfce7;color:#166534;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700}'+
+    '.badge-no{background:#fee2e2;color:#991b1b;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700}'+
+    '@media print{.no-print{display:none!important}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}'+
+    '</style></head><body>'+
+    '<div class="header">'+
+      '<div class="logo">IMÓVEIS RE/<em>MAX</em><div style="font-size:11px;opacity:.6;font-weight:400">Space — Caldas Novas GO</div></div>'+
+      '<div class="tag">'+tipo.toUpperCase()+'</div>'+
+    '</div>'+
+    '<div class="foto-area">'+
+      '<div class="foto-placeholder">📷<div style="font-size:14px;margin-top:8px">Adicione a foto do imóvel</div></div>'+
+    '</div>'+
+    '<div class="preco-bar">'+
+      '<div><div class="tipo">'+tipo+' à Venda</div><div class="preco">'+preco+'</div></div>'+
+      '<div style="text-align:right;color:rgba(255,255,255,.8);font-size:12px">'+
+        (iv.vva||'VENDA')+
+        (iv.gestao?'<div style="background:rgba(255,255,255,.2);padding:3px 10px;border-radius:10px;margin-top:4px;font-size:11px">Gestão Exclusiva</div>':'')+
+      '</div>'+
+    '</div>'+
+    '<div class="content">'+
+      '<div class="endereco">📍 <strong>'+iv.end+'</strong></div>'+
+      (dets.length?'<div class="dets">'+detsHtml+'</div>':'')+
+      '<div class="desc">'+
+        '<div style="font-size:12px;font-weight:700;color:#0f1a35;margin-bottom:8px;text-transform:uppercase">Sobre o imóvel</div>'+
+        (iv.sit||'Imóvel em excelente estado de conservação. Entre em contato para mais informações e agende sua visita.')+
+      '</div>'+
+      '<div class="checklists">'+
+        '<div class="checklist">'+
+          '<div class="ck-title">Documentação</div>'+
+          '<div class="ck-item">'+(iv.contrato?'<span class="badge-ok">✓ OK</span>':'<span class="badge-no">Pendente</span>')+' Contrato assinado</div>'+
+          '<div class="ck-item">'+(iv.fotos?'<span class="badge-ok">✓ OK</span>':'<span class="badge-no">Pendente</span>')+' Fotos profissionais</div>'+
+          '<div class="ck-item">'+(iv.ilist?'<span class="badge-ok">✓ OK</span>':'<span class="badge-no">Pendente</span>')+' iList RE/MAX</div>'+
+        '</div>'+
+        '<div class="checklist">'+
+          '<div class="ck-title">Divulgação</div>'+
+          '<div class="ck-item">'+(iv.zap?'<span class="badge-ok">✓ Ativo</span>':'<span class="badge-no">—</span>')+' ZAP Imóveis</div>'+
+          '<div class="ck-item">'+(iv.olx?'<span class="badge-ok">✓ Ativo</span>':'<span class="badge-no">—</span>')+' OLX</div>'+
+          '<div class="ck-item">'+(iv.instagram?'<span class="badge-ok">✓ Ativo</span>':'<span class="badge-no">—</span>')+' Instagram</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="footer">'+
+      '<div class="cor-info">'+
+        '<div class="cor-av">'+cor2.ini+'</div>'+
+        '<div><div class="cor-nome">'+cor2.nome+'</div>'+
+          (cor2.creci?'<div class="cor-sub">CRECI: '+cor2.creci+'</div>':'')+
+          '<div class="cor-sub">'+cor2.tel+'</div>'+
+          '<div class="cor-sub">'+cor2.cargo+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="qr-block">'+
+        '<img src="'+qr+'" width="80" height="80" style="border-radius:8px;background:#fff;padding:4px">'+
+        '<div class="qr-label">Escaneie para<br>contato via WhatsApp</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="no-print" style="text-align:center;padding:16px;background:#f8fafc;border-top:1px solid #e2e8f0">'+
+      '<button onclick="window.print()" style="background:#0f1a35;color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:14px;cursor:pointer;margin-right:8px">🖨️ Imprimir / Salvar PDF</button>'+
+      '<button onclick="window.close()" style="background:#f1f5f9;color:#0f1a35;border:1px solid #e2e8f0;padding:12px 20px;border-radius:8px;font-size:14px;cursor:pointer">Fechar</button>'+
+    '</div>'+
+    '</body></html>');
+  w.document.close();
+}
+
+
+// ===== GERADOR DE POSTS RE/MAX SPACE =====
+
+function gerarPost(i){
+  var iv = ivD[i];
+  var cor = corCad.find(function(c){ return c.nome===iv.corretor; }) || {nome:iv.corretor||'RE/MAX Space',creci:'',tel:'(64)9 9000-0000',cargo:'Corretora',ini:'R'};
+  
+  // Estado atual do gerador
+  var estado = {
+    modelo: 1,       // 1-6
+    comPreco: true,
+    comCreci: true,
+    comFoto: false,
+    fotoUrl: '',
+    corretorFotoUrl: ''
+  };
+
+  function getHashtags(iv){
+    var tags = ['#caldas_novas', '#caldas_novasgo', '#imoveiscaldasnovas', '#remax', '#remaxspace', '#remaxbrasil'];
+    var tipo = (iv.tipo||'').toLowerCase();
+    if(tipo.includes('casa')) tags.push('#casavenda','#casacaldasnovas');
+    else if(tipo.includes('apto')||tipo.includes('apart')) tags.push('#apartamento','#aptovenda');
+    else if(tipo.includes('lote')) tags.push('#lote','#terreno');
+    else if(tipo.includes('cha')) tags.push('#chacara','#sitio');
+    else if(tipo.includes('kit')) tags.push('#kitnet','#studioapartamento');
+    else if(tipo.includes('chal')) tags.push('#chale','#hospedagem');
+    else if(tipo.includes('sala')||tipo.includes('com')) tags.push('#salacomericial','#comercial');
+    tags.push('#imoveisgois','#corretor','#imobiliaria','#venderimovei');
+    if(iv.gestao) tags.push('#gestaoexclusiva','#exclusividade');
+    return tags.join(' ');
+  }
+
+  function getLegenda(iv, cor){
+    var tipo = iv.tipo||'Imóvel';
+    var end = iv.end||'Caldas Novas - GO';
+    var price = iv.valor ? '\n\n💰 ' + fmt(iv.valor) : '';
+    var dets = '';
+    if(iv.quartos) dets += '\n🛏 ' + iv.quartos + ' quarto(s)';
+    if(iv.banheiros) dets += '\n🚿 ' + iv.banheiros + ' banheiro(s)';
+    if(iv.vagas) dets += '\n🚗 ' + iv.vagas + ' vaga(s)';
+    if(iv.area) dets += '\n📐 ' + iv.area + 'm²';
+    return tipo.toUpperCase() + ' À VENDA\n📍 ' + end + price + dets +
+      '\n\n✅ Documentação verificada\n✅ Atendimento especializado\n✅ Financiamento facilitado' +
+      '\n\n📲 Entre em contato:\n📞 ' + cor.tel +
+      '\n\n🔴⚪🔵 RE/MAX Space — Caldas Novas\nNinguém no mundo vende mais imóveis que a RE/MAX!\n\n' + getHashtags(iv);
+  }
+
+  function renderPost(){
+    var tipo = (iv.tipo||'IMÓVEL').toUpperCase();
+    var end = iv.end || 'Caldas Novas - GO';
+    var preco = iv.valor ? fmt(iv.valor) : 'Consulte';
+    var dets = [];
+    if(iv.quartos) dets.push({i:'🛏',v:iv.quartos+' Qto'+(iv.quartos>1?'s':'')});
+    if(iv.banheiros) dets.push({i:'🚿',v:iv.banheiros+' Banh.'});
+    if(iv.vagas) dets.push({i:'🚗',v:iv.vagas+' Vaga'+(iv.vagas>1?'s':'')});
+    if(iv.area) dets.push({i:'📐',v:iv.area+'m²'});
+
+    var detsHtml = dets.map(function(d){
+      return '<div style="background:rgba(255,255,255,.15);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;color:#fff;display:flex;align-items:center;gap:5px">'+d.i+' '+d.v+'</div>';
+    }).join('');
+
+    var fotoStyle = estado.comFoto && estado.fotoUrl ?
+      'background:linear-gradient(180deg,rgba(15,26,53,.3) 0%,rgba(15,26,53,.85) 100%),url('+estado.fotoUrl+') center/cover no-repeat' :
+      'background:linear-gradient(135deg,#0f1a35 0%,#003DA5 60%,#1a3a6e 100%)';
+
+    // Footer corretor
+    var footerHtml = '';
+    if(estado.modelo <= 4){
+      footerHtml = '<div style="background:#0a1228;padding:12px 16px;display:flex;align-items:center;gap:10px">';
+      if(estado.corretorFotoUrl){
+        footerHtml += '<img src="'+estado.corretorFotoUrl+'" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid #D42028">';
+      } else {
+        footerHtml += '<div style="width:42px;height:42px;border-radius:50%;background:#D42028;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;flex-shrink:0">' + (cor.ini||'R') + '</div>';
+      }
+      footerHtml += '<div style="flex:1"><div style="font-size:13px;font-weight:700;color:#fff">'+cor.nome+'</div>';
+      if(estado.comCreci && cor.creci) footerHtml += '<div style="font-size:10px;color:rgba(255,255,255,.6)">CRECI: '+cor.creci+'</div>';
+      footerHtml += '<div style="font-size:10px;color:rgba(255,255,255,.6)">'+cor.tel+'</div></div>';
+      footerHtml += '<div style="text-align:right"><div style="font-size:9px;font-weight:900;color:#fff;letter-spacing:1px">IMÓVEIS</div><div style="font-size:16px;font-weight:900;color:#fff;letter-spacing:-0.5px">RE/<em style="color:#D42028;font-style:normal">MAX</em></div><div style="font-size:7px;color:rgba(255,255,255,.5)">Space — Caldas Novas</div></div>';
+      footerHtml += '</div>';
+    }
+
+    var m = estado.modelo;
+    var html = '';
+
+    if(m===1){
+      // MODELO 1 — Clássico fundo escuro
+      html = '<div style="'+fotoStyle+';width:500px;height:500px;position:relative;border-radius:12px;overflow:hidden;font-family:Arial,sans-serif">'+
+        '<div style="position:absolute;top:16px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:center">'+
+          '<div style="background:#D42028;color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px">VENDE-SE</div>'+
+          (estado.comPreco?'<div style="background:rgba(15,26,53,.9);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:13px;font-weight:800;padding:5px 14px;border-radius:20px">'+preco+'</div>':'<div style="background:#003DA5;color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px">Consulte o Valor</div>')+
+        '</div>'+
+        '<div style="position:absolute;bottom:'+(footerHtml?'68px':'16px')+';left:16px;right:16px">'+
+          '<div style="font-size:11px;color:rgba(255,255,255,.7);margin-bottom:4px">📍 '+end+'</div>'+
+          '<div style="font-size:22px;font-weight:900;color:#fff;line-height:1.2;margin-bottom:10px">'+tipo+'</div>'+
+          '<div style="display:flex;flex-wrap:wrap;gap:6px">'+detsHtml+'</div>'+
+        '</div>'+
+        footerHtml+
+      '</div>';
+    } else if(m===2){
+      // MODELO 2 — Faixa diagonal / clean
+      html = '<div style="'+fotoStyle+';width:500px;height:500px;position:relative;border-radius:12px;overflow:hidden;font-family:Arial,sans-serif">'+
+        '<div style="position:absolute;top:0;left:0;right:0;background:linear-gradient(90deg,#D42028,#a01018);padding:12px 18px;display:flex;justify-content:space-between;align-items:center">'+
+          '<div style="color:#fff;font-size:11px;font-weight:700;letter-spacing:2px">OPORTUNIDADE</div>'+
+          '<div style="font-size:9px;font-weight:900;color:#fff;letter-spacing:1px">IMÓVEIS RE/<em style="font-style:normal">MAX</em></div>'+
+        '</div>'+
+        '<div style="position:absolute;bottom:'+(footerHtml?'68px':'16px')+';left:0;right:0;background:linear-gradient(0,rgba(15,26,53,.98),transparent);padding:16px 18px">'+
+          (estado.comPreco?'<div style="background:#D42028;display:inline-block;color:#fff;font-size:18px;font-weight:900;padding:6px 16px;border-radius:6px;margin-bottom:8px">'+preco+'</div>':'')+ 
+          '<div style="font-size:24px;font-weight:900;color:#fff;margin-bottom:6px">'+tipo+'</div>'+
+          '<div style="font-size:12px;color:rgba(255,255,255,.8);margin-bottom:8px">📍 '+end+'</div>'+
+          '<div style="display:flex;flex-wrap:wrap;gap:6px">'+detsHtml+'</div>'+
+        '</div>'+
+        footerHtml+
+      '</div>';
+    } else if(m===3){
+      // MODELO 3 — Split azul + dados
+      html = '<div style="width:500px;height:500px;border-radius:12px;overflow:hidden;font-family:Arial,sans-serif;display:flex;flex-direction:column">'+
+        '<div style="'+fotoStyle+';flex:1;position:relative">'+
+          '<div style="position:absolute;top:12px;left:12px;background:#D42028;color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px">VENDE-SE</div>'+
+          (estado.comPreco?'<div style="position:absolute;top:12px;right:12px;background:rgba(15,26,53,.9);color:#fff;font-size:14px;font-weight:800;padding:5px 14px;border-radius:20px">'+preco+'</div>':'')+
+        '</div>'+
+        '<div style="background:#0f1a35;padding:14px 16px">'+
+          '<div style="font-size:18px;font-weight:900;color:#fff;margin-bottom:4px">'+tipo+'</div>'+
+          '<div style="font-size:11px;color:rgba(255,255,255,.7);margin-bottom:8px">📍 '+end+'</div>'+
+          '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">'+detsHtml+'</div>'+
+        '</div>'+
+        footerHtml+
+      '</div>';
+    } else if(m===4){
+      // MODELO 4 — Minimal branco
+      html = '<div style="width:500px;height:500px;border-radius:12px;overflow:hidden;font-family:Arial,sans-serif;background:#fff;display:flex;flex-direction:column;border:2px solid #e2e8f0">'+
+        '<div style="background:#0f1a35;padding:10px 16px;display:flex;justify-content:space-between;align-items:center">'+
+          '<div style="color:#fff;font-size:11px;font-weight:700">RE/MAX Space — Caldas Novas</div>'+
+          '<div style="background:#D42028;color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px">VENDA</div>'+
+        '</div>'+
+        '<div style="'+fotoStyle+';flex:1;position:relative">'+
+          (estado.comPreco?'<div style="position:absolute;bottom:10px;right:10px;background:#D42028;color:#fff;font-size:16px;font-weight:900;padding:6px 16px;border-radius:8px">'+preco+'</div>':'')+
+        '</div>'+
+        '<div style="padding:12px 16px;background:#fff">'+
+          '<div style="font-size:20px;font-weight:900;color:#0f1a35;margin-bottom:4px">'+tipo+'</div>'+
+          '<div style="font-size:11px;color:#64748b;margin-bottom:8px">📍 '+end+'</div>'+
+          '<div style="display:flex;flex-wrap:wrap;gap:6px">'+dets.map(function(d){return '<div style="background:#f1f5f9;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;color:#0f1a35">'+d.i+' '+d.v+'</div>';}).join('')+'</div>'+
+        '</div>'+
+        footerHtml+
+      '</div>';
+    } else if(m===5){
+      // MODELO 5 — Stories (vertical 9:16 adaptado)
+      html = '<div style="'+fotoStyle+';width:500px;height:500px;border-radius:12px;overflow:hidden;font-family:Arial,sans-serif;display:flex;flex-direction:column;justify-content:space-between;padding:0">'+
+        '<div style="padding:16px;display:flex;justify-content:space-between;align-items:center">'+
+          '<div style="background:#D42028;color:#fff;font-size:10px;font-weight:700;padding:4px 12px;border-radius:20px">VENDE-SE</div>'+
+          '<div style="text-align:right"><div style="font-size:8px;font-weight:900;color:#fff">IMÓVEIS</div><div style="font-size:14px;font-weight:900;color:#fff">RE/<em style="color:#D42028;font-style:normal">MAX</em></div></div>'+
+        '</div>'+
+        '<div style="padding:16px;background:linear-gradient(0,rgba(15,26,53,.98) 60%,transparent)">'+
+          (estado.comPreco?'<div style="background:rgba(212,32,40,.9);display:inline-block;color:#fff;font-size:20px;font-weight:900;padding:6px 16px;border-radius:8px;margin-bottom:8px">'+preco+'</div>':'')+
+          '<div style="font-size:28px;font-weight:900;color:#fff;line-height:1.1;margin-bottom:6px">'+tipo+'</div>'+
+          '<div style="font-size:12px;color:rgba(255,255,255,.8);margin-bottom:10px">📍 '+end+'</div>'+
+          '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">'+detsHtml+'</div>'+
+          '<div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.1);padding:10px;border-radius:10px">'+
+            (estado.corretorFotoUrl?'<img src="'+estado.corretorFotoUrl+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #D42028">':'<div style="width:38px;height:38px;border-radius:50%;background:#D42028;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff">'+cor.ini+'</div>')+
+            '<div><div style="font-size:12px;font-weight:700;color:#fff">'+cor.nome+'</div>'+(estado.comCreci&&cor.creci?'<div style="font-size:10px;color:rgba(255,255,255,.6)">CRECI: '+cor.creci+'</div>':'')+
+            '<div style="font-size:10px;color:rgba(255,255,255,.7)">'+cor.tel+'</div></div>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    } else {
+      // MODELO 6 — Detalhes / comparativo
+      html = '<div style="width:500px;height:500px;border-radius:12px;overflow:hidden;font-family:Arial,sans-serif;display:flex;flex-direction:column">'+
+        '<div style="background:#D42028;padding:12px 16px;display:flex;justify-content:space-between;align-items:center">'+
+          '<div><div style="font-size:11px;color:rgba(255,255,255,.8);font-weight:700;letter-spacing:1px">'+tipo+'</div>'+
+          (estado.comPreco?'<div style="font-size:22px;font-weight:900;color:#fff">'+preco+'</div>':'')+
+          '</div>'+
+          '<div style="text-align:right"><div style="font-size:8px;font-weight:900;color:rgba(255,255,255,.8)">IMÓVEIS</div><div style="font-size:18px;font-weight:900;color:#fff">RE/<em style="font-style:normal">MAX</em></div><div style="font-size:7px;color:rgba(255,255,255,.6)">Space Caldas Novas</div></div>'+
+        '</div>'+
+        '<div style="'+fotoStyle+';flex:1"></div>'+
+        '<div style="background:#0f1a35;padding:12px 16px">'+
+          '<div style="font-size:12px;color:rgba(255,255,255,.7);margin-bottom:6px">📍 '+end+'</div>'+
+          '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">'+dets.map(function(d){return '<div style="background:rgba(255,255,255,.1);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;color:#fff;display:flex;align-items:center;gap:4px">'+d.i+' '+d.v+'</div>';}).join('')+'</div>'+
+          '<div style="font-size:10px;color:#D42028;font-weight:700;text-transform:uppercase;letter-spacing:1px">Ninguém no mundo vende mais imóveis que a RE/MAX!</div>'+
+        '</div>'+
+        footerHtml+
+      '</div>';
+    }
+    return html;
+  }
+
+  function abrirGerador(){
+    var modelBtns = [1,2,3,4,5,6].map(function(n){
+      return '<button onclick="estadoPost.modelo='+n+';atualizarPreview()" style="background:'+(estado.modelo===n?'#003DA5':'#f1f5f9')+';color:'+(estado.modelo===n?'#fff':'#0f1a35')+';border:2px solid '+(estado.modelo===n?'#003DA5':'#e2e8f0')+';border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer" id="mbtn-'+n+'">M'+n+'</button>';
+    }).join('');
+
+    var conteudo = 
+      '<div style="display:flex;gap:16px;min-height:560px">'+
+        '<div style="width:200px;flex-shrink:0">'+
+          '<div style="font-size:11px;font-weight:700;color:var(--lm);margin-bottom:8px;text-transform:uppercase">Modelo</div>'+
+          '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px" id="model-btns">'+modelBtns+'</div>'+
+          '<div style="border-top:1px solid var(--lb);padding-top:12px;margin-bottom:12px">'+
+            '<div style="font-size:11px;font-weight:700;color:var(--lm);margin-bottom:8px;text-transform:uppercase">Opcoes</div>'+
+            '<label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:8px;cursor:pointer"><input type="checkbox" id="opt-preco" checked onchange="estadoPost.comPreco=this.checked;atualizarPreview()"> Mostrar preço</label>'+
+            '<label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:8px;cursor:pointer"><input type="checkbox" id="opt-creci" checked onchange="estadoPost.comCreci=this.checked;atualizarPreview()"> Mostrar CRECI</label>'+
+          '</div>'+
+          '<div style="border-top:1px solid var(--lb);padding-top:12px;margin-bottom:12px">'+
+            '<div style="font-size:11px;font-weight:700;color:var(--lm);margin-bottom:8px;text-transform:uppercase">Foto do Imóvel</div>'+
+            '<label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:8px;cursor:pointer"><input type="checkbox" id="opt-foto" onchange="estadoPost.comFoto=this.checked;atualizarPreview()"> Usar foto</label>'+
+            '<input type="file" id="inp-foto" accept="image/*" style="font-size:11px;width:100%" onchange="lerFotoImovel(this)">'+
+            '<div style="font-size:10px;color:var(--lm);margin-top:4px">JPG, PNG até 5MB</div>'+
+          '</div>'+
+          '<div style="border-top:1px solid var(--lb);padding-top:12px;margin-bottom:12px">'+
+            '<div style="font-size:11px;font-weight:700;color:var(--lm);margin-bottom:8px;text-transform:uppercase">Foto do Corretor</div>'+
+            '<input type="file" id="inp-cor-foto" accept="image/*" style="font-size:11px;width:100%" onchange="lerFotoCorretor(this)">'+
+          '</div>'+
+          '<div style="border-top:1px solid var(--lb);padding-top:12px">'+
+            '<button onclick="baixarPost()" class="btn btn-red" style="width:100%;margin-bottom:8px">⬇️ Baixar PNG</button>'+
+            '<button onclick="copiarLegenda()" class="btn btn-primary" style="width:100%">📋 Copiar Legenda</button>'+
+          '</div>'+
+        '</div>'+
+        '<div style="flex:1">'+
+          '<div style="font-size:11px;font-weight:700;color:var(--lm);margin-bottom:8px;text-transform:uppercase">Preview — 500x500px</div>'+
+          '<div id="post-preview" style="transform-origin:top left;transform:scale(0.75)">'+renderPost()+'</div>'+
+        '</div>'+
+      '</div>';
+
+    oM('📸 Gerador de Post — ' + (iv.tipo||'Imóvel') + ' | ' + (iv.end||''), conteudo, null, null, true);
+
+    // Store state globally for callbacks
+    window.estadoPost = estado;
+    window.ivPost = iv;
+    window.corPost = cor;
+    window.renderPostFn = renderPost;
+  }
+
+  window.atualizarPreview = function(){
+    var el = document.getElementById('post-preview');
+    if(el){ el.innerHTML = renderPost(); }
+    // Update model buttons
+    for(var n=1;n<=6;n++){
+      var btn = document.getElementById('mbtn-'+n);
+      if(btn){
+        btn.style.background = estado.modelo===n?'#003DA5':'#f1f5f9';
+        btn.style.color = estado.modelo===n?'#fff':'#0f1a35';
+        btn.style.borderColor = estado.modelo===n?'#003DA5':'#e2e8f0';
+      }
+    }
+  };
+
+  window.lerFotoImovel = function(input){
+    if(!input.files||!input.files[0]) return;
+    var reader = new FileReader();
+    reader.onload = function(e){
+      estado.fotoUrl = e.target.result;
+      estado.comFoto = true;
+      document.getElementById('opt-foto').checked = true;
+      atualizarPreview();
+    };
+    reader.readAsDataURL(input.files[0]);
+  };
+
+  window.lerFotoCorretor = function(input){
+    if(!input.files||!input.files[0]) return;
+    var reader = new FileReader();
+    reader.onload = function(e){
+      estado.corretorFotoUrl = e.target.result;
+      atualizarPreview();
+    };
+    reader.readAsDataURL(input.files[0]);
+  };
+
+  window.baixarPost = function(){
+    // Use html2canvas if available, else open in new window
+    var w = window.open('','_blank');
+    var html = renderPost();
+    w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#f8fafc;display:flex;flex-direction:column;align-items:center;padding:20px;font-family:Arial,sans-serif}</style></head><body>'+
+      '<div style="margin-bottom:16px">'+html+'</div>'+
+      '<div style="font-size:12px;color:#64748b;margin-bottom:12px">Clique com botão direito na imagem → Salvar imagem como...</div>'+
+      '<button onclick="window.print()" style="background:#D42028;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px">🖨️ Imprimir / Salvar</button>'+
+      '</body></html>');
+    w.document.close();
+  };
+
+  window.copiarLegenda = function(){
+    var leg = getLegenda(iv, cor);
+    navigator.clipboard.writeText(leg).then(function(){ alert('Legenda copiada! Cole no Instagram.'); })
+    .catch(function(){
+      var ta=document.createElement('textarea'); ta.value=leg;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta); alert('Legenda copiada!');
+    });
+  };
+
+  abrirGerador();
+}
+
 function pIV(){
   document.getElementById('pa').innerHTML='<button class="btn btn-red" onclick="nIV()">+ Novo Imovel</button>';
   var sf=ivD.filter(function(i){return !i.fotos;}).length;
@@ -3349,7 +3749,7 @@ function pIV(){
     r+='<td>'+(iv.ilist?'<span class="badge bg">OK</span>':'<span class="badge br">N</span>')+'</td>';
     r+='<td>'+(iv.gestao?'<span class="badge bt">OK</span>':'<span class="badge bgr">-</span>')+'</td>';
     r+='<td style="max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:var(--lm)">'+iv.sit+'</td>';
-    r+='<td style="display:flex;gap:3px"><button class="btn btn-sm" onclick="eIV('+i+')">Editar</button><button class="btn btn-sm btn-gray" onclick="if(confirm(\'Excluir imovel #'+iv.id+'?\')){ivD.splice('+i+',1);pIV();}">Del</button></td>';
+    r+='<td style="display:flex;gap:3px"><button class="btn btn-sm" onclick="eIV('+i+')">Editar</button><button class="btn btn-sm" style="background:#E1306C;color:#fff;border-color:#E1306C" onclick="gerarPost('+i+')">📸 Post</button><button class="btn btn-sm" style="background:#059669;color:#fff;border-color:#059669" onclick="fichaImovel('+i+')">📄 Ficha</button><button class="btn btn-sm btn-gray" onclick="if(confirm(\'Excluir imovel #'+iv.id+'?\')){ivD.splice('+i+',1);pIV();}">Del</button></td>';
     r+='</tr>';
   });
   var cors='<option value="">Todos</option>'; var cl=[];

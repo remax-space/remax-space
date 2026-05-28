@@ -905,49 +905,13 @@ function msgCobranca(i){
 
   var msgs=[
     {label:'Aviso Gentil (antes do vencimento)',
-     txt:'Olá, '+c.inq+'! Tudo bem?
-
-Passando para lembrar que o aluguel de '+mesRef+' vence no dia '+c.venc+'. 😊
-
-Valor: '+fmt(c.valor)+'
-PIX: [chave pix da imobiliária]
-
-Qualquer dúvida estou à disposição!
-
-Atenciosamente,
-RE/MAX Space — Caldas Novas'},
+     txt:'Olá, '+c.inq+'! Tudo bem?\n\nPassando para lembrar que o aluguel de '+mesRef+' vence no dia '+c.venc+'. 😊\n\nValor: '+fmt(c.valor)+'\nPIX: [chave pix da imobiliária]\n\nQualquer dúvida estou à disposição!\n\nAtenciosamente,\nRE/MAX Space — Caldas Novas'},
     {label:'1ª Cobrança (vencimento hoje)',
-     txt:'Olá, '+c.inq+'! Tudo bem?
-
-O aluguel de '+mesRef+' vence hoje, dia '+c.venc+'.
-
-Valor: '+fmt(c.valor)+'
-PIX: [chave pix da imobiliária]
-
-Fique à vontade para nos contatar se precisar de algo.
-
-RE/MAX Space — (64) 9 9000-0000'},
+     txt:'Olá, '+c.inq+'! Tudo bem?\n\nO aluguel de '+mesRef+' vence hoje, dia '+c.venc+'.\n\nValor: '+fmt(c.valor)+'\nPIX: [chave pix da imobiliária]\n\nFique à vontade para nos contatar se precisar de algo.\n\nRE/MAX Space — (64) 9 9000-0000'},
     {label:'2ª Cobrança (3-5 dias de atraso)',
-     txt:'Olá, '+c.inq+'. Tudo bem?
-
-Nosso sistema ainda não identificou o pagamento do aluguel de '+mesRef+' (vencimento: '+c.venc+').
-
-Valor: '+fmt(c.valor)+'
-PIX: [chave pix da imobiliária]
-
-Por favor, nos confirme quando efetuar o pagamento. Caso já tenha pago, desconsidere.
-
-RE/MAX Space'},
+     txt:'Olá, '+c.inq+'. Tudo bem?\n\nNosso sistema ainda não identificou o pagamento do aluguel de '+mesRef+' (vencimento: '+c.venc+').\n\nValor: '+fmt(c.valor)+'\nPIX: [chave pix da imobiliária]\n\nPor favor, nos confirme quando efetuar o pagamento. Caso já tenha pago, desconsidere.\n\nRE/MAX Space'},
     {label:'3ª Cobrança — Formal (mais de 10 dias)',
-     txt:'Prezado(a) '+c.inq+',
-
-Informamos que o aluguel referente ao mês de '+mesRef+' encontra-se em aberto desde o dia '+c.venc+', totalizando '+diasAtraso+' dia(s) de atraso.
-
-Valor em aberto: '+fmt(c.valor)+'
-
-Solicitamos a regularização do pagamento até 48 horas, a fim de evitar notificação formal e aplicação de multa contratual conforme previsto no contrato.
-
-RE/MAX Space Caldas Novas
+     txt:'Prezado(a) '+c.inq+',\n\nInformamos que o aluguel referente ao mês de '+mesRef+' encontra-se em aberto desde o dia '+c.venc+', totalizando '+diasAtraso+' dia(s) de atraso.\n\nValor em aberto: '+fmt(c.valor)+'\n\nSolicitamos a regularização do pagamento até 48 horas, a fim de evitar notificação formal e aplicação de multa contratual conforme previsto no contrato.\n\nRE/MAX Space Caldas Novas
 Tatiana Basile — Diretora'}
   ];
 

@@ -1970,7 +1970,10 @@ function eLead(i){
       '<div class="fg"><label>Corretor</label><select id="el-c">'+corrSel(l.cor)+'</select></div>'+
       '<div class="fg"><label>Status</label><select id="el-s"><option>Novo</option><option>Em contato</option><option>Visita agendada</option><option>Proposta</option><option>Fechado</option><option>Perdido</option></select></div>'+
     '</div>'+
-    '<div class="fg"><label>Obs</label><textarea id="el-o">'+l.obs+'</textarea></div>',
+    '<div class="fg"><label>Obs</label><textarea id="el-o">'+l.obs+'</textarea></div>'+
+    '<div style="margin-top:10px">'+
+    '<button type="button" class="btn btn-sm" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;width:100%;margin-bottom:6px" onclick="sugerirRespostaIA('+i+')">🤖 Sugerir Resposta para este Lead</button>'+
+    '</div>',
     function(){
       var orig=document.getElementById('el-o2')||document.getElementById('el-o');
       var origVal=document.getElementById('el-o').value;
@@ -3328,6 +3331,221 @@ function nVistoria(){
 }
 
 // ===== IMOVEIS VENDA =====
+// ===== IA MARKETING — ANTHROPIC API =====
+var CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+
+async function callClaude(prompt, system, maxTokens){
+  maxTokens = maxTokens || 1000;
+  try{
+    var resp = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: CLAUDE_MODEL,
+        max_tokens: maxTokens,
+        system: system||'Você é um especialista em marketing imobiliário brasileiro, especializado em RE/MAX.',
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    var data = await resp.json();
+    if(data.content && data.content[0]) return data.content[0].text;
+    throw new Error(data.error ? data.error.message : 'Erro na API');
+  } catch(e){
+    throw e;
+  }
+}
+
+// ===== 1. DESCRIÇÃO DO IMÓVEL COM IA =====
+async function gerarDescricaoIA(i){
+  var iv = ivD[i];
+  var el = document.getElementById('ei-s');
+  var btn = event.target;
+  
+  btn.disabled = true;
+  btn.textContent = '⏳ Gerando descrição...';
+  btn.style.background = '#94a3b8';
+
+  var prompt = 'Gere uma descrição profissional de venda para o seguinte imóvel:\n\n' +
+    'Tipo: ' + iv.tipo + '\n' +
+    'Endereço: ' + iv.end + '\n' +
+    'Cidade: Caldas Novas - Goiás\n' +
+    'Valor: ' + (iv.valor ? fmt(iv.valor) : 'A consultar') + '\n' +
+    (iv.quartos ? 'Quartos: ' + iv.quartos + '\n' : '') +
+    (iv.banheiros ? 'Banheiros: ' + iv.banheiros + '\n' : '') +
+    (iv.vagas ? 'Vagas de garagem: ' + iv.vagas + '\n' : '') +
+    (iv.area ? 'Área: ' + iv.area + 'm²\n' : '') +
+    (iv.gestao ? 'Gestão exclusiva RE/MAX\n' : '') +
+    (iv.sit ? 'Informações adicionais: ' + iv.sit + '\n' : '') +
+    '\nEscreva uma descrição comercial envolvente de 3-4 parágrafos, destacando os diferenciais do imóvel e de Caldas Novas como cidade turística e de lazer. Tom: profissional, caloroso e persuasivo. Não use bullet points. Termine com uma chamada para ação para agendar visita.';
+
+  var system = 'Você é um especialista em marketing imobiliário da RE/MAX Space, imobiliária premium em Caldas Novas - GO, cidade turística famosa pelas águas quentes. Escreva descrições profissionais, envolventes e persuasivas em português brasileiro. Use linguagem culta mas acessível.';
+
+  try{
+    var descricao = await callClaude(prompt, system, 600);
+    if(el){ 
+      el.value = descricao;
+      ivD[i].sit = descricao;
+    }
+    btn.textContent = '✅ Descrição gerada!';
+    btn.style.background = '#059669';
+    setTimeout(function(){ 
+      btn.textContent = '🤖 Gerar Descrição com IA'; 
+      btn.style.background = 'linear-gradient(135deg,#6366f1,#8b5cf6)';
+      btn.disabled = false;
+    }, 3000);
+  } catch(e){
+    btn.textContent = '❌ Erro — Tentar novamente';
+    btn.style.background = '#dc2626';
+    btn.disabled = false;
+    alert('Erro ao gerar descrição: ' + e.message);
+  }
+}
+
+// ===== 2. POST PERSONALIZADO COM IA POR CORRETOR =====
+async function gerarLegendaIA(i){
+  var iv = ivD[i];
+  var corretorNome = iv.corretor || (U ? U.nome : 'Corretor');
+  var cor2 = corCad.find(function(c){ return c.nome===corretorNome; }) || {};
+
+  // Personalidade por corretor
+  var personalidades = {
+    'T. Basile': 'especialista com mais de 10 anos em Caldas Novas, advogada, diretora da RE/MAX Space, tom profissional e seguro, focada em segurança jurídica e exclusividade',
+    'Tatiana Basile': 'especialista com mais de 10 anos em Caldas Novas, advogada, diretora da RE/MAX Space, tom profissional e seguro, focada em segurança jurídica e exclusividade',
+    'Meirielli': 'gerente e corretora em ascensão, tom acolhedor e próximo, foco em atendimento humanizado e facilitar o sonho da casa própria',
+    'Lucas Basile': 'corretor jovem, marketing digital, linguagem moderna e dinâmica, usa mais emojis, foco em alcance digital e novidades do mercado',
+    'T. Moraes': 'corretora experiente, tom equilibrado, profissional e atencioso',
+    'Sergio Justino': 'corretor, tom direto e objetivo, foco nos números e na oportunidade de investimento',
+    'Talyta': 'corretora, tom jovem e entusiasmado, foca na experiência do cliente',
+    'Carlos': 'corretor, tom experiente e confiável, foca nos diferenciais do imóvel',
+    'Dubem': 'corretor, tom amigável e descontraído, foca na praticidade'
+  };
+
+  var personalidade = personalidades[corretorNome] || 'corretor profissional, tom equilibrado';
+  var tipo = iv.tipo || 'Imóvel';
+  var preco = iv.valor ? fmt(iv.valor) : 'consulte';
+
+  // Show modal with loading
+  oM('🤖 Gerando Post com IA — ' + corretorNome,
+    '<div id="ia-post-content" style="min-height:200px;display:flex;align-items:center;justify-content:center">'+
+      '<div style="text-align:center"><div style="font-size:32px;margin-bottom:12px">✨</div>'+
+      '<div style="font-size:14px;font-weight:700;color:var(--navy)">Gerando legenda personalizada...</div>'+
+      '<div style="font-size:12px;color:var(--lm);margin-top:6px">Adaptando para o estilo de ' + corretorNome + '</div></div>'+
+    '</div>',
+    null, null, true
+  );
+
+  var prompt = 'Crie uma legenda para post de Instagram sobre este imóvel:\n\n' +
+    'Tipo: ' + tipo + '\n' +
+    'Endereço: ' + iv.end + ', Caldas Novas - GO\n' +
+    'Preço: ' + preco + '\n' +
+    (iv.quartos ? 'Quartos: ' + iv.quartos + '\n' : '') +
+    (iv.banheiros ? 'Banheiros: ' + iv.banheiros + '\n' : '') +
+    (iv.vagas ? 'Vagas: ' + iv.vagas + '\n' : '') +
+    (iv.area ? 'Área: ' + iv.area + 'm²\n' : '') +
+    (iv.gestao ? 'Gestão exclusiva RE/MAX\n' : '') +
+    (iv.sit ? 'Descrição: ' + iv.sit.slice(0,200) + '\n' : '') +
+    '\nCorretor: ' + corretorNome + ' — perfil: ' + personalidade +
+    '\n\nCrie uma legenda de Instagram com:\n1. Frase de abertura impactante\n2. Descrição do imóvel com emojis\n3. Chamada para ação com o número: ' + (cor2.tel||'(64)9 9000-0000') +
+    '\n4. 15-20 hashtags relevantes\n\nAdapte o tom ao perfil do corretor descrito. Limite de 2000 caracteres.';
+
+  var system = 'Você é um especialista em marketing digital imobiliário. Crie legendas envolventes para Instagram focadas no mercado imobiliário de Caldas Novas - GO, cidade turística com águas quentes. Use emojis estrategicamente. Adapte o tom ao perfil de cada corretor.';
+
+  try{
+    var legenda = await callClaude(prompt, system, 800);
+    var el = document.getElementById('ia-post-content');
+    if(el){
+      el.innerHTML = 
+        '<div style="width:100%">'+
+          '<div style="font-size:11px;font-weight:700;color:var(--lm);margin-bottom:8px;text-transform:uppercase">Legenda gerada por IA para ' + corretorNome + '</div>'+
+          '<textarea id="ia-leg-txt" style="width:100%;height:200px;font-size:12px;line-height:1.6;border:1px solid var(--lb);border-radius:8px;padding:12px;resize:vertical">' + legenda + '</textarea>'+
+          '<div style="display:flex;gap:8px;margin-top:10px">'+
+            '<button class="btn btn-primary" onclick="var t=document.getElementById(\'ia-leg-txt\');navigator.clipboard.writeText(t.value).then(function(){alert(\'Legenda copiada!\');})">📋 Copiar</button>'+
+            '<button class="btn btn-sm" style="background:#E1306C;color:#fff;border-color:#E1306C" onclick="gerarLegendaIA('+i+')">🔄 Gerar outra versão</button>'+
+          '</div>'+
+        '</div>';
+    }
+  } catch(e){
+    var el2 = document.getElementById('ia-post-content');
+    if(el2) el2.innerHTML = '<div style="color:#dc2626;text-align:center;padding:20px">Erro: ' + e.message + '<br><br><button class="btn btn-sm btn-primary" onclick="gerarLegendaIA('+i+')">Tentar novamente</button></div>';
+  }
+}
+
+// ===== 3. RESPOSTA SUGERIDA PARA LEADS =====
+async function sugerirRespostaIA(i){
+  var l = ldD[i];
+  var corretorNome = l.cor || (U ? U.nome : 'Corretor');
+  var cor3 = corCad.find(function(c){ return c.nome===corretorNome; }) || {};
+
+  var personalidades3 = {
+    'T. Basile': 'diretora e advogada, tom profissional e seguro, menciona expertise jurídica',
+    'Tatiana Basile': 'diretora e advogada, tom profissional e seguro, menciona expertise jurídica',
+    'Meirielli': 'gerente, tom acolhedor e próximo, linguagem pessoal',
+    'Lucas Basile': 'corretor jovem, linguagem moderna e descontraída',
+    'T. Moraes': 'corretora experiente, tom equilibrado e profissional',
+    'Sergio Justino': 'corretor, tom direto e objetivo'
+  };
+  var personalidade3 = personalidades3[corretorNome] || 'corretor profissional e atencioso';
+
+  var score = iaScore(l);
+  var temperatura = score >= 60 ? 'QUENTE (alta probabilidade)' : score >= 35 ? 'MORNO (em desenvolvimento)' : 'FRIO (precisa de aquecimento)';
+
+  oM('🤖 Resposta Sugerida por IA — ' + l.nome,
+    '<div id="ia-resp-content" style="min-height:200px;display:flex;align-items:center;justify-content:center">'+
+      '<div style="text-align:center"><div style="font-size:32px;margin-bottom:12px">🧠</div>'+
+      '<div style="font-size:14px;font-weight:700;color:var(--navy)">Analisando o perfil do lead...</div>'+
+      '<div style="font-size:12px;color:var(--lm);margin-top:6px">Score IA: ' + score + 'pts — ' + temperatura + '</div></div>'+
+    '</div>',
+    null, null, true
+  );
+
+  var prompt = 'Analise este lead imobiliário e sugira a melhor resposta de WhatsApp:\n\n' +
+    'DADOS DO LEAD:\n' +
+    'Nome: ' + l.nome + '\n' +
+    'Canal de origem: ' + (l.orig||'') + ' (' + (l.orig_cat||'') + ')\n' +
+    'Tipo de imóvel desejado: ' + (l.tipo||'') + '\n' +
+    'Faixa de preço: ' + (l.faixa||'não informada') + '\n' +
+    'Bairro/região desejada: ' + (l.bairro||'não informado') + '\n' +
+    'Renda: ' + (l.renda ? 'R$ '+l.renda : 'não informada') + '\n' +
+    'Intenção: ' + (l.intencao||'Comprar') + '\n' +
+    'Status atual: ' + l.st + '\n' +
+    'Score IA: ' + score + '/100 (' + temperatura + ')\n' +
+    'Observações: ' + (l.obs||'nenhuma') + '\n' +
+    (l.orig_cat==='Referenciamento' ? 'IMPORTANTE: Lead veio por referenciamento de ' + (l.ref_remax||'outra unidade RE/MAX') + '\n' : '') +
+    '\nCorretor responsável: ' + corretorNome + ' — perfil: ' + personalidade3 +
+    '\n\nSugira:\n1. Mensagem de primeiro contato pelo WhatsApp (se status "Novo")\n2. Mensagem de follow-up (se status "Em contato" ou "Visita agendada")\n3. Dicas estratégicas específicas para este lead\n\nAdapte ao tom do corretor. Seja prático e direto.';
+
+  var system = 'Você é um coach de vendas imobiliárias especializado em técnicas de CRM e conversão de leads. Seu objetivo é maximizar a taxa de conversão sugerindo abordagens personalizadas baseadas no perfil de cada lead. Foco em Caldas Novas - GO, mercado imobiliário turístico.';
+
+  try{
+    var resposta = await callClaude(prompt, system, 1000);
+    var el3 = document.getElementById('ia-resp-content');
+    if(el3){
+      // Format the response into sections
+      var scoreColor = score>=60?'#059669':score>=35?'#d97706':'#dc2626';
+      var scoreBg = score>=60?'#dcfce7':score>=35?'#fef9c3':'#fee2e2';
+      el3.innerHTML =
+        '<div style="width:100%">'+
+          '<div style="background:'+scoreBg+';border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">'+
+            '<div><div style="font-size:12px;font-weight:700;color:'+scoreColor+'">'+temperatura+'</div>'+
+            '<div style="font-size:11px;color:var(--lm)">Lead: '+l.nome+' · '+l.tipo+' · '+l.faixa+'</div></div>'+
+            '<div style="font-size:24px;font-weight:800;color:'+scoreColor+'">'+score+'</div>'+
+          '</div>'+
+          '<div style="font-size:11px;font-weight:700;color:var(--lm);margin-bottom:8px;text-transform:uppercase">Estratégia sugerida pela IA</div>'+
+          '<div id="ia-resp-txt" style="background:#f9fafb;border:1px solid var(--lb);border-radius:8px;padding:14px;font-size:12px;line-height:1.8;white-space:pre-wrap;max-height:300px;overflow-y:auto">'+resposta+'</div>'+
+          '<div style="display:flex;gap:8px;margin-top:10px">'+
+            '<button class="btn btn-primary" onclick="navigator.clipboard.writeText(document.getElementById(\'ia-resp-txt\').textContent).then(function(){alert(\'Copiado!\');})">📋 Copiar</button>'+
+            '<button class="btn btn-sm" style="background:#7c3aed;color:#fff;border-color:#7c3aed" onclick="sugerirRespostaIA('+i+')">🔄 Nova sugestão</button>'+
+          '</div>'+
+        '</div>';
+    }
+  } catch(e2){
+    var el4 = document.getElementById('ia-resp-content');
+    if(el4) el4.innerHTML = '<div style="color:#dc2626;text-align:center;padding:20px">Erro: ' + e2.message + '</div>';
+  }
+}
+
+// ===== BOTÃO IA NO GERADOR DE POST (adiciona ao gerarPost) =====
+
 // ===== FICHA DO IMÓVEL — PDF IMPRIMÍVEL =====
 function fichaImovel(i){
   var iv = ivD[i];
@@ -3749,7 +3967,7 @@ function pIV(){
     r+='<td>'+(iv.ilist?'<span class="badge bg">OK</span>':'<span class="badge br">N</span>')+'</td>';
     r+='<td>'+(iv.gestao?'<span class="badge bt">OK</span>':'<span class="badge bgr">-</span>')+'</td>';
     r+='<td style="max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:var(--lm)">'+iv.sit+'</td>';
-    r+='<td style="display:flex;gap:3px"><button class="btn btn-sm" onclick="eIV('+i+')">Editar</button><button class="btn btn-sm" style="background:#E1306C;color:#fff;border-color:#E1306C" onclick="gerarPost('+i+')">📸 Post</button><button class="btn btn-sm" style="background:#059669;color:#fff;border-color:#059669" onclick="fichaImovel('+i+')">📄 Ficha</button><button class="btn btn-sm btn-gray" onclick="if(confirm(\'Excluir imovel #'+iv.id+'?\')){ivD.splice('+i+',1);pIV();}">Del</button></td>';
+    r+='<td style="display:flex;gap:3px"><button class="btn btn-sm" onclick="eIV('+i+')">Editar</button><button class="btn btn-sm" style="background:#E1306C;color:#fff;border-color:#E1306C" onclick="gerarPost('+i+')">📸 Post</button><button class="btn btn-sm" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none" onclick="gerarLegendaIA('+i+')">🤖 IA</button><button class="btn btn-sm" style="background:#059669;color:#fff;border-color:#059669" onclick="fichaImovel('+i+')">📄 Ficha</button><button class="btn btn-sm btn-gray" onclick="if(confirm(\'Excluir imovel #'+iv.id+'?\')){ivD.splice('+i+',1);pIV();}">Del</button></td>';
     r+='</tr>';
   });
   var cors='<option value="">Todos</option>'; var cl=[];
@@ -3784,7 +4002,9 @@ function eIV(i){
     '<div class="fg"><label>Corretor</label><select id="ei-c">'+corrSel(iv.corretor)+'</select></div></div>'+
     '<div class="fg"><label>V/A</label><select id="ei-va"><option>VENDA</option><option>VENDA E ALUGUEL</option><option>VENDA AGIO</option></select></div>'+
     '<div style="columns:2;gap:10px;font-size:12px;margin-bottom:10px">'+ck('contrato','Contrato assinado')+ck('fotos','Fotos feitas')+ck('video','Video')+ck('acm','ACM feito')+ck('acm_apres','ACM apresentado')+ck('ilist','No iList')+ck('site','Site RE/MAX')+ck('zap','ZAP')+ck('olx','OLX')+ck('ig','Instagram')+ck('trafego','Trafego pago')+ck('gestao','Gestao RE/MAX')+'</div>'+
-    '<div class="fg"><label>Situacao</label><textarea id="ei-s">'+iv.sit+'</textarea></div>',
+    '<div class="fg"><label>Situacao / Descricao</label>'+
+    '<textarea id="ei-s" rows="4">'+iv.sit+'</textarea>'+
+    '<button type="button" class="btn btn-sm" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;margin-top:6px;width:100%" onclick="gerarDescricaoIA('+i+')">🤖 Gerar Descrição com IA</button></div>',
     function(){ivD[i].prop=document.getElementById('ei-p').value;ivD[i].tel=document.getElementById('ei-t').value;ivD[i].end=document.getElementById('ei-e').value;ivD[i].tipo=document.getElementById('ei-tp').value;ivD[i].valor=parseFloat(document.getElementById('ei-v').value)||0;ivD[i].corretor=document.getElementById('ei-c').value;ivD[i].vva=document.getElementById('ei-va').value;ivD[i].sit=document.getElementById('ei-s').value;cM();salvarTudo();pIV();});
   setTimeout(function(){document.getElementById('ei-tp').value=iv.tipo;document.getElementById('ei-va').value=iv.vva;},50);
 }

@@ -4569,7 +4569,14 @@ function eIV(i){
     '<div class="fg"><label>Valor R$</label><input id="ei-v" type="number" value="'+iv.valor+'"></div>'+
     '<div class="fg"><label>Corretor</label><select id="ei-c">'+corrSel(iv.corretor)+'</select></div></div>'+
     '<div class="fg"><label>V/A</label><select id="ei-va"><option>VENDA</option><option>VENDA E ALUGUEL</option><option>VENDA AGIO</option></select></div>'+
-    '<div style="columns:2;gap:10px;font-size:12px;margin-bottom:10px">'+ck('contrato','Contrato assinado')+ck('fotos','Fotos feitas')+ck('video','Video')+ck('acm','ACM feito')+ck('acm_apres','ACM apresentado')+ck('ilist','No iList')+ck('site','Site RE/MAX')+ck('zap','ZAP')+ck('olx','OLX')+ck('ig','Instagram')+ck('trafego','Trafego pago')+ck('gestao','Gestao RE/MAX')+'</div>'+
+    '<div style="background:#f9fafb;border-radius:8px;padding:10px;margin-bottom:10px">'+
+    '<div style="font-size:11px;font-weight:700;color:var(--lm);margin-bottom:8px;text-transform:uppercase">Documentação e Divulgação</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;font-size:12px">'+
+    ck('contrato','Contrato assinado')+ck('fotos','Fotos feitas')+ck('video','Vídeo')+
+    ck('acm','ACM feito')+ck('acm_apres','ACM apresentado')+ck('ilist','No iList')+
+    ck('site','Site RE/MAX')+ck('zap','ZAP Imóveis')+ck('olx','OLX')+
+    ck('ig','Instagram')+ck('trafego','Tráfego pago')+ck('gestao','Gestão RE/MAX')+
+    '</div></div>'+
     '<div class="fg"><label>Fotos do Imóvel</label>'+
     '<div id="foto-preview-'+iv.id+'" style="margin-bottom:8px">'+mostrarFotosImovel(iv)+'</div>'+
     '<input type="file" id="ei-fotos" accept="image/*" multiple style="font-size:11px;width:100%" onchange="processarFotosUpload('+i+', this)">'+

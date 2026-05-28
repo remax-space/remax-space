@@ -898,40 +898,35 @@ function msgCobranca(i){
   var c=ctD[i];
   if(!c) return;
   var hoje=new Date();
-  var venc=new Date(hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0')+'-'+String(c.venc).padStart(2,'0'));
-  if(venc<hoje) venc.setMonth(venc.getMonth()+1);
-  var diasAtraso=Math.max(0,Math.round((hoje-venc)/86400000));
-  var mesRef=venc.toLocaleString('pt-BR',{month:'long',year:'numeric'});
+  var mesRef=hoje.toLocaleString('pt-BR',{month:'long',year:'numeric'});
+  var vencDia=c.venc||10;
+  var tel=(c.inq_tel||'').replace(/\D/g,'');
+  var v=fmt(c.valor);
 
-  var msgs=[
-    {label:'Aviso Gentil (antes do vencimento)',
-     txt:'Olá, '+c.inq+'! Tudo bem?\n\nPassando para lembrar que o aluguel de '+mesRef+' vence no dia '+c.venc+'. 😊\n\nValor: '+fmt(c.valor)+'\nPIX: [chave pix da imobiliária]\n\nQualquer dúvida estou à disposição!\n\nAtenciosamente,\nRE/MAX Space — Caldas Novas'},
-    {label:'1ª Cobrança (vencimento hoje)',
-     txt:'Olá, '+c.inq+'! Tudo bem?\n\nO aluguel de '+mesRef+' vence hoje, dia '+c.venc+'.\n\nValor: '+fmt(c.valor)+'\nPIX: [chave pix da imobiliária]\n\nFique à vontade para nos contatar se precisar de algo.\n\nRE/MAX Space — (64) 9 9000-0000'},
-    {label:'2ª Cobrança (3-5 dias de atraso)',
-     txt:'Olá, '+c.inq+'. Tudo bem?\n\nNosso sistema ainda não identificou o pagamento do aluguel de '+mesRef+' (vencimento: '+c.venc+').\n\nValor: '+fmt(c.valor)+'\nPIX: [chave pix da imobiliária]\n\nPor favor, nos confirme quando efetuar o pagamento. Caso já tenha pago, desconsidere.\n\nRE/MAX Space'},
-    {label:'3ª Cobrança — Formal (mais de 10 dias)',
-     txt:'Prezado(a) '+c.inq+',\n\nInformamos que o aluguel referente ao mês de '+mesRef+' encontra-se em aberto desde o dia '+c.venc+', totalizando '+diasAtraso+' dia(s) de atraso.\n\nValor em aberto: '+fmt(c.valor)+'\n\nSolicitamos a regularização do pagamento até 48 horas, a fim de evitar notificação formal e aplicação de multa contratual conforme previsto no contrato.\n\nRE/MAX Space Caldas Novas\nTatiana Basile — Diretora'}
-  ];
+  function msg0(){ return 'Ola, '+c.inq+'! Tudo bem?\n\nPassando para lembrar que o aluguel de '+mesRef+' vence no dia '+vencDia+'.\n\nValor: '+v+'\nPIX: [chave pix da imobiliaria]\n\nQualquer duvida estou a disposicao!\n\nAtenciosamente,\nRE/MAX Space'; }
+  function msg1(){ return 'Ola, '+c.inq+'! Tudo bem?\n\nO aluguel de '+mesRef+' vence hoje, dia '+vencDia+'.\n\nValor: '+v+'\nPIX: [chave pix da imobiliaria]\n\nFique a vontade para nos contatar.\n\nRE/MAX Space — (64) 9 9000-0000'; }
+  function msg2(){ return 'Ola, '+c.inq+'. Tudo bem?\n\nNosso sistema ainda nao identificou o pagamento do aluguel de '+mesRef+' (vencimento: '+vencDia+').\n\nValor: '+v+'\nPIX: [chave pix da imobiliaria]\n\nPor favor confirme quando efetuar o pagamento.\n\nRE/MAX Space'; }
+  function msg3(){ return 'Prezado(a) '+c.inq+',\n\nInformamos que o aluguel de '+mesRef+' encontra-se em aberto desde o dia '+vencDia+'.\n\nValor em aberto: '+v+'\n\nSolicitamos a regularizacao ate 48 horas para evitar notificacao formal conforme contrato.\n\nRE/MAX Space Caldas Novas\nTatiana Basile - Diretora'; }
 
-  var btns=msgs.map(function(m,idx){
-    return '<div style="background:#f9fafb;border:1px solid var(--lb);border-radius:10px;padding:12px;margin-bottom:10px">'+
-      '<div style="font-size:11px;font-weight:700;color:var(--lm);margin-bottom:8px">'+m.label+'</div>'+
-      '<div style="background:#fff;border:1px solid var(--lb);border-radius:8px;padding:10px;font-size:12px;line-height:1.7;white-space:pre-wrap;font-family:monospace;max-height:120px;overflow-y:auto">'+m.txt+'</div>'+
-      '<div style="display:flex;gap:8px;margin-top:8px">'+
+  var labels=['Aviso Gentil (antes do vencimento)','1a Cobranca (vencimento hoje)','2a Cobranca (3-5 dias de atraso)','3a Cobranca - Formal (mais de 10 dias)'];
+  var fns=[msg0,msg1,msg2,msg3];
+
+  var btns='';
+  for(var idx=0;idx<4;idx++){
+    btns+='<div style="background:#f9fafb;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:10px">'+
+      '<div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:8px">'+labels[idx]+'</div>'+
+      '<textarea id="cob-msg-'+idx+'" style="width:100%;height:80px;font-size:11px;border:1px solid #e2e8f0;border-radius:6px;padding:8px;resize:vertical;font-family:monospace">'+fns[idx]()+'</textarea>'+
+      '<div style="display:flex;gap:8px;margin-top:6px">'+
         '<button class="btn btn-sm btn-blue" onclick="copiarMsgIdx('+idx+')">Copiar</button>'+
-        '<a href="https://wa.me/55'+c.inq_tel+'" target="_blank" class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366;text-decoration:none">WhatsApp</a>'+
+        (tel?'<a href="https://wa.me/55'+tel+'" target="_blank" class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366;text-decoration:none">WhatsApp</a>':'')+
       '</div>'+
-      '<div id="cob-msg-'+idx+'" style="display:none">'+m.txt+'</div>'+
     '</div>';
-  }).join('');
+  }
 
-  oM('📱 Mensagem de Cobrança — '+c.inq,
+  oM('Mensagem de Cobranca — '+c.inq,
     '<div style="background:#fef9c3;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px">'+
-      '<b>Contrato:</b> '+c.id+' &nbsp;|&nbsp; <b>Inquilino:</b> '+c.inq+' &nbsp;|&nbsp; <b>Valor:</b> '+fmt(c.valor)+' &nbsp;|&nbsp; <b>Vencimento:</b> dia '+c.venc+
-      (diasAtraso>0?'&nbsp;|&nbsp; <b style="color:#dc2626">'+diasAtraso+' dias em atraso</b>':'')+
-    '</div>'+
-    btns,
+      '<b>Contrato:</b> '+c.id+' | <b>Inquilino:</b> '+c.inq+' | <b>Valor:</b> '+v+' | <b>Vencimento:</b> dia '+vencDia+
+    '</div>'+btns,
     null, null, true
   );
 }

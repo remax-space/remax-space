@@ -893,14 +893,120 @@ var TITLES = {
   rank:'Ranking',
   relat:'Relatórios Gerenciais'
 };
+// ===== MENSAGEM DE COBRANÇA AUTOMÁTICA =====
+function msgCobranca(i){
+  var c=ctD[i];
+  if(!c) return;
+  var hoje=new Date();
+  var venc=new Date(hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0')+'-'+String(c.venc).padStart(2,'0'));
+  if(venc<hoje) venc.setMonth(venc.getMonth()+1);
+  var diasAtraso=Math.max(0,Math.round((hoje-venc)/86400000));
+  var mesRef=venc.toLocaleString('pt-BR',{month:'long',year:'numeric'});
+
+  var msgs=[
+    {label:'Aviso Gentil (antes do vencimento)',
+     txt:'Olá, '+c.inq+'! Tudo bem?
+
+Passando para lembrar que o aluguel de '+mesRef+' vence no dia '+c.venc+'. 😊
+
+Valor: '+fmt(c.valor)+'
+PIX: [chave pix da imobiliária]
+
+Qualquer dúvida estou à disposição!
+
+Atenciosamente,
+RE/MAX Space — Caldas Novas'},
+    {label:'1ª Cobrança (vencimento hoje)',
+     txt:'Olá, '+c.inq+'! Tudo bem?
+
+O aluguel de '+mesRef+' vence hoje, dia '+c.venc+'.
+
+Valor: '+fmt(c.valor)+'
+PIX: [chave pix da imobiliária]
+
+Fique à vontade para nos contatar se precisar de algo.
+
+RE/MAX Space — (64) 9 9000-0000'},
+    {label:'2ª Cobrança (3-5 dias de atraso)',
+     txt:'Olá, '+c.inq+'. Tudo bem?
+
+Nosso sistema ainda não identificou o pagamento do aluguel de '+mesRef+' (vencimento: '+c.venc+').
+
+Valor: '+fmt(c.valor)+'
+PIX: [chave pix da imobiliária]
+
+Por favor, nos confirme quando efetuar o pagamento. Caso já tenha pago, desconsidere.
+
+RE/MAX Space'},
+    {label:'3ª Cobrança — Formal (mais de 10 dias)',
+     txt:'Prezado(a) '+c.inq+',
+
+Informamos que o aluguel referente ao mês de '+mesRef+' encontra-se em aberto desde o dia '+c.venc+', totalizando '+diasAtraso+' dia(s) de atraso.
+
+Valor em aberto: '+fmt(c.valor)+'
+
+Solicitamos a regularização do pagamento até 48 horas, a fim de evitar notificação formal e aplicação de multa contratual conforme previsto no contrato.
+
+RE/MAX Space Caldas Novas
+Tatiana Basile — Diretora'}
+  ];
+
+  var btns=msgs.map(function(m,idx){
+    return '<div style="background:#f9fafb;border:1px solid var(--lb);border-radius:10px;padding:12px;margin-bottom:10px">'+
+      '<div style="font-size:11px;font-weight:700;color:var(--lm);margin-bottom:8px">'+m.label+'</div>'+
+      '<div style="background:#fff;border:1px solid var(--lb);border-radius:8px;padding:10px;font-size:12px;line-height:1.7;white-space:pre-wrap;font-family:monospace;max-height:120px;overflow-y:auto">'+m.txt+'</div>'+
+      '<div style="display:flex;gap:8px;margin-top:8px">'+
+        '<button class="btn btn-sm btn-blue" onclick="copiarMsg('+idx+','cob-msg-'+idx+'')">📋 Copiar</button>'+
+        '<a href="https://wa.me/55'+c.inq_tel+'" target="_blank" class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366;text-decoration:none">📱 Abrir WhatsApp</a>'+
+      '</div>'+
+      '<div id="cob-msg-'+idx+'" style="display:none">'+m.txt+'</div>'+
+    '</div>';
+  }).join('');
+
+  oM('📱 Mensagem de Cobrança — '+c.inq,
+    '<div style="background:#fef9c3;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px">'+
+      '<b>Contrato:</b> '+c.id+' &nbsp;|&nbsp; <b>Inquilino:</b> '+c.inq+' &nbsp;|&nbsp; <b>Valor:</b> '+fmt(c.valor)+' &nbsp;|&nbsp; <b>Vencimento:</b> dia '+c.venc+
+      (diasAtraso>0?'&nbsp;|&nbsp; <b style="color:#dc2626">'+diasAtraso+' dias em atraso</b>':'')+
+    '</div>'+
+    btns,
+    null, null, true
+  );
+}
+
+function copiarMsg(idx, id){
+  var el=document.getElementById(id);
+  if(!el) return;
+  var txt=el.textContent;
+  navigator.clipboard.writeText(txt).then(function(){
+    var btn=document.querySelectorAll('.btn-sm.btn-blue')[idx];
+    var orig='📋 Copiar';
+    if(btn){btn.textContent='✅ Copiado!';setTimeout(function(){btn.textContent=orig;},2000);}
+  }).catch(function(){
+    var ta=document.createElement('textarea');
+    ta.value=txt; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    alert('Mensagem copiada!');
+  });
+}
+
 function pRelat(){
-  document.getElementById('pa').innerHTML='';
+  document.getElementById('pa').innerHTML='<button class="btn btn-primary" onclick="gerarRelatorioMensal()">📄 Gerar Relatório do Mês</button>';
   var tot=ctD.filter(function(c){return c.status!=='Inativo';}).reduce(function(s,c){return s+c.valor;},0);
   var tpag=cpD.reduce(function(s,c){return s+c.val;},0);
   var adm=tot*.1;
   var res=adm-tpag;
+  var mi=new Date().getMonth();
+
+  // Check if auto-report should show (day 1-3 of month)
+  var hoje=new Date();
+  var autoAlert='';
+  if(hoje.getDate()<=3){
+    autoAlert='<div class="alt alt-b" style="margin-bottom:12px;cursor:pointer" onclick="gerarRelatorioMensal()">'+
+      '📅 Início de mês detectado! Clique aqui para gerar o Relatório de '+mesAno()+' automaticamente.</div>';
+  }
 
   document.getElementById('pc').innerHTML=
+    autoAlert+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:20px">'+
     '<div class="kc blue"><div class="kc-l">Contratos Ativos</div><div class="kc-v">'+ctD.filter(function(c){return c.status!=='Inativo';}).length+'</div></div>'+
     '<div class="kc green"><div class="kc-l">Receita Locação/mês</div><div class="kc-v">'+fmt(tot)+'</div></div>'+
@@ -917,7 +1023,115 @@ function pRelat(){
     '<button class="btn btn-primary" style="padding:14px;font-size:14px;background:#0891b2" onclick="relLeads()">👥 Relatório Leads</button>'+
     '<button class="btn btn-primary" style="padding:14px;font-size:14px;background:#dc2626" onclick="relCompleto()">📁 RELATÓRIO COMPLETO</button>'+
     '<button class="btn btn-primary" style="padding:14px;font-size:14px;background:#7c3aed;grid-column:1/-1" onclick="abrirFunil()">🎯 FUNIL DE VENDAS — Acompanhamento por Corretor</button>'+
+    '<button class="btn btn-primary" style="padding:14px;font-size:14px;background:#0f1a35;grid-column:1/-1" onclick="gerarRelatorioMensal()">📅 RELATÓRIO MENSAL AUTOMÁTICO — '+mesAno()+'</button>'+
     '</div>';
+}
+
+function gerarRelatorioMensal(){
+  var mi=new Date().getMonth();
+  var mes=mesAno();
+  var ativos=ctD.filter(function(c){return c.status!=='Inativo';});
+  var totLoc=ativos.reduce(function(s,c){return s+c.valor;},0);
+  var adm=totLoc*.1;
+  var repasse=totLoc*.9;
+  var recebidos=ativos.filter(function(c){return c.rs&&c.rs[mi]==='R';});
+  var pendentes=ativos.filter(function(c){return !c.rs||c.rs[mi]!=='R';});
+  var despesas=cpD.reduce(function(s,c){return s+c.val;},0);
+  var resultado=adm-despesas;
+
+  // Leads
+  var leadsTotal=ldD.length;
+  var leadsFechados=ldD.filter(function(l){return l.st==='Fechado';}).length;
+  var leadsQuentes=ldD.filter(function(l){return iaScore(l)>=60&&l.st!=='Fechado';}).length;
+  var leadsPorCanal={};
+  ldD.forEach(function(l){leadsPorCanal[l.orig_cat||'Outros']=(leadsPorCanal[l.orig_cat||'Outros']||0)+1;});
+
+  // Ranking
+  var rankData=COR.map(function(c){
+    var cap=ivD.filter(function(iv){return (iv.corretor||'').indexOf(c.nome)>=0;}).length;
+    var leads=ldD.filter(function(l){return l.cor===c.nome;}).length;
+    var fech=ldD.filter(function(l){return l.cor===c.nome&&l.st==='Fechado';}).length;
+    return {nome:c.nome,ini:c.initials,cor:c.cor,cap:cap,leads:leads,fech:fech};
+  }).sort(function(a,b){return (b.fech*15+b.leads*2+b.cap*5)-(a.fech*15+a.leads*2+a.cap*5)});
+
+  // MCMV
+  var mcmvAtivos=mcmvD.filter(function(m){return m.st!=='Descartado';}).length;
+  var mcmvFechados=mcmvD.filter(function(m){return m.st==='Fechado';}).length;
+  var mcmvQuentes=mcmvD.filter(function(m){return iaMCMVScore(m)>=60&&m.st!=='Fechado';}).length;
+
+  // Vencimentos próximos
+  var hoje=new Date(); hoje.setHours(0,0,0,0);
+  var vencendo60=ctD.filter(function(c){
+    if(c.status==='Inativo'||!c.fim) return false;
+    var d=Math.round((new Date(c.fim)-hoje)/86400000);
+    return d>=0&&d<=60;
+  });
+
+  var rankRows=rankData.map(function(d,i){
+    return '<tr><td><b>'+(i+1)+'.</b> '+d.nome+'</td><td style="text-align:center">'+d.cap+'</td><td style="text-align:center">'+d.leads+'</td><td style="text-align:center;font-weight:700;color:#059669">'+d.fech+'</td></tr>';
+  }).join('');
+
+  var canaisRows=Object.keys(leadsPorCanal).map(function(k){
+    return '<tr><td>'+k+'</td><td style="text-align:center;font-weight:700">'+leadsPorCanal[k]+'</td></tr>';
+  }).join('');
+
+  var pendentesRows=pendentes.slice(0,10).map(function(c){
+    return '<tr><td>'+c.id+'</td><td>'+c.inq+'</td><td>'+c.prop+'</td><td style="text-align:right;font-weight:700">'+fmt(c.valor)+'</td></tr>';
+  }).join('');
+
+  var w=window.open('','_blank');
+  w.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'+
+    '<title>Relatório Mensal — '+mes+'</title>'+
+    '<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;background:#f8fafc;color:#1e293b;padding:24px}'+
+    '.header{background:#0f1a35;color:#fff;padding:24px;border-radius:12px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}'+
+    '.logo{font-size:22px;font-weight:900;letter-spacing:-1px}.logo em{color:#D42028;font-style:normal}'+
+    '.mes{font-size:14px;opacity:.7}h2{font-size:14px;font-weight:700;color:#0f1a35;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #e2e8f0}'+
+    '.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}'+
+    '.kpi{background:#fff;border-radius:10px;padding:14px;border:1px solid #e2e8f0;text-align:center}'+
+    '.kpi-l{font-size:10px;color:#64748b;text-transform:uppercase;margin-bottom:4px}'+
+    '.kpi-v{font-size:22px;font-weight:800}.kpi-s{font-size:10px;color:#94a3b8;margin-top:2px}'+
+    '.card{background:#fff;border-radius:10px;padding:16px;border:1px solid #e2e8f0;margin-bottom:16px}'+
+    'table{width:100%;border-collapse:collapse;font-size:12px}th{background:#f1f5f9;padding:8px;text-align:left;font-weight:700;font-size:10px;text-transform:uppercase}'+
+    'td{padding:7px 8px;border-bottom:1px solid #f1f5f9}.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}'+
+    '.ok{color:#059669;font-weight:700}.warn{color:#d97706;font-weight:700}.bad{color:#dc2626;font-weight:700}'+
+    '.footer{text-align:center;font-size:10px;color:#94a3b8;margin-top:24px;padding-top:16px;border-top:1px solid #e2e8f0}'+
+    '@media print{body{padding:10px}.header{-webkit-print-color-adjust:exact;print-color-adjust:exact}}'+
+    '</style></head><body>'+
+    '<div class="header"><div><div class="logo">RE/<em>MAX</em> Space</div><div class="mes">Caldas Novas — GO</div></div>'+
+    '<div style="text-align:right"><div style="font-size:18px;font-weight:700">Relatório Mensal</div><div class="mes">'+mes+' &nbsp;|&nbsp; Gerado em '+hoje.toLocaleDateString('pt-BR')+'</div></div></div>'+
+
+    '<div class="grid">'+
+    '<div class="kpi"><div class="kpi-l">Receita Locação</div><div class="kpi-v" style="color:#059669">'+fmt(totLoc)+'</div><div class="kpi-s">'+ativos.length+' contratos ativos</div></div>'+
+    '<div class="kpi"><div class="kpi-l">ADM 10%</div><div class="kpi-v" style="color:#0f1a35">'+fmt(adm)+'</div><div class="kpi-s">repasse '+fmt(repasse)+'</div></div>'+
+    '<div class="kpi"><div class="kpi-l">Despesas</div><div class="kpi-v" style="color:#dc2626">'+fmt(despesas)+'</div><div class="kpi-s">'+cpD.length+' lançamentos</div></div>'+
+    '<div class="kpi"><div class="kpi-l">Resultado</div><div class="kpi-v '+(resultado>=0?'ok':'bad')+'">'+fmt(resultado)+'</div><div class="kpi-s">'+(resultado>=0?'superávit':'déficit')+'</div></div>'+
+    '<div class="kpi"><div class="kpi-l">Pagamentos Rec.</div><div class="kpi-v" style="color:#059669">'+recebidos.length+'</div><div class="kpi-s">de '+ativos.length+' contratos</div></div>'+
+    '<div class="kpi"><div class="kpi-l">Pendentes</div><div class="kpi-v '+(pendentes.length>0?'bad':'ok')+'">'+pendentes.length+'</div><div class="kpi-s">contratos em aberto</div></div>'+
+    '<div class="kpi"><div class="kpi-l">Leads Totais</div><div class="kpi-v" style="color:#7c3aed">'+leadsTotal+'</div><div class="kpi-s">'+leadsQuentes+' quentes</div></div>'+
+    '<div class="kpi"><div class="kpi-l">MCMV Ativos</div><div class="kpi-v" style="color:#0891b2">'+mcmvAtivos+'</div><div class="kpi-s">'+mcmvQuentes+' quentes</div></div>'+
+    '</div>'+
+
+    '<div class="g2">'+
+    '<div class="card"><h2>Ranking da Equipe — '+mes+'</h2><table><thead><tr><th>Corretor</th><th>Captações</th><th>Leads</th><th>Fechamentos</th></tr></thead><tbody>'+rankRows+'</tbody></table></div>'+
+    '<div class="card"><h2>Leads por Canal</h2><table><thead><tr><th>Canal</th><th>Total</th></tr></thead><tbody>'+canaisRows+'</tbody></table></div>'+
+    '</div>'+
+
+    (pendentes.length>0?
+    '<div class="card"><h2>⚠️ Contratos com Pagamento Pendente ('+pendentes.length+')</h2>'+
+    '<table><thead><tr><th>CT</th><th>Inquilino</th><th>Proprietário</th><th style="text-align:right">Valor</th></tr></thead><tbody>'+pendentesRows+'</tbody></table>'+
+    (pendentes.length>10?'<div style="font-size:11px;color:#64748b;padding:8px">... e mais '+(pendentes.length-10)+' contratos</div>':'')+
+    '</div>':'')+ 
+
+    (vencendo60.length>0?
+    '<div class="card"><h2>📅 Contratos Vencendo em 60 dias ('+vencendo60.length+')</h2>'+
+    '<table><thead><tr><th>CT</th><th>Inquilino</th><th>Vencimento</th></tr></thead><tbody>'+
+    vencendo60.map(function(c){return '<tr><td>'+c.id+'</td><td>'+c.inq+'</td><td>'+new Date(c.fim).toLocaleDateString('pt-BR')+'</td></tr>';}).join('')+
+    '</tbody></table></div>':'')+ 
+
+    '<div class="footer">Relatório gerado automaticamente pelo sistema RE/MAX Space &nbsp;|&nbsp; '+mes+' &nbsp;|&nbsp; Caldas Novas — Goiás</div>'+
+    '<div style="text-align:center;margin-top:16px"><button onclick="window.print()" style="background:#0f1a35;color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:14px;cursor:pointer">🖨️ Imprimir / Salvar PDF</button></div>'+
+    '</body></html>');
+  w.document.close();
 }
 
 function abrirFunil(){
@@ -1927,28 +2141,71 @@ function eAcoes(i){
 }
 
 // ===== MCMV (editavel) =====
+function iaMCMVScore(m){
+  var score=0;
+  // Simulação feita
+  if(m.simulacao) score+=20;
+  // Documentação
+  if(m.docs==='Completo') score+=25; else if(m.docs==='Parcial') score+=12;
+  // Financiamento
+  if(m.financiamento==='Aprovado') score+=30; else if(m.financiamento==='Em analise') score+=15; else if(m.financiamento==='Aguarda') score+=5;
+  // Status
+  var stS={Fechado:40,'Em andamento':15,Novo:5,Descartado:-20};
+  score+=(stS[m.st]||0);
+  // Entrada informada
+  if(m.entrada && parseInt(m.entrada)>0) score+=10;
+  // Obs preenchida
+  if(m.obs && m.obs.length>5) score+=5;
+  return Math.min(100,Math.max(0,score));
+}
+
 function pMCMV(){
   document.getElementById('pa').innerHTML='<button class="btn btn-red" onclick="nMCMV()">+ Novo</button>';
-  var r=''; mcmvD.forEach(function(m,i){
+  var quentes=mcmvD.filter(function(m){return iaMCMVScore(m)>=60&&m.st!=='Fechado';}).length;
+  var r='';
+  mcmvD.slice().sort(function(a,b){return iaMCMVScore(b)-iaMCMVScore(a);}).forEach(function(m,idx){
+    var i=mcmvD.indexOf(m);
+    var score=iaMCMVScore(m);
     r+='<tr>'+
-    '<td style="font-weight:600">'+m.nome+'</td>'+
-    '<td>'+m.tel+'</td>'+
+    '<td>'+iaLabel(score)+'</td>'+
+    '<td style="font-weight:700">'+m.nome+'</td>'+
+    '<td><a href="tel:'+m.tel+'" style="color:var(--navy);font-size:11px;text-decoration:none">'+m.tel+'</a></td>'+
     '<td id="mr-'+i+'" class="edc">R$ '+m.renda+'</td>'+
     '<td><span class="badge bb">'+m.faixa+'</span></td>'+
-    '<td>'+(m.simulacao?'<span class="badge bg">Sim</span>':'<span class="badge br">Nao</span>')+'</td>'+
+    '<td>'+(m.simulacao?'<span class="badge bg">✓ Sim</span>':'<span class="badge br">✗ Não</span>')+'</td>'+
     '<td><span class="badge '+(m.docs==='Completo'?'bg':m.docs==='Parcial'?'by':'br')+'">'+m.docs+'</span></td>'+
     '<td><span class="badge '+(m.financiamento==='Aprovado'?'bg':m.financiamento==='Em analise'?'by':'bgr')+'">'+m.financiamento+'</span></td>'+
-    '<td>'+m.corretor+'</td>'+
+    '<td style="font-size:11px">'+m.corretor+'</td>'+
     '<td>'+sBadge(m.st)+'</td>'+
-    '<td id="mo-'+i+'" style="font-size:10.5px;color:var(--lm)">'+( m.obs||'-')+'</td>'+
+    '<td id="mo-'+i+'" style="font-size:10.5px;color:var(--lm);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(m.obs||'-')+'</td>'+
     '<td style="display:flex;gap:3px"><button class="btn btn-sm btn-blue" onclick="eMCMV('+i+')">Editar</button><button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5" onclick="delMCMV('+i+')">Del</button></td>'+
     '</tr>';
   });
+  var faixas={};
+  mcmvD.forEach(function(m){faixas[m.faixa]=(faixas[m.faixa]||0)+1;});
+  var faixaBar=Object.keys(faixas).map(function(f){
+    return '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px">'+f+'</span><span class="badge bb">'+faixas[f]+'</span></div>';
+  }).join('');
   document.getElementById('pc').innerHTML=
-    '<div class="g3"><div class="kc blue"><div class="kc-l">Leads MCMV</div><div class="kc-v">'+mcmvD.length+'</div></div>'+
-    '<div class="kc green"><div class="kc-l">Em andamento</div><div class="kc-v">'+mcmvD.filter(function(m){return m.st==='Em andamento';}).length+'</div></div>'+
-    '<div class="kc gold"><div class="kc-l">Fechados</div><div class="kc-v">'+mcmvD.filter(function(m){return m.st==='Fechado';}).length+'</div></div></div>'+
-    '<div class="card"><div class="tw"><table><thead><tr><th>Cliente</th><th>Tel</th><th>Renda</th><th>Faixa</th><th>Simulacao</th><th>Docs</th><th>Financiamento</th><th>Corretor</th><th>Status</th><th>Obs</th><th>Acoes</th></tr></thead><tbody>'+r+'</tbody></table></div></div>';
+    '<div class="g4" style="margin-bottom:12px">'+
+      '<div class="kc blue"><div class="kc-l">Total MCMV</div><div class="kc-v">'+mcmvD.length+'</div></div>'+
+      '<div class="kc" style="border-left:3px solid #dc2626"><div class="kc-l">🔥 Quentes</div><div class="kc-v" style="color:#dc2626">'+quentes+'</div></div>'+
+      '<div class="kc green"><div class="kc-l">Em andamento</div><div class="kc-v">'+mcmvD.filter(function(m){return m.st==='Em andamento';}).length+'</div></div>'+
+      '<div class="kc gold"><div class="kc-l">Fechados</div><div class="kc-v">'+mcmvD.filter(function(m){return m.st==='Fechado';}).length+'</div></div>'+
+    '</div>'+
+    '<div class="g2" style="margin-bottom:12px">'+
+      '<div class="card"><div class="chd"><h3>Por Faixa</h3></div><div class="cbd">'+faixaBar+'</div></div>'+
+      '<div class="card" style="background:#eff6ff;border:1px solid #bfdbfe"><div class="cbd" style="padding:14px">'+
+        '<div style="font-size:12px;font-weight:700;color:#1d4ed8;margin-bottom:8px">🤖 Como o Score IA MCMV funciona</div>'+
+        '<div style="font-size:11px;color:#1e40af;line-height:1.8">'+
+          '🔥 Quente (60+): simulação feita + docs completo/parcial + financiamento em andamento<br>'+
+          '🌡️ Morno (35-59): tem simulação mas docs incompleto<br>'+
+          '❄️ Frio (0-34): sem simulação, sem documentação<br>'+
+          'A tabela já vem ordenada do mais quente para o mais frio'+
+        '</div>'+
+      '</div></div>'+
+    '</div>'+
+    '<div class="card"><div class="tw"><table><thead><tr><th>IA</th><th>Cliente</th><th>Tel</th><th>Renda</th><th>Faixa</th><th>Simulação</th><th>Docs</th><th>Financiamento</th><th>Corretor</th><th>Status</th><th>Obs</th><th>Ações</th></tr></thead><tbody>'+r+'</tbody></table></div></div>';
   mcmvD.forEach(function(m,i){
     ied(document.getElementById('mr-'+i), m.renda, function(v){mcmvD[i].renda=v;});
     ied(document.getElementById('mo-'+i), m.obs||'', function(v){mcmvD[i].obs=v;});
@@ -2043,7 +2300,7 @@ function pLC(){
     r+='<td style="font-size:10px">'+c.fim+'</td>';
     r+='<td style="font-size:10.5px">'+(c.corretor||'-')+'</td>';
     r+='<td>'+sBadge(c.status)+'</td>';
-    r+='<td style="display:flex;gap:3px"><button class="btn btn-sm btn-blue" onclick="eCT('+i+')">Editar</button><button class="btn btn-sm btn-gray" onclick="excluirCT('+i+')">Del</button></td>';
+    r+='<td style="display:flex;gap:3px"><button class="btn btn-sm btn-blue" onclick="eCT('+i+')">Editar</button><button class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366;font-size:10px" onclick="msgCobranca('+i+')">📱</button><button class="btn btn-sm btn-gray" onclick="excluirCT('+i+')">Del</button></td>';
     r+='</tr>';
   });
   document.getElementById('pc').innerHTML=

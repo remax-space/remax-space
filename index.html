@@ -666,14 +666,10 @@ function doLogin() {
   var u = document.getElementById('lu').value.trim().toLowerCase();
   var p = document.getElementById('lp').value;
   var err = document.getElementById('lerr');
-  // Verificar login via Supabase Auth table
   err.style.display='none';
   var btn = document.querySelector('.lbtn');
   if(btn){ btn.disabled=true; btn.textContent='Verificando...'; }
   verificarLoginSupabase(u, p, err, btn);
-  return; // async flow continues in verificarLoginSupabase
-  err.style.display='none';
-  finalizarLogin();
 }
 
 function finalizarLogin(){

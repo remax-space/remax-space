@@ -321,6 +321,8 @@ function salvarTudo(){
         cp:cpD, mc:mcmvD, vs:vsD, iq:inqCad,
         pc:propCad, cc:corCad, sn:senhas,
         ll:(typeof llD!=='undefined'?llD:[]),
+        ag:(typeof agD!=='undefined'?agD:[]),
+        hi:(typeof histD!=='undefined'?histD:{}),
         mt:(typeof metasD!=='undefined'?metasD:{}),
         dc:(typeof docsD!=='undefined'?docsD:[]),
         os:(typeof osD!=='undefined'?osD:[]),
@@ -358,6 +360,8 @@ async function carregarDados(){
       if(e.mc) mcmvD = e.mc;
       if(e.vs) vsD = e.vs;
       if(e.ll) llD = e.ll;
+      if(e.ag) agD = e.ag;
+      if(e.hi) histD = e.hi;
       if(e.mt) metasD = e.mt;
       if(e.dc) docsD = e.dc;
       if(e.iq && e.iq.length > 0) inqCad = e.iq;
@@ -504,6 +508,14 @@ var ldD = [
   {id:5,dt:'13/05',hr:'16:00',orig:'Indicação / Boca a Boca',orig_cat:'Orgânico',tipo:'Chácara',nome:'Ana Beatriz',tel:'(64)9 9777-8888',cor:'T. Basile',st:'Fechado',obs:'Vendida',renda:'12000',faixa:'R$ 500k+',intencao:'Comprar',ref_remax:'',ref_cor:'',ia_score:0},
   {id:6,dt:'12/05',hr:'11:00',orig:'Referenciamento RE/MAX',orig_cat:'Referenciamento',tipo:'Casa',nome:'Paulo Drummond',tel:'(11)9 9888-7777',cor:'T. Basile',st:'Em contato',obs:'Cliente de SP buscando imóvel em Caldas Novas para investimento',renda:'15000',faixa:'R$ 600k+',intencao:'Comprar',ref_remax:'RE/MAX Jardins - SP',ref_cor:'Carla Mendes',ia_score:0}
 ];
+var agD = [
+  {id:1,dt:'2026-05-28',hr:'09:00',fim:'10:00',titulo:'Visita - Casa Centro',cor:'T. Basile',tipo:'Visita',cli:'Roberto Alves',end:'Rua das Flores 100',obs:'',lembrete:30,st:'Confirmado'},
+  {id:2,dt:'2026-05-28',hr:'14:00',fim:'15:00',titulo:'Captacao - Setor Sul',cor:'Meirielli',tipo:'Captacao',cli:'Proprietario Silva',end:'Setor Sul Lote 14',obs:'',lembrete:60,st:'Agendado'},
+  {id:3,dt:'2026-05-29',hr:'10:00',fim:'11:00',titulo:'Reuniao Equipe',cor:'T. Basile',tipo:'Reuniao',cli:'',end:'RE/MAX Space',obs:'Reuniao semanal',lembrete:30,st:'Confirmado'},
+  {id:4,dt:'2026-05-30',hr:'09:30',fim:'10:30',titulo:'Apresentacao ACM',cor:'T. Moraes',tipo:'ACM',cli:'Ana Maria',end:'Casa Orquideas 210',obs:'',lembrete:30,st:'Agendado'}
+];
+var agNextId=5;
+var histD = {}; // {YYYY-MM: {snapshot}}
 var vD = [
   {id:1,dt:'2026-05-16',hr:'10:00',cor:'Meirielli',cli:'Fernanda Costa',end:'Av. das Palmeiras 430',st:'Confirmada'},
   {id:2,dt:'2026-05-16',hr:'14:00',cor:'T. Moraes',cli:'Diego Santos',end:'Rua das Orquideas 210',st:'Realizada'},
@@ -610,6 +622,8 @@ function doLogin() {
   document.getElementById('tbro').textContent=U.role;
   document.getElementById('tbdt').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
   bSB();
+  // Start agenda notifications
+  setTimeout(iniciarNotificacoes, 2000);
   // Wire global search
   setTimeout(function(){
     var gsi = document.getElementById('gs-inp');
@@ -848,7 +862,7 @@ function fStD(el,cid,val){
 // ===== SIDEBAR =====
 var NAV = [
   {s:'Principal'},{id:'dashboard',l:'Dashboard'},{id:'leads',l:'Leads'},
-  {s:'Venda'},{id:'prosp',l:'Prospeccao'},{id:'visitas',l:'Agenda Visitas'},{id:'acm',l:'ACM'},{id:'docs',l:'Documentacao'},{id:'contratos',l:'Contratos'},{id:'acoes',l:'Acoes no Imovel'},{id:'mcmv',l:'MCMV'},
+  {s:'Venda'},{id:'prosp',l:'Prospeccao'},{id:'agenda',l:'📅 Agenda'},{id:'visitas',l:'Visitas'},{id:'acm',l:'ACM'},{id:'docs',l:'Documentacao'},{id:'contratos',l:'Contratos'},{id:'acoes',l:'Acoes no Imovel'},{id:'mcmv',l:'MCMV'},
   {s:'Locacao'},{id:'loc-c',l:'Contratos Ativos'},{id:'repasses',l:'💰 Repasses',a:true},{id:'loc-l',l:'Leads Locacao'},{id:'loc-v',l:'Vistorias'},{id:'boletos',l:'📨 Boletos',a:true},{id:'extrato',l:'📄 Extrato Prop.',a:true},{id:'os',l:'🔧 Ordens Serviço'},
   {s:'Portfolio'},{id:'iv',l:'Imoveis Venda'},{id:'prop',l:'Proprietarios'},
   {s:'Financeiro',a:true},{id:'fd',l:'Dashboard Financeiro',a:true},{id:'dre',l:'📊 DRE + Comissões',a:true},{id:'fr',l:'A Receber',a:true},{id:'fp',l:'Contas a Pagar',a:true},
@@ -960,6 +974,124 @@ function copiarMsg(idx, btnOrId){
     alert('Mensagem copiada!');
   });
 }
+
+// ===== HISTÓRICO MENSAL =====
+function salvarSnapshotMes(){
+  var hoje = new Date();
+  var chave = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0');
+  var ativos = ctD.filter(function(c){ return c.status!=='Inativo'; });
+  histD[chave] = {
+    mes: chave,
+    label: hoje.toLocaleString('pt-BR',{month:'long',year:'numeric'}),
+    contratos: ativos.length,
+    receita: ativos.reduce(function(s,c){ return s+c.valor; },0),
+    leads: ldD.length,
+    leadsFechados: ldD.filter(function(l){ return l.st==='Fechado'; }).length,
+    imoveis: ivD.length,
+    mcmv: mcmvD.filter(function(m){ return m.st!=='Descartado'; }).length,
+    despesas: cpD.reduce(function(s,c){ return s+c.val; },0),
+    ranking: COR.map(function(c){
+      return {
+        nome: c.nome,
+        cap: ivD.filter(function(iv){ return (iv.corretor||'').indexOf(c.nome)>=0; }).length,
+        leads: ldD.filter(function(l){ return l.cor===c.nome; }).length,
+        fech: ldD.filter(function(l){ return l.cor===c.nome&&l.st==='Fechado'; }).length
+      };
+    })
+  };
+  salvarTudo();
+  return chave;
+}
+
+function pHistorico(){
+  document.getElementById('pa').innerHTML =
+    '<button class="btn btn-primary" onclick="salvarSnapshotMes();pHistorico()">💾 Salvar Snapshot do Mes Atual</button>';
+
+  var meses = Object.keys(histD).sort().reverse();
+
+  if(!meses.length){
+    document.getElementById('pc').innerHTML =
+      '<div class="card"><div class="cbd" style="text-align:center;padding:40px">' +
+        '<div style="font-size:48px;margin-bottom:12px">📊</div>' +
+        '<div style="font-size:16px;font-weight:700;margin-bottom:8px">Nenhum historico salvo ainda</div>' +
+        '<div style="color:var(--lm);font-size:13px;margin-bottom:16px">Clique em "Salvar Snapshot" no inicio de cada mes para registrar os dados</div>' +
+        '<button class="btn btn-primary" onclick="salvarSnapshotMes();pHistorico()">Salvar snapshot agora</button>' +
+      '</div></div>';
+    return;
+  }
+
+  // Graficos de evolucao
+  var receitaMax = Math.max.apply(null, meses.map(function(m){ return histD[m].receita||0; }))||1;
+  var leadsMax   = Math.max.apply(null, meses.map(function(m){ return histD[m].leads||0; }))||1;
+
+  var barReceitaHtml = meses.slice(0,12).reverse().map(function(m){
+    var d = histD[m];
+    var pct = Math.round((d.receita||0)/receitaMax*100)||2;
+    var mesLabel = m.slice(5); // MM
+    var mNomes = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1">' +
+      '<div style="font-size:9px;font-weight:700;color:var(--lm)">'+fmt(d.receita).replace('R$\u00a0','').replace(',00','')+'</div>' +
+      '<div style="background:#003DA5;width:100%;height:'+(pct*0.8)+'px;border-radius:4px 4px 0 0;min-height:4px"></div>' +
+      '<div style="font-size:9px;color:var(--lm)">'+mNomes[parseInt(mesLabel)]+'</div>' +
+    '</div>';
+  }).join('');
+
+  var barLeadsHtml = meses.slice(0,12).reverse().map(function(m){
+    var d = histD[m];
+    var pct = Math.round((d.leads||0)/leadsMax*100)||2;
+    var mesLabel = m.slice(5);
+    var mNomes = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1">' +
+      '<div style="font-size:9px;font-weight:700;color:var(--lm)">'+d.leads+'</div>' +
+      '<div style="background:#D42028;width:100%;height:'+(pct*0.8)+'px;border-radius:4px 4px 0 0;min-height:4px"></div>' +
+      '<div style="font-size:9px;color:var(--lm)">'+mNomes[parseInt(mesLabel)]+'</div>' +
+    '</div>';
+  }).join('');
+
+  // Tabela comparativa
+  var tableRows = meses.map(function(m){
+    var d = histD[m];
+    var adm = (d.receita||0)*0.1;
+    var res = adm - (d.despesas||0);
+    return '<tr>' +
+      '<td style="font-weight:700">'+d.label+'</td>' +
+      '<td style="text-align:center">'+d.contratos+'</td>' +
+      '<td style="text-align:right;font-weight:700;color:#059669">'+fmt(d.receita)+'</td>' +
+      '<td style="text-align:right">'+fmt(adm)+'</td>' +
+      '<td style="text-align:right;color:'+(res>=0?'#059669':'#dc2626')+'">'+fmt(res)+'</td>' +
+      '<td style="text-align:center">'+d.leads+'</td>' +
+      '<td style="text-align:center;font-weight:700;color:#059669">'+d.leadsFechados+'</td>' +
+      '<td style="text-align:center">'+d.imoveis+'</td>' +
+      '<button onclick="verSnapshotRanking(\''+m+'\')" style="background:none;border:none;color:var(--navy);cursor:pointer;font-size:11px">Ver ranking</button></tr>';
+  }).join('');
+
+  document.getElementById('pc').innerHTML =
+    '<div class="g2" style="margin-bottom:14px">' +
+      '<div class="card"><div class="chd"><h3>Evolucao da Receita Locacao</h3></div>' +
+        '<div style="display:flex;align-items:flex-end;gap:4px;height:100px;padding:10px 16px">'+barReceitaHtml+'</div>'+
+      '</div>' +
+      '<div class="card"><div class="chd"><h3>Evolucao de Leads</h3></div>' +
+        '<div style="display:flex;align-items:flex-end;gap:4px;height:100px;padding:10px 16px">'+barLeadsHtml+'</div>'+
+      '</div>' +
+    '</div>' +
+    '<div class="card"><div class="chd"><h3>Comparativo Mensal</h3></div>' +
+      '<div class="tw"><table><thead><tr><th>Mes</th><th>Contratos</th><th style="text-align:right">Receita</th><th style="text-align:right">ADM</th><th style="text-align:right">Resultado</th><th>Leads</th><th>Fechamentos</th><th>Imoveis</th><th></th></tr></thead>' +
+      '<tbody>'+tableRows+'</tbody></table></div>' +
+    '</div>';
+}
+
+function verSnapshotRanking(m){
+  var d = histD[m];
+  if(!d||!d.ranking) return;
+  var rows = d.ranking.sort(function(a,b){ return (b.fech*15+b.leads*2+b.cap*5)-(a.fech*15+a.leads*2+a.cap*5); }).map(function(c,i){
+    return '<tr><td>'+(i+1)+'.</td><td><b>'+c.nome+'</b></td><td style="text-align:center">'+c.cap+'</td><td style="text-align:center">'+c.leads+'</td><td style="text-align:center;font-weight:700;color:#059669">'+c.fech+'</td></tr>';
+  }).join('');
+  oM('Ranking — '+d.label,
+    '<table class="tw"><thead><tr><th>#</th><th>Corretor</th><th>Captacoes</th><th>Leads</th><th>Fechamentos</th></tr></thead><tbody>'+rows+'</tbody></table>',
+    null, null, true
+  );
+}
+
 
 function pRelat(){
   document.getElementById('pa').innerHTML='<button class="btn btn-primary" onclick="gerarRelatorioMensal()">📄 Gerar Relatório do Mês</button>';
@@ -1350,7 +1482,7 @@ function pPermissoes(){
   var users = Object.keys(USR).filter(function(k){return (USR[k].role_key||'corretor')!=='admin';});
   var mods = [
     {id:'dashboard',l:'Dashboard'},{id:'leads',l:'Leads'},{id:'prosp',l:'Prospecção'},
-    {id:'visitas',l:'Agenda'},{id:'acm',l:'ACM'},{id:'contratos',l:'Contratos'},
+    {id:'agenda',l:'Agenda'},{id:'visitas',l:'Visitas'},{id:'acm',l:'ACM'},{id:'contratos',l:'Contratos'},
     {id:'acoes',l:'Ações Imóvel'},{id:'mcmv',l:'MCMV'},{id:'loc-c',l:'Locação'},
     {id:'repasses',l:'Repasses'},{id:'boletos',l:'Boletos'},{id:'iv',l:'Imóveis Venda'},
     {id:'fd',l:'Fin. Dashboard'},{id:'fr',l:'A Receber'},{id:'fp',l:'Contas Pagar'},
@@ -1398,13 +1530,13 @@ function gP(id){
   document.getElementById('pt').textContent = TITLES[id]||id;
   document.getElementById('pa').innerHTML = '';
   var pages = {
-    dashboard:pDash, leads:pLeads, prosp:pProsp, visitas:pVis,
+    dashboard:pDash, leads:pLeads, prosp:pProsp, agenda:pAgenda, visitas:pVis,
     acm:pAcm, docs:pDocs, contratos:pContratos, acoes:pAcoes, mcmv:pMCMV,
     'loc-c':pLC, 'loc-r':pLR, 'repasses':pRepasses, 'loc-l':pLL, 'loc-v':pLV, 'boletos':pBoletos, 'extrato':pExtrato, 'os':pOS,
     iv:pIV, prop:pProp,
     fd:pFD, dre:pDRE, fr:pFR, fp:pFP,
     'cad-cor':pCadCor, 'cad-prop':pCadProp, 'cad-inq':pCadInq,
-    rank:pRank, metas:pMetas, perms:pPermissoes,
+    rank:pRank, metas:pMetas, historico:pHistorico, perms:pPermissoes,
     relat:pRelat
   };
   if(pages[id]) pages[id](); else pDash();
@@ -1412,6 +1544,84 @@ function gP(id){
 
 // ===== DASHBOARD =====
 function pDash(){
+  if(!isA()){
+    pDashCorretor();
+    return;
+  }
+  pDashAdmin();
+}
+
+function pDashCorretor(){
+  var nome = U.nome;
+  var hoje = new Date();
+  var hojeStr = hoje.toISOString().slice(0,10);
+
+  // Metricas do corretor
+  var meusLeads = ldD.filter(function(l){ return l.cor===nome; });
+  var meusMCMV  = mcmvD.filter(function(m){ return m.corretor===nome; });
+  var minhasCapt = ivD.filter(function(iv){ return (iv.corretor||'').indexOf(nome)>=0; });
+  var minhasVis  = vD.filter(function(v){ return v.cor===nome; });
+  var meusProsp  = prD.filter(function(p){ return p.cor===nome; });
+  var meusEv     = agD.filter(function(ev){ return ev.cor===nome&&ev.dt===hojeStr; }).sort(function(a,b){ return a.hr.localeCompare(b.hr); });
+  var leadsQuentes = meusLeads.filter(function(l){ return iaScore(l)>=60&&l.st!=='Fechado'; });
+  var mcmvQuentes  = meusMCMV.filter(function(m){ return iaMCMVScore(m)>=60&&m.st!=='Fechado'; });
+
+  // Score IA pessoal
+  var pts = minhasCapt.length*5 + meusLeads.length*2 + minhasVis.length*3 + meusProsp.length + meusLeads.filter(function(l){ return l.st==='Fechado'; }).length*15;
+  var rank = 0;
+  COR.forEach(function(c){
+    var cPts = ivD.filter(function(iv){ return (iv.corretor||'').indexOf(c.nome)>=0; }).length*5 +
+               ldD.filter(function(l){ return l.cor===c.nome; }).length*2 +
+               vD.filter(function(v){ return v.cor===c.nome; }).length*3;
+    if(cPts > pts) rank++;
+  });
+  rank++;
+
+  // Agenda do dia
+  var agendaHtml = meusEv.length ? meusEv.map(function(ev){
+    var t = AG_TIPOS[ev.tipo]||AG_TIPOS['Outro'];
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px;border-left:3px solid '+t.cor+';background:#f9fafb;border-radius:0 8px 8px 0;margin-bottom:6px;cursor:pointer" onclick="gP(\'agenda\')">' +
+      '<div style="font-size:13px;font-weight:800;color:'+t.cor+';min-width:42px">'+ev.hr+'</div>' +
+      '<div><div style="font-size:12px;font-weight:700">'+t.icon+' '+ev.titulo+'</div>' +
+      '<div style="font-size:10px;color:var(--lm)">'+ev.end+'</div></div>' +
+    '</div>';
+  }).join('') : '<div style="text-align:center;padding:16px;color:var(--lm)">Nenhum evento hoje — <span style="color:var(--navy);cursor:pointer" onclick="gP(\'agenda\')">Ver agenda</span></div>';
+
+  // Leads quentes
+  var leadsHtml = leadsQuentes.slice(0,5).map(function(l){
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--lb);cursor:pointer" onclick="gP(\'leads\')">' +
+      '<span style="font-size:9px;background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:8px;font-weight:700">🔥</span>' +
+      '<div style="flex:1"><div style="font-size:12px;font-weight:700">'+l.nome+'</div>' +
+      '<div style="font-size:10px;color:var(--lm)">'+l.tipo+' · '+l.faixa+'</div></div>' +
+      '<div>'+sBadge(l.st)+'</div>' +
+    '</div>';
+  }).join('') + (leadsQuentes.length===0?'<div style="text-align:center;padding:12px;color:var(--lm);font-size:12px">Sem leads quentes no momento</div>':'');
+
+  document.getElementById('pc').innerHTML =
+    '<div style="background:linear-gradient(135deg,#0f1a35,#003DA5);color:#fff;border-radius:14px;padding:20px;margin-bottom:16px;display:flex;align-items:center;gap:16px">' +
+      '<div style="width:56px;height:56px;border-radius:50%;background:'+U.cor+';display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;flex-shrink:0">'+U.ini+'</div>' +
+      '<div>' +
+        '<div style="font-size:20px;font-weight:800">Bom dia, '+U.nome.split(' ')[0]+'!</div>' +
+        '<div style="font-size:12px;opacity:.7">'+hoje.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+'</div>' +
+        '<div style="margin-top:6px;font-size:11px;opacity:.85">Você esta em <b>#'+rank+'</b> no ranking da equipe com <b>'+pts+' pontos</b></div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">' +
+      '<div class="kc blue" style="cursor:pointer" onclick="gP(\'iv\')"><div class="kc-l">Captacoes</div><div class="kc-v">'+minhasCapt.length+'</div></div>' +
+      '<div class="kc warn" style="cursor:pointer" onclick="gP(\'leads\')"><div class="kc-l">Leads</div><div class="kc-v">'+meusLeads.length+'</div><div class="kc-s">'+leadsQuentes.length+' quentes</div></div>' +
+      '<div class="kc" style="cursor:pointer" onclick="gP(\'visitas\')"><div class="kc-l">Visitas</div><div class="kc-v">'+minhasVis.length+'</div></div>' +
+      '<div class="kc green"><div class="kc-l">Fechamentos</div><div class="kc-v">'+meusLeads.filter(function(l){return l.st==='Fechado';}).length+'</div></div>' +
+    '</div>' +
+    '<div class="g2">' +
+      '<div>' +
+        '<div class="card"><div class="chd"><h3>📅 Agenda de Hoje</h3><button class="btn btn-sm btn-primary" onclick="gP(\'agenda\')">Ver tudo</button></div><div class="cbd">'+agendaHtml+'</div></div>' +
+        (meusMCMV.length?'<div class="card"><div class="chd"><h3>🏠 MCMV</h3></div><div class="cbd" style="font-size:13px"><b>'+meusMCMV.length+'</b> leads · <b style="color:#dc2626">'+mcmvQuentes.length+'</b> quentes</div></div>':'')+'</div>' +
+      '<div class="card"><div class="chd"><h3>🔥 Leads Quentes</h3><button class="btn btn-sm btn-primary" onclick="gP(\'leads\')">Ver todos</button></div><div class="cbd">'+leadsHtml+'</div></div>' +
+    '</div>';
+}
+
+
+function pDashAdmin(){
   try{
     var ativos = ctD.filter(function(c){return c.status!=='Inativo';});
     var tot = ativos.reduce(function(s,c){return s+c.valor;},0);
@@ -1854,6 +2064,299 @@ function nProsp(){
 function eProsp(i){var p=prD[i];oM('Editar','<div class="fg2"><div class="fg"><label>Cliente</label><input id="ep-c" value="'+p.cli+'"></div><div class="fg"><label>Tel</label><input id="ep-t" value="'+p.tel+'"></div></div><div class="fg"><label>Obs</label><textarea id="ep-o">'+p.obs+'</textarea></div><div class="fg"><label>Status</label><select id="ep-s"><option>Novo</option><option>Em contato</option><option>Agendado</option></select></div>',function(){prD[i].cli=document.getElementById('ep-c').value;prD[i].tel=document.getElementById('ep-t').value;prD[i].obs=document.getElementById('ep-o').value;prD[i].st=document.getElementById('ep-s').value;cM();salvarTudo();pProsp();});setTimeout(function(){document.getElementById('ep-s').value=p.st;},50);}
 
 // ===== VISITAS =====
+// ===== TIPOS DE EVENTO =====
+var AG_TIPOS = {
+  'Visita':     {cor:'#D42028', icon:'🏠'},
+  'Captacao':   {cor:'#003DA5', icon:'📸'},
+  'Reuniao':    {cor:'#7c3aed', icon:'👥'},
+  'ACM':        {cor:'#B9975B', icon:'📊'},
+  'Ligacao':    {cor:'#059669', icon:'📞'},
+  'Documento':  {cor:'#0891b2', icon:'📄'},
+  'Outro':      {cor:'#64748b', icon:'📌'}
+};
+
+// ===== NOTIFICAÇÕES =====
+var _agNotifTimer = null;
+function iniciarNotificacoes(){
+  if(_agNotifTimer) clearInterval(_agNotifTimer);
+  _agNotifTimer = setInterval(verificarLembretes, 30000);
+  verificarLembretes();
+}
+
+function verificarLembretes(){
+  if(!agD || !agD.length) return;
+  var agora = new Date();
+  var nomeU = U ? U.nome : '';
+  agD.forEach(function(ev){
+    if(ev.st === 'Cancelado') return;
+    if(!isA() && ev.cor !== nomeU) return; // corretor só vê os seus
+    var evDt = new Date(ev.dt + 'T' + (ev.hr||'00:00'));
+    var diffMin = Math.round((evDt - agora) / 60000);
+    var key = 'notif_' + ev.id + '_' + ev.dt;
+    if(diffMin > 0 && diffMin <= (ev.lembrete||30) && !sessionStorage.getItem(key)){
+      sessionStorage.setItem(key, '1');
+      mostrarNotif(ev, diffMin);
+    }
+  });
+}
+
+function mostrarNotif(ev, min){
+  var tipo = AG_TIPOS[ev.tipo] || AG_TIPOS['Outro'];
+  // Sound
+  try{
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.5);
+  } catch(e){}
+  // Browser notification
+  if(window.Notification && Notification.permission === 'granted'){
+    new Notification('RE/MAX Space — Lembrete', {
+      body: tipo.icon + ' ' + ev.titulo + ' em ' + min + ' min\n' + (ev.end||''),
+      icon: '/favicon.ico'
+    });
+  }
+  // In-app toast
+  var toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;top:70px;right:16px;z-index:9999;background:#0f1a35;color:#fff;padding:14px 18px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.3);max-width:300px;animation:slideIn .3s ease;border-left:4px solid ' + tipo.cor;
+  toast.innerHTML = '<div style="font-size:13px;font-weight:700;margin-bottom:4px">' + tipo.icon + ' Lembrete: ' + ev.titulo + '</div>' +
+    '<div style="font-size:11px;opacity:.8">Em ' + min + ' minuto(s) | ' + ev.hr + (ev.end?' | '+ev.end:'') + '</div>' +
+    '<div style="font-size:10px;opacity:.6;margin-top:4px">Clique para ver a agenda</div>';
+  toast.onclick = function(){ gP('agenda'); document.body.removeChild(toast); };
+  document.body.appendChild(toast);
+  setTimeout(function(){ if(toast.parentNode) toast.parentNode.removeChild(toast); }, 8000);
+}
+
+function solicitarPermissaoNotif(){
+  if(window.Notification && Notification.permission === 'default'){
+    Notification.requestPermission();
+  }
+}
+
+// ===== AGENDA PRINCIPAL =====
+function pAgenda(){
+  solicitarPermissaoNotif();
+  var hoje = new Date();
+  var nomeU = U ? U.nome : '';
+  document.getElementById('pa').innerHTML =
+    '<button class="btn btn-red" onclick="nEvento()">+ Novo Evento</button>' +
+    '<button class="btn btn-primary" style="margin-left:8px" onclick="pAgenda()">🔄 Atualizar</button>';
+
+  // Filter events for current user
+  var meusEv = isA() ? agD : agD.filter(function(ev){ return ev.cor === nomeU; });
+
+  // Build 30-day calendar view
+  var semanas = [];
+  var inicio = new Date(hoje);
+  inicio.setDate(inicio.getDate() - inicio.getDay()); // start of week
+  for(var w=0; w<5; w++){
+    var sem = [];
+    for(var d=0; d<7; d++){
+      var dia = new Date(inicio);
+      dia.setDate(inicio.getDate() + w*7 + d);
+      var dStr = dia.toISOString().slice(0,10);
+      var evsDia = meusEv.filter(function(ev){ return ev.dt === dStr; });
+      sem.push({dia:dia, dStr:dStr, evs:evsDia});
+    }
+    semanas.push(sem);
+  }
+
+  var diasSemana = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
+  var meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+  var calHtml = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:16px">';
+  diasSemana.forEach(function(d){ calHtml += '<div style="text-align:center;font-size:10px;font-weight:700;color:var(--lm);padding:4px">' + d + '</div>'; });
+  semanas.forEach(function(sem){
+    sem.forEach(function(cell){
+      var isHoje = cell.dStr === hoje.toISOString().slice(0,10);
+      var isMes = cell.dia.getMonth() === hoje.getMonth();
+      var evList = cell.evs.map(function(ev){
+        var t = AG_TIPOS[ev.tipo]||AG_TIPOS['Outro'];
+        return '<div style="background:' + t.cor + ';color:#fff;font-size:8px;padding:1px 4px;border-radius:3px;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer" onclick="verDia(\'' + cell.dStr + '\')" title="' + ev.hr + ' — ' + ev.titulo + '">' + t.icon + ' ' + ev.titulo + '</div>';
+      }).join('');
+      calHtml += '<div style="background:' + (isHoje?'#003DA5':isMes?'#fff':'#f8fafc') + ';border:' + (isHoje?'2px solid #D42028':'1px solid #e2e8f0') + ';border-radius:8px;padding:4px;min-height:70px;cursor:pointer" onclick="verDia(\'' + cell.dStr + '\')">' +
+        '<div style="font-size:11px;font-weight:' + (isHoje?'900':'600') + ';color:' + (isHoje?'#fff':isMes?'var(--lt)':'#94a3b8') + '">' + cell.dia.getDate() + '</div>' +
+        evList +
+        (cell.evs.length===0?'':'') +
+      '</div>';
+    });
+  });
+  calHtml += '</div>';
+
+  // Today's agenda
+  var hoje_str = hoje.toISOString().slice(0,10);
+  var evsHoje = meusEv.filter(function(ev){ return ev.dt === hoje_str; }).sort(function(a,b){ return a.hr.localeCompare(b.hr); });
+  var amanha_str = new Date(hoje.getTime()+86400000).toISOString().slice(0,10);
+  var evsAmanha = meusEv.filter(function(ev){ return ev.dt === amanha_str; }).sort(function(a,b){ return a.hr.localeCompare(b.hr); });
+
+  function evCard(ev, i){
+    var t = AG_TIPOS[ev.tipo]||AG_TIPOS['Outro'];
+    var realIdx = agD.indexOf(ev);
+    return '<div style="display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:10px;background:#fff;border:1px solid var(--lb);margin-bottom:6px;border-left:4px solid ' + t.cor + '">' +
+      '<div style="text-align:center;min-width:42px"><div style="font-size:14px;font-weight:800;color:' + t.cor + '">' + (ev.hr||'--') + '</div><div style="font-size:8px;color:var(--lm)">' + (ev.fim||'') + '</div></div>' +
+      '<div style="flex:1"><div style="font-size:13px;font-weight:700">' + t.icon + ' ' + ev.titulo + '</div>' +
+        '<div style="font-size:11px;color:var(--lm)">' + (ev.cli?ev.cli+' · ':'') + ev.end + '</div>' +
+        (ev.obs?'<div style="font-size:10px;color:var(--lm);margin-top:2px">' + ev.obs + '</div>':'') +
+        '<div style="margin-top:4px;display:flex;gap:6px;align-items:center">' +
+          (isA()?'<span style="font-size:10px;background:#f1f5f9;padding:1px 7px;border-radius:8px">' + ev.cor + '</span>':'') +
+          sBadge(ev.st) +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:4px">' +
+        '<button class="btn btn-sm btn-blue" onclick="eEvento(' + realIdx + ')">✏️</button>' +
+        '<button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5" onclick="delEvento(' + realIdx + ')">✕</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  var hojeHtml = evsHoje.length ? evsHoje.map(evCard).join('') : '<div style="text-align:center;padding:20px;color:var(--lm);font-size:13px">Nenhum evento hoje</div>';
+  var amanhaHtml = evsAmanha.length ? evsAmanha.map(evCard).join('') : '<div style="text-align:center;padding:12px;color:var(--lm);font-size:12px">Nenhum evento amanha</div>';
+
+  // Proximos eventos
+  var proximos = meusEv.filter(function(ev){ return ev.dt > hoje_str && ev.dt !== amanha_str; })
+    .sort(function(a,b){ return a.dt.localeCompare(b.dt) || a.hr.localeCompare(b.hr); }).slice(0,8);
+
+  document.getElementById('pc').innerHTML =
+    '<div class="g3" style="margin-bottom:14px">' +
+      '<div class="kc blue"><div class="kc-l">Eventos Hoje</div><div class="kc-v">' + evsHoje.length + '</div></div>' +
+      '<div class="kc warn"><div class="kc-l">Esta Semana</div><div class="kc-v">' + meusEv.filter(function(ev){ var d=new Date(ev.dt);var s=new Date(hoje);s.setDate(s.getDate()-s.getDay());var e=new Date(s);e.setDate(s.getDate()+6);return d>=s&&d<=e; }).length + '</div></div>' +
+      '<div class="kc green"><div class="kc-l">Este Mes</div><div class="kc-v">' + meusEv.filter(function(ev){ return ev.dt && ev.dt.slice(0,7) === hoje_str.slice(0,7); }).length + '</div></div>' +
+    '</div>' +
+    '<div class="card" style="margin-bottom:14px"><div class="chd"><h3>Calendario — ' + meses[hoje.getMonth()] + ' ' + hoje.getFullYear() + '</h3></div><div class="cbd">' + calHtml + '</div></div>' +
+    '<div class="g2">' +
+      '<div><div class="card"><div class="chd"><h3>📅 Hoje — ' + hoje.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}) + '</h3></div><div class="cbd">' + hojeHtml + '</div></div>' +
+      '<div class="card"><div class="chd"><h3>📅 Amanha</h3></div><div class="cbd">' + amanhaHtml + '</div></div></div>' +
+      '<div class="card"><div class="chd"><h3>Proximos Eventos</h3></div><div class="cbd">' +
+        (proximos.length ? proximos.map(function(ev){
+          var t=AG_TIPOS[ev.tipo]||AG_TIPOS['Outro'];
+          return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--lb)">' +
+            '<div style="font-size:16px">' + t.icon + '</div>' +
+            '<div style="flex:1"><div style="font-size:12px;font-weight:700">' + ev.titulo + '</div>' +
+            '<div style="font-size:10px;color:var(--lm)">' + new Date(ev.dt+'T12:00').toLocaleDateString('pt-BR',{day:'numeric',month:'short'}) + ' ' + ev.hr + ' · ' + ev.cor + '</div></div>' +
+            '<div style="width:6px;height:6px;border-radius:50%;background:' + t.cor + '"></div>' +
+          '</div>';
+        }).join('') : '<div style="text-align:center;padding:20px;color:var(--lm)">Sem proximos eventos</div>') +
+      '</div></div>' +
+    '</div>';
+}
+
+function verDia(dStr){
+  var nomeU = U ? U.nome : '';
+  var evsDia = (isA() ? agD : agD.filter(function(ev){ return ev.cor===nomeU; })).filter(function(ev){ return ev.dt===dStr; }).sort(function(a,b){ return a.hr.localeCompare(b.hr); });
+  var dtFmt = new Date(dStr+'T12:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  var html = evsDia.length ? evsDia.map(function(ev){
+    var t=AG_TIPOS[ev.tipo]||AG_TIPOS['Outro'];
+    var realIdx=agD.indexOf(ev);
+    return '<div style="padding:10px;border-left:4px solid '+t.cor+';background:#f9fafb;border-radius:0 8px 8px 0;margin-bottom:8px">' +
+      '<div style="font-weight:700">'+t.icon+' '+ev.titulo+'</div>' +
+      '<div style="font-size:11px;color:var(--lm)">'+ev.hr+(ev.fim?' — '+ev.fim:'')+(ev.cli?' | '+ev.cli:'')+'</div>' +
+      '<div style="font-size:11px;color:var(--lm)">'+ev.end+'</div>' +
+      (ev.obs?'<div style="font-size:11px;color:var(--lm)">'+ev.obs+'</div>':'')+
+      '<div style="margin-top:6px;display:flex;gap:6px">'+
+        '<button class="btn btn-sm btn-blue" onclick="cM();eEvento('+realIdx+')">Editar</button>' +
+      '</div></div>';
+  }).join('') : '<div style="text-align:center;padding:20px;color:var(--lm)">Nenhum evento neste dia</div>';
+  oM(dtFmt, html + '<div style="margin-top:10px"><button class="btn btn-primary" onclick="cM();nEventoDia(\''+dStr+'\')">+ Adicionar evento neste dia</button></div>', null, null, true);
+}
+
+function nEventoDia(dStr){ cM(); nEvento(dStr); }
+
+function nEvento(dtPre){
+  var tipoOpts = Object.keys(AG_TIPOS).map(function(t){ return '<option>'+t+'</option>'; }).join('');
+  var lemOpts = '<option value="15">15 min antes</option><option value="30" selected>30 min antes</option><option value="60">1 hora antes</option><option value="120">2 horas antes</option><option value="1440">1 dia antes</option>';
+  oM('+ Novo Evento',
+    '<div class="fg3">' +
+      '<div class="fg"><label>Data</label><input type="date" id="ne-d" value="'+(dtPre||new Date().toISOString().slice(0,10))+'"></div>' +
+      '<div class="fg"><label>Hora inicio</label><input type="time" id="ne-h" value="09:00"></div>' +
+      '<div class="fg"><label>Hora fim</label><input type="time" id="ne-f" value="10:00"></div>' +
+    '</div>' +
+    '<div class="fg"><label>Titulo do Evento</label><input id="ne-t" placeholder="Ex: Visita - Casa Centro"></div>' +
+    '<div class="fg2">' +
+      '<div class="fg"><label>Tipo</label><select id="ne-tp">'+tipoOpts+'</select></div>' +
+      '<div class="fg"><label>Status</label><select id="ne-s"><option>Agendado</option><option>Confirmado</option><option>Realizado</option><option>Cancelado</option></select></div>' +
+    '</div>' +
+    '<div class="fg2">' +
+      '<div class="fg"><label>Corretor</label><select id="ne-c">'+corrSel(U?U.nome:'')+'</select></div>' +
+      '<div class="fg"><label>Lembrete</label><select id="ne-lem">'+lemOpts+'</select></div>' +
+    '</div>' +
+    '<div class="fg2">' +
+      '<div class="fg"><label>Cliente</label><input id="ne-cl" placeholder="Nome do cliente"></div>' +
+      '<div class="fg"><label>Endereco</label><input id="ne-e" placeholder="Local do evento"></div>' +
+    '</div>' +
+    '<div class="fg"><label>Observacao</label><textarea id="ne-o" placeholder="Detalhes adicionais..."></textarea></div>',
+    function(){
+      var titulo = document.getElementById('ne-t').value.trim();
+      if(!titulo){ alert('Informe o titulo.'); return; }
+      agD.unshift({
+        id: agNextId++,
+        dt: document.getElementById('ne-d').value,
+        hr: document.getElementById('ne-h').value||'09:00',
+        fim: document.getElementById('ne-f').value||'10:00',
+        titulo: titulo,
+        tipo: document.getElementById('ne-tp').value,
+        cor: document.getElementById('ne-c').value,
+        st: document.getElementById('ne-s').value,
+        lembrete: parseInt(document.getElementById('ne-lem').value)||30,
+        cli: document.getElementById('ne-cl').value||'',
+        end: document.getElementById('ne-e').value||'',
+        obs: document.getElementById('ne-o').value||''
+      });
+      cM(); salvarTudo(); pAgenda();
+    }, 'Salvar Evento');
+}
+
+function eEvento(i){
+  var ev = agD[i];
+  if(!ev) return;
+  var tipoOpts = Object.keys(AG_TIPOS).map(function(t){ return '<option'+(t===ev.tipo?' selected':'')+'>'+t+'</option>'; }).join('');
+  var lemOpts = [15,30,60,120,1440].map(function(v){ return '<option value="'+v+'"'+(v===(ev.lembrete||30)?' selected':'')+'>'+({15:'15 min',30:'30 min',60:'1 hora',120:'2 horas',1440:'1 dia'}[v]||v+' min')+'</option>'; }).join('');
+  oM('Editar Evento — '+ev.titulo,
+    '<div class="fg3">' +
+      '<div class="fg"><label>Data</label><input type="date" id="ee-d" value="'+ev.dt+'"></div>' +
+      '<div class="fg"><label>Hora inicio</label><input type="time" id="ee-h" value="'+ev.hr+'"></div>' +
+      '<div class="fg"><label>Hora fim</label><input type="time" id="ee-f" value="'+(ev.fim||'')+'"></div>' +
+    '</div>' +
+    '<div class="fg"><label>Titulo</label><input id="ee-t" value="'+ev.titulo+'"></div>' +
+    '<div class="fg2">' +
+      '<div class="fg"><label>Tipo</label><select id="ee-tp">'+tipoOpts+'</select></div>' +
+      '<div class="fg"><label>Status</label><select id="ee-s"><option>Agendado</option><option>Confirmado</option><option>Realizado</option><option>Cancelado</option></select></div>' +
+    '</div>' +
+    '<div class="fg2">' +
+      '<div class="fg"><label>Corretor</label><select id="ee-c">'+corrSel(ev.cor)+'</select></div>' +
+      '<div class="fg"><label>Lembrete</label><select id="ee-lem">'+lemOpts+'</select></div>' +
+    '</div>' +
+    '<div class="fg2">' +
+      '<div class="fg"><label>Cliente</label><input id="ee-cl" value="'+(ev.cli||'')+'"></div>' +
+      '<div class="fg"><label>Endereco</label><input id="ee-e" value="'+(ev.end||'')+'"></div>' +
+    '</div>' +
+    '<div class="fg"><label>Observacao</label><textarea id="ee-o">'+(ev.obs||'')+'</textarea></div>',
+    function(){
+      agD[i].dt=document.getElementById('ee-d').value;
+      agD[i].hr=document.getElementById('ee-h').value;
+      agD[i].fim=document.getElementById('ee-f').value;
+      agD[i].titulo=document.getElementById('ee-t').value;
+      agD[i].tipo=document.getElementById('ee-tp').value;
+      agD[i].st=document.getElementById('ee-s').value;
+      agD[i].cor=document.getElementById('ee-c').value;
+      agD[i].lembrete=parseInt(document.getElementById('ee-lem').value)||30;
+      agD[i].cli=document.getElementById('ee-cl').value;
+      agD[i].end=document.getElementById('ee-e').value;
+      agD[i].obs=document.getElementById('ee-o').value;
+      cM(); salvarTudo(); pAgenda();
+    }, 'Salvar');
+  setTimeout(function(){ document.getElementById('ee-s').value=ev.st; }, 50);
+}
+
+function delEvento(i){
+  excluirComSenha('Evento — '+agD[i].titulo, 'Remover evento <b>'+agD[i].titulo+'</b> do dia '+agD[i].dt,
+    function(){ agD.splice(i,1); salvarTudo(); pAgenda(); });
+}
+
+
 function pVis(){
   document.getElementById('pa').innerHTML='<button class="btn btn-red" onclick="nVis()">+ Agendar</button>';
   var r=''; vD.forEach(function(v,i){

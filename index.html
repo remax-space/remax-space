@@ -1906,7 +1906,7 @@ function pGerenciarSenhas(){
       '<td style="font-weight:700">'+usr.nome+'</td>'+
       '<td><span class="badge bb" style="font-size:9px">'+usr.role+'</span></td>'+
       '<td><input type="password" id="pw-'+u+'" placeholder="Nova senha..." style="width:140px;padding:5px 8px;border:1px solid var(--lb);border-radius:6px;font-size:12px"></td>'+
-      '<td><button class="btn btn-sm btn-primary" onclick="salvarSenhaUser(''+u+'')">Salvar</button></td>'+
+      '<td><button class="btn btn-sm btn-primary" onclick="salvarSenhaUser(\'+u+\')">Salvar</button></td>'+
     '</tr>';
   }).join('');
   

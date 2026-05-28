@@ -919,7 +919,7 @@ function msgCobranca(i){
       '<div style="font-size:11px;font-weight:700;color:var(--lm);margin-bottom:8px">'+m.label+'</div>'+
       '<div style="background:#fff;border:1px solid var(--lb);border-radius:8px;padding:10px;font-size:12px;line-height:1.7;white-space:pre-wrap;font-family:monospace;max-height:120px;overflow-y:auto">'+m.txt+'</div>'+
       '<div style="display:flex;gap:8px;margin-top:8px">'+
-        '<button class="btn btn-sm btn-blue" onclick="copiarMsg('+idx+','cob-msg-'+idx+'')">📋 Copiar</button>'+
+        '<button class="btn btn-sm btn-blue" onclick="copiarMsgIdx('+idx+')">📋 Copiar</button>'+
         '<a href="https://wa.me/55'+c.inq_tel+'" target="_blank" class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366;text-decoration:none">📱 Abrir WhatsApp</a>'+
       '</div>'+
       '<div id="cob-msg-'+idx+'" style="display:none">'+m.txt+'</div>'+
@@ -936,6 +936,19 @@ function msgCobranca(i){
   );
 }
 
+function copiarMsgIdx(idx){
+  var el=document.getElementById('cob-msg-'+idx);
+  if(!el) return;
+  var txt=el.textContent;
+  navigator.clipboard.writeText(txt).then(function(){
+    alert('Mensagem copiada!');
+  }).catch(function(){
+    var ta=document.createElement('textarea');
+    ta.value=txt; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    alert('Mensagem copiada!');
+  });
+}
 function copiarMsg(idx, btnOrId){
   var el=typeof btnOrId==='string'?document.getElementById(btnOrId):btnOrId.parentElement.parentElement.querySelector('[id^="cob-msg"]');
   if(!el) el=document.getElementById('cob-msg-'+idx);

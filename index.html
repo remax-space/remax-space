@@ -936,8 +936,9 @@ function msgCobranca(i){
   );
 }
 
-function copiarMsg(idx, id){
-  var el=document.getElementById(id);
+function copiarMsg(idx, btnOrId){
+  var el=typeof btnOrId==='string'?document.getElementById(btnOrId):btnOrId.parentElement.parentElement.querySelector('[id^="cob-msg"]');
+  if(!el) el=document.getElementById('cob-msg-'+idx);
   if(!el) return;
   var txt=el.textContent;
   navigator.clipboard.writeText(txt).then(function(){

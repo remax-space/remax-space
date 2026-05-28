@@ -4538,18 +4538,20 @@ async function uploadMultiplosFotos(files, ivId){
 function mostrarFotosImovel(iv){
   var fotos = iv.foto_urls || (iv.foto_url ? [iv.foto_url] : []);
   if(!fotos.length) return '<div style="background:#f1f5f9;border-radius:8px;height:120px;display:flex;align-items:center;justify-content:center;color:var(--lm);font-size:12px">Sem fotos cadastradas</div>';
+  var ivId = iv.id;
   return '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
     fotos.map(function(url, idx){
       return '<div style="position:relative">' +
-        '<img src="'+url+'" style="width:100px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--lb)" onerror="this.style.display='none'">' +
-        '<div style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:#fff" onclick="removerFoto('+JSON.stringify(iv.id)+','+idx+')">✕</div>' +
+        '<img src="'+url+'" style="width:100px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--lb)" onerror="this.style.visibility='hidden'">' +
+        '<div style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:#fff" data-id="'+ivId+'" data-idx="'+idx+'" onclick="removerFoto(this.dataset.id,this.dataset.idx)">x</div>' +
       '</div>';
     }).join('') +
   '</div>';
 }
 
 function removerFoto(ivId, idx){
-  var iv = ivD.find(function(i){ return i.id===ivId; });
+  ivId=parseInt(ivId)||ivId; idx=parseInt(idx);
+  var iv = ivD.find(function(i){ return i.id===ivId||String(i.id)===String(ivId); });
   if(!iv) return;
   if(!iv.foto_urls) iv.foto_urls = iv.foto_url ? [iv.foto_url] : [];
   iv.foto_urls.splice(idx, 1);

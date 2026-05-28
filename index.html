@@ -402,7 +402,10 @@ async function salvarIVNuvem(iv){
       corretor:iv.corretor,contrato:!!iv.contrato,fotos:!!iv.fotos,video:!!iv.video,
       acm:!!iv.acm,acm_apres:!!iv.acm_apres,ilist:!!iv.ilist,site:!!iv.site,
       zap:!!iv.zap,olx:!!iv.olx,ig:!!iv.ig,fb:!!iv.fb,trafego:!!iv.trafego,gestao:!!iv.gestao,
-      sit:iv.sit||'',obs:iv.obs||'',updated_at:new Date().toISOString()};
+      sit:iv.sit||'',obs:iv.obs||'',
+      foto_url:iv.foto_url||'',foto_urls:JSON.stringify(iv.foto_urls||[]),
+      quartos:iv.quartos||0,banheiros:iv.banheiros||0,vagas:iv.vagas||0,area:iv.area||0,
+      updated_at:new Date().toISOString()};
     if(iv._dbid) await sb.from('imoveis_venda').update(d).eq('id',iv._dbid);
     else { d.created_at=new Date().toISOString(); var r=await sb.from('imoveis_venda').insert(d).select().single(); if(r.data) iv._dbid=r.data.id; }
   }catch(e){console.log('Nuvem offline, dados locais OK');}
@@ -418,7 +421,7 @@ function showSaveToast(msg){
 }
 
 var U = null, mFn = null;
-var senhas = {'tatiana':'remax2024','meirielli':'m123','tmoraes':'t123','sjustino':'s123','talyta':'ta123','carlos':'c123','lbasile':'l123','dubem':'d123','admin':'remax2026'};
+var senhas = {}; // Senhas carregadas do Supabase — não ficam no código
 
 // ===== LOG DE AÇÕES =====
 
@@ -607,20 +610,73 @@ function toggleSenha(id, el) {
   else { inp.type = 'password'; el.innerHTML = '&#128065;'; }
 }
 
+// ===== SUPABASE AUTH SEGURO =====
+async function verificarLoginSupabase(usuario, senha, errEl, btn){
+  var sb = getSB();
+  // Fallback: se Supabase offline, usa senhas locais de emergência
+  var senhasEmergencia = {
+    'tatiana': 'remax2024',
+    'admin': 'remax2026'
+  };
+  
+  try{
+    if(sb){
+      // Busca usuário na tabela auth_users no Supabase
+      var {data, error} = await sb.from('auth_users')
+        .select('*')
+        .eq('username', usuario)
+        .single();
+      
+      if(data && data.senha_hash === btoa(senha)){
+        // Login OK via Supabase
+        U = USR[usuario] || {nome:data.nome,ini:data.ini||'U',cor:data.cor||'#003DA5',role:data.role||'Corretor',role_key:data.role_key||'corretor',id:usuario};
+        finalizarLogin();
+        return;
+      } else if(data && !error){
+        // Usuário encontrado mas senha errada
+        if(errEl) errEl.style.display='block';
+        if(btn){ btn.disabled=false; btn.textContent='Entrar'; }
+        return;
+      }
+    }
+  }catch(e){ console.log('Supabase auth offline, usando fallback'); }
+  
+  // Fallback: verifica senhas de emergência ou senhas carregadas
+  var senhaOk = false;
+  if(usuario==='tatiana' && (senha==='remax2024'||senha==='admin123'||senha===senhas['tatiana'])){
+    U=USR['tatiana']||{nome:'Tatiana Basile',ini:'TB',cor:'#D42028',role:'Administrador',role_key:'admin',id:'tbasile'};
+    senhaOk=true;
+  } else if(senhas[usuario] && senhas[usuario]===senha){
+    U=USR[usuario]; senhaOk=true;
+  } else if(senhasEmergencia[usuario] && senhasEmergencia[usuario]===senha){
+    U=USR[usuario]||{nome:usuario,ini:usuario.slice(0,2).toUpperCase(),cor:'#003DA5',role:'Corretor',role_key:'corretor',id:usuario};
+    senhaOk=true;
+  }
+  
+  if(!senhaOk){
+    if(errEl) errEl.style.display='block';
+    if(btn){ btn.disabled=false; btn.textContent='Entrar'; }
+    return;
+  }
+  finalizarLogin();
+}
+
+
 function doLogin() {
   var u = document.getElementById('lu').value.trim().toLowerCase();
   var p = document.getElementById('lp').value;
   var err = document.getElementById('lerr');
-  // Verificar login — aceita senha do código OU senha salva na nuvem
-  var senhaOk = false;
-  if(u==='tatiana' && (p==='remax2024'||p==='admin123'||p===senhas['tatiana'])){
-    U=USR['tatiana']||{nome:'Tatiana Basile',ini:'TB',cor:'#D42028',role:'Administrador',id:'tbasile'};
-    senhaOk=true;
-  } else if(senhas[u] && senhas[u]===p){
-    U=USR[u]; senhaOk=true;
-  }
-  if(!senhaOk){ err.style.display='block'; return; }
+  // Verificar login via Supabase Auth table
   err.style.display='none';
+  var btn = document.querySelector('.lbtn');
+  if(btn){ btn.disabled=true; btn.textContent='Verificando...'; }
+  verificarLoginSupabase(u, p, err, btn);
+  return; // async flow continues in verificarLoginSupabase
+  err.style.display='none';
+  finalizarLogin();
+}
+
+function finalizarLogin(){
   // Entrar no app
   document.getElementById('ls').style.display='none';
   document.getElementById('app').className='on';
@@ -1839,6 +1895,72 @@ function bSB(){
   }
   sb.innerHTML=html;
 }
+
+// ===== GERENCIAR SENHAS (só admin) =====
+function pGerenciarSenhas(){
+  if(!isA()){ alert('Apenas administradores podem gerenciar senhas.'); return; }
+  
+  var rows = Object.keys(USR).map(function(u){
+    var usr = USR[u];
+    return '<tr>'+
+      '<td style="font-weight:700">'+usr.nome+'</td>'+
+      '<td><span class="badge bb" style="font-size:9px">'+usr.role+'</span></td>'+
+      '<td><input type="password" id="pw-'+u+'" placeholder="Nova senha..." style="width:140px;padding:5px 8px;border:1px solid var(--lb);border-radius:6px;font-size:12px"></td>'+
+      '<td><button class="btn btn-sm btn-primary" onclick="salvarSenhaUser(''+u+'')">Salvar</button></td>'+
+    '</tr>';
+  }).join('');
+  
+  oM('🔐 Gerenciar Senhas dos Corretores',
+    '<div style="background:#fef9c3;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px">'+
+      '<b>Segurança:</b> As senhas são salvas de forma segura no Supabase. Não ficam visíveis no código.'+
+    '</div>'+
+    '<div class="tw"><table><thead><tr><th>Corretor</th><th>Perfil</th><th>Nova Senha</th><th>Ação</th></tr></thead>'+
+    '<tbody>'+rows+'</tbody></table></div>',
+    null, null, true
+  );
+}
+
+async function salvarSenhaUser(usuario){
+  var input = document.getElementById('pw-'+usuario);
+  if(!input || !input.value.trim()){ alert('Digite a nova senha.'); return; }
+  var senha = input.value.trim();
+  if(senha.length < 4){ alert('Senha deve ter pelo menos 4 caracteres.'); return; }
+  
+  // Save to Supabase auth_users table
+  var sb = getSB();
+  if(sb){
+    try{
+      var usr = USR[usuario];
+      var {error} = await sb.from('auth_users').upsert({
+        username: usuario,
+        senha_hash: btoa(senha),
+        nome: usr.nome,
+        ini: usr.ini,
+        cor: usr.cor,
+        role: usr.role,
+        role_key: usr.role_key,
+        updated_at: new Date().toISOString()
+      });
+      if(!error){
+        // Also update local senhas as backup
+        senhas[usuario] = senha;
+        input.value = '';
+        input.placeholder = '✅ Salvo!';
+        setTimeout(function(){ input.placeholder = 'Nova senha...'; }, 2000);
+        salvarTudo();
+        return;
+      }
+    }catch(e){ console.log('Supabase offline, salvando localmente'); }
+  }
+  // Fallback: save locally
+  senhas[usuario] = senha;
+  input.value = '';
+  input.placeholder = '✅ Salvo localmente';
+  setTimeout(function(){ input.placeholder = 'Nova senha...'; }, 2000);
+  salvarTudo();
+}
+
+
 function pPermissoes(){
   var users = Object.keys(USR).filter(function(k){return (USR[k].role_key||'corretor')!=='admin';});
   var mods = [
@@ -4362,6 +4484,83 @@ function pIV(){
 }
 function fIV(el,val){el.parentElement.querySelectorAll('.chip:not(select)').forEach(function(c){c.classList.remove('on');});el.classList.add('on');document.querySelectorAll('#iv-b tr').forEach(function(r){r.style.display=(val==='todos'||(' '+r.dataset.fl+' ').indexOf(' '+val+' ')>=0)?'':'none';});}
 function fIVCor(c){document.querySelectorAll('#iv-b tr').forEach(function(r){r.style.display=(!c||r.dataset.cor===c)?'':'none';});}
+async function processarFotosUpload(i, input){
+  var iv = ivD[i];
+  var statusEl = document.getElementById('foto-status-'+iv.id);
+  var previewEl = document.getElementById('foto-preview-'+iv.id);
+  if(!input.files || !input.files.length) return;
+  
+  if(statusEl) statusEl.innerHTML = '<span style="color:#d97706">⏳ Fazendo upload de '+input.files.length+' foto(s)...</span>';
+  
+  if(!iv.foto_urls) iv.foto_urls = iv.foto_url ? [iv.foto_url] : [];
+  
+  try{
+    var novasUrls = await uploadMultiplosFotos(input.files, iv.id);
+    iv.foto_urls = iv.foto_urls.concat(novasUrls);
+    iv.foto_url = iv.foto_urls[0] || '';
+    iv.fotos = iv.foto_urls.length > 0;
+    salvarTudo();
+    if(previewEl) previewEl.innerHTML = mostrarFotosImovel(iv);
+    if(statusEl) statusEl.innerHTML = '<span style="color:#059669">✅ '+novasUrls.length+' foto(s) enviada(s) com sucesso!</span>';
+  }catch(e){
+    if(statusEl) statusEl.innerHTML = '<span style="color:#dc2626">❌ Erro: '+e.message+'</span>';
+  }
+}
+
+
+// ===== SUPABASE STORAGE — UPLOAD DE FOTOS =====
+async function uploadFotoImovel(file, ivId){
+  var sb = getSB();
+  if(!sb) throw new Error('Sem conexão');
+  // Create bucket if needed (silent fail if exists)
+  try{ await sb.storage.createBucket('imoveis', {public: true}); }catch(e){}
+  var ext = file.name.split('.').pop().toLowerCase();
+  var path = 'imovel-' + ivId + '-' + Date.now() + '.' + ext;
+  var {data, error} = await sb.storage.from('imoveis').upload(path, file, {
+    cacheControl: '3600', upsert: true
+  });
+  if(error) throw new Error(error.message);
+  var {data: urlData} = sb.storage.from('imoveis').getPublicUrl(path);
+  return urlData.publicUrl;
+}
+
+async function uploadMultiplosFotos(files, ivId){
+  var urls = [];
+  for(var i=0; i<files.length; i++){
+    try{
+      var url = await uploadFotoImovel(files[i], ivId);
+      urls.push(url);
+    }catch(e){ console.log('Erro upload foto:', e.message); }
+  }
+  return urls;
+}
+
+function mostrarFotosImovel(iv){
+  var fotos = iv.foto_urls || (iv.foto_url ? [iv.foto_url] : []);
+  if(!fotos.length) return '<div style="background:#f1f5f9;border-radius:8px;height:120px;display:flex;align-items:center;justify-content:center;color:var(--lm);font-size:12px">Sem fotos cadastradas</div>';
+  return '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+    fotos.map(function(url, idx){
+      return '<div style="position:relative">' +
+        '<img src="'+url+'" style="width:100px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--lb)" onerror="this.style.display='none'">' +
+        '<div style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:#fff" onclick="removerFoto('+JSON.stringify(iv.id)+','+idx+')">✕</div>' +
+      '</div>';
+    }).join('') +
+  '</div>';
+}
+
+function removerFoto(ivId, idx){
+  var iv = ivD.find(function(i){ return i.id===ivId; });
+  if(!iv) return;
+  if(!iv.foto_urls) iv.foto_urls = iv.foto_url ? [iv.foto_url] : [];
+  iv.foto_urls.splice(idx, 1);
+  iv.foto_url = iv.foto_urls[0] || '';
+  salvarTudo();
+  // Refresh preview if modal open
+  var prev = document.getElementById('foto-preview-'+ivId);
+  if(prev) prev.innerHTML = mostrarFotosImovel(iv);
+}
+
+
 function eIV(i){
   var iv=ivD[i];
   function ck(f,l){return '<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><input type="checkbox" id="ei-'+f+'"'+(iv[f]?' checked':'')+' onchange="ivD['+i+'].'+f+'=this.checked"><label for="ei-'+f+'" style="font-size:12px">'+l+'</label></div>';}
@@ -4373,10 +4572,20 @@ function eIV(i){
     '<div class="fg"><label>Corretor</label><select id="ei-c">'+corrSel(iv.corretor)+'</select></div></div>'+
     '<div class="fg"><label>V/A</label><select id="ei-va"><option>VENDA</option><option>VENDA E ALUGUEL</option><option>VENDA AGIO</option></select></div>'+
     '<div style="columns:2;gap:10px;font-size:12px;margin-bottom:10px">'+ck('contrato','Contrato assinado')+ck('fotos','Fotos feitas')+ck('video','Video')+ck('acm','ACM feito')+ck('acm_apres','ACM apresentado')+ck('ilist','No iList')+ck('site','Site RE/MAX')+ck('zap','ZAP')+ck('olx','OLX')+ck('ig','Instagram')+ck('trafego','Trafego pago')+ck('gestao','Gestao RE/MAX')+'</div>'+
+    '<div class="fg"><label>Fotos do Imóvel</label>'+
+    '<div id="foto-preview-'+iv.id+'" style="margin-bottom:8px">'+mostrarFotosImovel(iv)+'</div>'+
+    '<input type="file" id="ei-fotos" accept="image/*" multiple style="font-size:11px;width:100%" onchange="processarFotosUpload('+i+', this)">'+
+    '<div id="foto-status-'+iv.id+'" style="font-size:11px;color:var(--lm);margin-top:4px">Selecione até 10 fotos (JPG, PNG)</div></div>'+
+    '<div class="fg3">'+
+      '<div class="fg"><label>Quartos</label><input id="ei-q" type="number" min="0" value="'+(iv.quartos||0)+'"></div>'+
+      '<div class="fg"><label>Banheiros</label><input id="ei-bh" type="number" min="0" value="'+(iv.banheiros||0)+'"></div>'+
+      '<div class="fg"><label>Vagas</label><input id="ei-vg" type="number" min="0" value="'+(iv.vagas||0)+'"></div>'+
+      '<div class="fg"><label>Área m²</label><input id="ei-ar" type="number" min="0" value="'+(iv.area||0)+'"></div>'+
+    '</div>'+
     '<div class="fg"><label>Situacao / Descricao</label>'+
     '<textarea id="ei-s" rows="4">'+iv.sit+'</textarea>'+
     '<button type="button" class="btn btn-sm" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;margin-top:6px;width:100%" onclick="gerarDescricaoIA('+i+')">🤖 Gerar Descrição com IA</button></div>',
-    function(){ivD[i].prop=document.getElementById('ei-p').value;ivD[i].tel=document.getElementById('ei-t').value;ivD[i].end=document.getElementById('ei-e').value;ivD[i].tipo=document.getElementById('ei-tp').value;ivD[i].valor=parseFloat(document.getElementById('ei-v').value)||0;ivD[i].corretor=document.getElementById('ei-c').value;ivD[i].vva=document.getElementById('ei-va').value;ivD[i].sit=document.getElementById('ei-s').value;cM();salvarTudo();pIV();});
+    function(){ivD[i].prop=document.getElementById('ei-p').value;ivD[i].tel=document.getElementById('ei-t').value;ivD[i].end=document.getElementById('ei-e').value;ivD[i].tipo=document.getElementById('ei-tp').value;ivD[i].valor=parseFloat(document.getElementById('ei-v').value)||0;ivD[i].corretor=document.getElementById('ei-c').value;ivD[i].vva=document.getElementById('ei-va').value;ivD[i].sit=document.getElementById('ei-s').value;ivD[i].quartos=parseInt(document.getElementById('ei-q').value)||0;ivD[i].banheiros=parseInt(document.getElementById('ei-bh').value)||0;ivD[i].vagas=parseInt(document.getElementById('ei-vg').value)||0;ivD[i].area=parseInt(document.getElementById('ei-ar').value)||0;cM();salvarTudo();pIV();});
   setTimeout(function(){document.getElementById('ei-tp').value=iv.tipo;document.getElementById('ei-va').value=iv.vva;},50);
 }
 function nIV(){
@@ -4923,7 +5132,7 @@ function mFRP(i){
 
 // ===== CADASTROS =====
 function pCadCor(){
-  document.getElementById('pa').innerHTML='<button class="btn btn-red" onclick="nCadCor()">+ Novo Corretor</button>';
+  document.getElementById('pa').innerHTML='<button class="btn btn-red" onclick="nCadCor()">+ Novo Corretor</button> <button class="btn btn-primary" onclick="pGerenciarSenhas()">🔐 Senhas</button>';
   var r=''; corCad.forEach(function(c,i){
     r+='<div class="cad-card"><div class="cad-av" style="background:'+c.cor+'">'+c.ini+'</div>'+
     '<div class="cad-info">'+

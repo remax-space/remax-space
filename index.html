@@ -4538,7 +4538,7 @@ function mostrarFotosImovel(iv){
   return '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
     fotos.map(function(url, idx){
       return '<div style="position:relative">' +
-        '<img src="'+url+'" style="width:100px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--lb)" onerror="this.style.visibility='hidden'">' +
+        '<img src="'+url+'" style="width:100px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--lb)">' +
         '<div style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:#fff" data-id="'+ivId+'" data-idx="'+idx+'" onclick="removerFoto(this.dataset.id,this.dataset.idx)">x</div>' +
       '</div>';
     }).join('') +

@@ -2828,7 +2828,7 @@ function delProsp(i){
   excluirComSenha('Prospecção — '+prD[i].cli,'Remover prospecção de <b>'+prD[i].cli+'</b>',function(){prD.splice(i,1);salvarTudo();pProsp();});
 }
 function nProsp(){
-  oM('Nova Prospeccao','<div class="fg3"><div class="fg"><label>Data</label><input type="date" id="np-d"></div><div class="fg"><label>Corretor</label><select id="np-c">'+corrSel()+'</select></div><div class="fg"><label>Canal</label><select id="np-ca"><option>Telefone</option><option>Pessoal</option><option>Redes Sociais</option><option>Outros</option></select></div></div><div class="fg2"><div class="fg"><label>Cliente</label><input id="np-cl"></div><div class="fg"><label>Tel</label><input id="np-t"></div></div><div class="fg"><label>Obs</label><textarea id="np-o"></textarea></div><div class="fg"><label>Status</label><select id="np-s"><option>Novo</option><option>Em contato</option><option>Agendado</option></select></div>',
+  oM('Nova Prospeccao','<div class="fg3"><div class="fg"><label>Data</label><input type="date" id="np-d"></div><div class="fg"><label>Corretor</label><select id="np-c">'+corrSel()+'</select></div><div class="fg"><label>Canal</label><select id="np-ca"><option>Telefone</option><option>Pessoal</option><option>Redes Sociais</option><option>Outros</option></select></div></div><div class="fg2"><div class="fg"><label>Cliente</label><input id="np-cl"></div><div class="fg"><label>Tel</label><input id="np-t"></div></div><div class="fg"><label>Obs</label><textarea id="np-o"></textarea></div><div class="fg"><label>Status</label><select id="np-s"><option>Novo</option><option>Em contato</option><option>Agendado</option><option>Proposta</option><option>Fechado</option><option>Finalizado</option><option>Perdido</option></select></div>',
   function(){var d=document.getElementById('np-d').value,a=d?d.split('-'):['','',''];prD.unshift({id:prD.length+1,dt:d?(a[2]+'/'+a[1]):'Hoje',cor:document.getElementById('np-c').value,canal:document.getElementById('np-ca').value,cli:document.getElementById('np-cl').value||'-',tel:document.getElementById('np-t').value||'-',obs:document.getElementById('np-o').value,st:document.getElementById('np-s').value});cM();salvarTudo();pProsp();});
 }
 function eProsp(i){var p=prD[i];oM('Editar','<div class="fg2"><div class="fg"><label>Cliente</label><input id="ep-c" value="'+p.cli+'"></div><div class="fg"><label>Tel</label><input id="ep-t" value="'+p.tel+'"></div></div><div class="fg"><label>Obs</label><textarea id="ep-o">'+p.obs+'</textarea></div><div class="fg"><label>Status</label><select id="ep-s"><option>Novo</option><option>Em contato</option><option>Agendado</option></select></div>',function(){prD[i].cli=document.getElementById('ep-c').value;prD[i].tel=document.getElementById('ep-t').value;prD[i].obs=document.getElementById('ep-o').value;prD[i].st=document.getElementById('ep-s').value;cM();salvarTudo();pProsp();});setTimeout(function(){document.getElementById('ep-s').value=p.st;},50);}
@@ -2978,6 +2978,7 @@ function pAgenda(){
       '</div>' +
       '<div style="display:flex;gap:4px">' +
         '<button class="btn btn-sm btn-blue" onclick="eEvento(' + realIdx + ')">✏️</button>' +
+        (ev.st !== 'Concluído' ? '<button class="btn btn-sm" style="background:#059669;color:#fff;border-color:#059669;font-size:10px;padding:3px 8px" onclick="concluirEvento(' + realIdx + ')">✓ OK</button>' : '<span style="background:#dcfce7;color:#166534;font-size:9px;padding:3px 8px;border-radius:8px;font-weight:700">✓ Feito</span>') +
         '<button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5" onclick="delEvento(' + realIdx + ')">✕</button>' +
       '</div>' +
     '</div>';
@@ -3121,6 +3122,13 @@ function eEvento(i){
   setTimeout(function(){ document.getElementById('ee-s').value=ev.st; }, 50);
 }
 
+function concluirEvento(i){
+  if(!agD[i]) return;
+  agD[i].st = 'Concluído';
+  salvarTudo();
+  pAgenda();
+}
+
 function delEvento(i){
   excluirComSenha('Evento — '+agD[i].titulo, 'Remover evento <b>'+agD[i].titulo+'</b> do dia '+agD[i].dt,
     function(){ agD.splice(i,1); salvarTudo(); pAgenda(); });
@@ -3140,56 +3148,301 @@ function eVis(i){var v=vD[i];oM('Editar Visita','<div class="fg2"><div class="fg
 
 // ===== ACM (editavel) =====
 function pAcm(){
-  document.getElementById('pa').innerHTML='<button class="btn btn-red" onclick="nAcm()">+ Novo ACM</button>';
-  var r=''; acmD.forEach(function(a,i){
-    r+='<tr>'+
-    '<td style="font-weight:600">'+a.im+'</td>'+
-    '<td><span class="badge bgr">'+a.tipo+'</span></td>'+
-    '<td>'+a.prop+'</td>'+
-    '<td>'+a.cor+'</td>'+
-    '<td>'+a.dt+'</td>'+
-    '<td id="av-'+i+'" style="font-weight:600;color:var(--navy)">'+( a.val||'-')+'</td>'+
-    '<td>'+(a.feito?'<span class="badge bg">Sim</span>':'<span class="badge br">Pendente</span>')+'</td>'+
-    '<td>'+(a.apres?'<span class="badge bg">Sim</span>':'<span class="badge bgr">Aguarda</span>')+'</td>'+
-    '<td id="ao-'+i+'" style="font-size:10.5px;color:var(--lm)">'+( a.obs||'-')+'</td>'+
-    '<td style="display:flex;gap:3px">'+
-    '<button class="btn btn-xs btn-blue" onclick="eAcm('+i+')">Editar</button>'+
-    '<button class="btn btn-xs btn-green" onclick="tAcm('+i+')">Avancar</button>'+
-    '</td></tr>';
-  });
+  document.getElementById('pa').innerHTML=
+    '<button class="btn btn-red" onclick="nAcm()">+ Novo ACM</button>';
+
+  var total=acmD.length;
+  var feitos=acmD.filter(function(a){return a.feito;}).length;
+  var apres=acmD.filter(function(a){return a.apres;}).length;
+
+  var rows=acmD.map(function(a,i){
+    return '<tr>'+
+      '<td style="font-weight:700">'+a.im+'</td>'+
+      '<td><span class="badge bgr" style="font-size:9px">'+a.tipo+'</span></td>'+
+      '<td style="font-size:11px">'+a.prop+'</td>'+
+      '<td style="font-size:11px">'+a.cor+'</td>'+
+      '<td style="font-size:11px">'+a.dt+'</td>'+
+      '<td style="font-weight:700;color:#059669">'+a.val+'</td>'+
+      '<td><span class="badge '+(a.feito?'bg':'br')+'">'+( a.feito?'✓ Sim':'✗ Não')+'</span></td>'+
+      '<td><span class="badge '+(a.apres?'bg':'by')+'">'+( a.apres?'✓ Apres.':'Pendente')+'</span></td>'+
+      '<td style="display:flex;gap:3px">'+
+        '<button class="btn btn-sm btn-blue" onclick="abrirACM('+i+')">📊 Abrir</button>'+
+        '<button class="btn btn-sm" style="background:#059669;color:#fff;border-color:#059669;font-size:10px" onclick="gerarPDFAcm('+i+')">PDF</button>'+
+      '</td>'+
+    '</tr>';
+  }).join('');
+
   document.getElementById('pc').innerHTML=
-    '<div class="card"><div class="tw"><table><thead><tr><th>Imovel</th><th>Tipo</th><th>Proprietario</th><th>Corretor</th><th>Data</th><th>Valor ACM</th><th>Feito</th><th>Apresentado</th><th>Obs</th><th>Acoes</th></tr></thead><tbody>'+r+'</tbody></table></div></div>';
-  acmD.forEach(function(a,i){
-    ied(document.getElementById('av-'+i), a.val||'', function(v){acmD[i].val=v;});
-    ied(document.getElementById('ao-'+i), a.obs||'', function(v){acmD[i].obs=v;});
-  });
+    '<div class="g3" style="margin-bottom:12px">'+
+      '<div class="kc blue"><div class="kc-l">Total ACMs</div><div class="kc-v">'+total+'</div></div>'+
+      '<div class="kc green"><div class="kc-l">Análises Feitas</div><div class="kc-v">'+feitos+'</div></div>'+
+      '<div class="kc gold"><div class="kc-l">Apresentados</div><div class="kc-v">'+apres+'</div></div>'+
+    '</div>'+
+    '<div class="card"><div class="tw"><table><thead><tr>'+
+      '<th>Imóvel</th><th>Tipo</th><th>Proprietário</th><th>Corretor</th><th>Data</th><th>Valor Sug.</th><th>ACM Feito</th><th>Apresentado</th><th>Ações</th>'+
+    '</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
-function tAcm(i){if(!acmD[i].feito)acmD[i].feito=true;else if(!acmD[i].apres)acmD[i].apres=true;pAcm();}
-function eAcm(i){
-  var a=acmD[i];
-  oM('Editar ACM','<div class="fg2"><div class="fg"><label>Imovel/Endereco</label><input id="ea-im" value="'+a.im+'"></div><div class="fg"><label>Tipo</label><select id="ea-tp"><option>CASA</option><option>APARTAMENTO</option><option>LOTE</option><option>CHACARA</option><option>FAZENDA</option><option>CHALE</option><option>FLAT</option></select></div></div><div class="fg2"><div class="fg"><label>Proprietario</label><input id="ea-pr" value="'+a.prop+'"></div><div class="fg"><label>Corretor</label><select id="ea-c">'+corrSel(a.cor)+'</select></div></div><div class="fg2"><div class="fg"><label>Data</label><input type="date" id="ea-d" value="'+a.dt+'"></div><div class="fg"><label>Valor sugerido</label><input id="ea-v" value="'+(a.val||'')+'"></div></div><div class="fg2"><div class="fg"><label>ACM feito?</label><select id="ea-f"><option>Sim</option><option>Nao</option></select></div><div class="fg"><label>Apresentado?</label><select id="ea-ap"><option>Sim</option><option>Nao</option></select></div></div><div class="fg"><label>Observacoes</label><textarea id="ea-o">'+( a.obs||'')+'</textarea></div>',
-  function(){
-    acmD[i].im=document.getElementById('ea-im').value;
-    acmD[i].tipo=document.getElementById('ea-tp').value;
-    acmD[i].prop=document.getElementById('ea-pr').value;
-    acmD[i].cor=document.getElementById('ea-c').value;
-    acmD[i].dt=document.getElementById('ea-d').value;
-    acmD[i].val=document.getElementById('ea-v').value;
-    acmD[i].feito=document.getElementById('ea-f').value==='Sim';
-    acmD[i].apres=document.getElementById('ea-ap').value==='Sim';
-    acmD[i].obs=document.getElementById('ea-o').value;
-    cM(); pAcm();
-  });
-  setTimeout(function(){
-    document.getElementById('ea-tp').value=a.tipo;
-    document.getElementById('ea-f').value=a.feito?'Sim':'Nao';
-    document.getElementById('ea-ap').value=a.apres?'Sim':'Nao';
-  },50);
-}
+
 function nAcm(){
-  acmD.push({id:acmD.length+1,im:'',tipo:'CASA',prop:'',cor:COR[0].nome,dt:'',val:'',feito:false,apres:false,obs:''});
-  eAcm(acmD.length-1);
+  // Pre-fill with imóveis da carteira
+  var ivOpts = ivD.map(function(iv){ 
+    return '<option value="'+iv.id+'">'+iv.tipo+' — '+iv.end.slice(0,30)+(iv.end.length>30?'...':'')+' ('+iv.prop+')</option>'; 
+  }).join('');
+  
+  oM('+ Novo ACM',
+    '<div class="fg"><label>Imóvel (da carteira)</label>'+
+      '<select id="na-iv" onchange="preencherACM()"><option value="">Selecione ou preencha manualmente...</option>'+ivOpts+'</select>'+
+    '</div>'+
+    '<div class="fg2">'+
+      '<div class="fg"><label>Nome do imóvel</label><input id="na-im" placeholder="Ex: Casa Orquideas 210"></div>'+
+      '<div class="fg"><label>Tipo</label><select id="na-tp"><option>CASA</option><option>APARTAMENTO</option><option>LOTE</option><option>CHACARA</option><option>FAZENDA</option><option>CHALE</option><option>FLAT</option><option>TERRENO</option></select></div>'+
+    '</div>'+
+    '<div class="fg2">'+
+      '<div class="fg"><label>Proprietário</label><input id="na-pr" placeholder="Nome do proprietário"></div>'+
+      '<div class="fg"><label>Corretor</label><select id="na-cor">'+corrSel(U?U.nome:'')+'</select></div>'+
+    '</div>'+
+    '<div class="fg"><label>Valor sugerido</label><input id="na-vl" placeholder="R$ 000.000,00"></div>'+
+    '<div class="fg"><label>Observação</label><textarea id="na-ob" rows="2"></textarea></div>',
+    function(){
+      var im=document.getElementById('na-im').value.trim();
+      if(!im){alert('Informe o imóvel.');return;}
+      acmD.unshift({
+        id:acmD.length+1,
+        im:im,
+        tipo:document.getElementById('na-tp').value,
+        prop:document.getElementById('na-pr').value||'—',
+        cor:document.getElementById('na-cor').value,
+        dt:new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}),
+        val:document.getElementById('na-vl').value||'A definir',
+        feito:false,apres:false,
+        obs:document.getElementById('na-ob').value||'',
+        amostras:[]
+      });
+      cM();salvarTudo();pAcm();
+    },'Salvar');
+  setTimeout(function(){ window.preencherACM=function(){ 
+    var sel=document.getElementById('na-iv');
+    var ivId=parseInt(sel.value);
+    if(!ivId) return;
+    var iv=ivD.find(function(x){return x.id===ivId;});
+    if(!iv) return;
+    document.getElementById('na-im').value=iv.tipo+' — '+iv.end;
+    document.getElementById('na-tp').value=iv.tipo;
+    document.getElementById('na-pr').value=iv.prop||'';
+    var corSel=document.getElementById('na-cor');
+    for(var i=0;i<corSel.options.length;i++){if(corSel.options[i].text===iv.corretor){corSel.selectedIndex=i;break;}}
+  };},100);
 }
+
+function abrirACM(i){
+  var a=acmD[i];
+  if(!a.amostras) a.amostras=[];
+  
+  // Auto-load samples from ivD — same type, similar location
+  var autoAmostras=ivD.filter(function(iv){
+    return iv.tipo===a.tipo && iv.id!==i && iv.valor>0;
+  }).slice(0,8).map(function(iv){
+    return {end:iv.end,tipo:iv.tipo,valor:iv.valor,area:iv.area||0,quartos:iv.quartos||0,fonte:'Carteira RE/MAX Space',ativo:true};
+  });
+
+  // Merge with manual samples
+  var todasAmostras=a.amostras.length>0?a.amostras:autoAmostras;
+  
+  // Stats
+  var vals=todasAmostras.filter(function(s){return s.ativo!==false&&s.valor>0;}).map(function(s){return Number(s.valor);});
+  var media=vals.length?Math.round(vals.reduce(function(s,v){return s+v;},0)/vals.length):0;
+  var min=vals.length?Math.min.apply(null,vals):0;
+  var max=vals.length?Math.max.apply(null,vals):0;
+  var mediana=vals.length?vals.slice().sort(function(a,b){return a-b;})[Math.floor(vals.length/2)]:0;
+
+  var amostrasHtml=todasAmostras.map(function(s,si){
+    return '<tr>'+
+      '<td style="font-size:11px">'+s.end+'</td>'+
+      '<td><span class="badge bgr" style="font-size:9px">'+s.tipo+'</span></td>'+
+      '<td style="text-align:right;font-weight:700;color:#059669">'+fmt(Number(s.valor)||0)+'</td>'+
+      '<td style="text-align:center;font-size:11px">'+(s.area||'—')+'</td>'+
+      '<td style="text-align:center;font-size:11px">'+(s.quartos||'—')+'</td>'+
+      '<td style="font-size:10px;color:var(--lm)">'+s.fonte+'</td>'+
+      '<td><input type="checkbox"'+(s.ativo!==false?' checked':'')+' onchange="acmD['+i+'].amostras['+ si +'].ativo=this.checked;abrirACM('+i+')"></td>'+
+    '</tr>';
+  }).join('');
+
+  oM('📊 ACM — '+a.im,
+    '<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">'+
+      '<div class="kc green" style="flex:1;min-width:120px"><div class="kc-l">Média</div><div class="kc-v" style="font-size:16px">'+fmt(media)+'</div></div>'+
+      '<div class="kc blue" style="flex:1;min-width:120px"><div class="kc-l">Mediana</div><div class="kc-v" style="font-size:16px">'+fmt(mediana)+'</div></div>'+
+      '<div class="kc" style="flex:1;min-width:120px;border-left:3px solid #059669"><div class="kc-l">Mínimo</div><div class="kc-v" style="font-size:16px">'+fmt(min)+'</div></div>'+
+      '<div class="kc" style="flex:1;min-width:120px;border-left:3px solid #dc2626"><div class="kc-l">Máximo</div><div class="kc-v" style="font-size:16px">'+fmt(max)+'</div></div>'+
+      '<div class="kc gold" style="flex:1;min-width:120px"><div class="kc-l">Amostras</div><div class="kc-v" style="font-size:16px">'+vals.length+'</div></div>'+
+    '</div>'+
+    '<div class="fg2" style="margin-bottom:12px">'+
+      '<div class="fg"><label>Valor Sugerido</label><input id="acm-val" value="'+a.val+'" onchange="acmD['+i+'].val=this.value"></div>'+
+      '<div style="display:flex;gap:8px;align-items:flex-end">'+
+        '<button class="btn btn-primary" onclick="acmD['+i+'].feito=true;acmD['+i+'].val=document.getElementById(\'acm-val\').value;salvarTudo();cM();pAcm()">✅ Marcar Feito</button>'+
+        '<button class="btn btn-primary" style="background:#059669" onclick="acmD['+i+'].apres=true;salvarTudo();cM();pAcm()">📋 Marcar Apresentado</button>'+
+        '<button class="btn btn-primary" style="background:#D42028" onclick="gerarPDFAcm('+i+')">🖨️ Gerar PDF</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="card" style="margin-bottom:12px">'+
+      '<div class="chd"><h3>Amostras Comparativas</h3>'+
+        '<button class="btn btn-sm btn-blue" onclick="adicionarAmostraACM('+i+')">+ Adicionar amostra manual</button>'+
+      '</div>'+
+      '<div class="tw"><table><thead><tr>'+
+        '<th>Endereço</th><th>Tipo</th><th>Valor</th><th>Área m²</th><th>Quartos</th><th>Fonte</th><th>Usar</th>'+
+      '</tr></thead><tbody>'+amostrasHtml+'</tbody></table></div>'+
+    '</div>',
+    function(){acmD[i].amostras=todasAmostras;salvarTudo();pAcm();},
+    'Salvar ACM', true
+  );
+  if(a.amostras.length===0) acmD[i].amostras=todasAmostras;
+}
+
+function adicionarAmostraACM(i){
+  oM('+ Adicionar Amostra',
+    '<div class="fg"><label>Endereço do comparável</label><input id="as-end" placeholder="Rua/Setor..."></div>'+
+    '<div class="fg2">'+
+      '<div class="fg"><label>Valor R$</label><input id="as-val" type="number" placeholder="0"></div>'+
+      '<div class="fg"><label>Fonte</label><select id="as-fonte"><option>ZAP Imóveis</option><option>OLX</option><option>Viva Real</option><option>Indicação</option><option>Venda anterior</option><option>Outro</option></select></div>'+
+    '</div>'+
+    '<div class="fg3">'+
+      '<div class="fg"><label>Área m²</label><input id="as-area" type="number" value="0"></div>'+
+      '<div class="fg"><label>Quartos</label><input id="as-q" type="number" value="0"></div>'+
+      '<div class="fg"><label>Tipo</label><select id="as-tp"><option>CASA</option><option>APARTAMENTO</option><option>LOTE</option><option>CHACARA</option><option>TERRENO</option></select></div>'+
+    '</div>',
+    function(){
+      if(!acmD[i].amostras) acmD[i].amostras=[];
+      acmD[i].amostras.push({
+        end:document.getElementById('as-end').value||'Não informado',
+        tipo:document.getElementById('as-tp').value,
+        valor:parseFloat(document.getElementById('as-val').value)||0,
+        area:parseInt(document.getElementById('as-area').value)||0,
+        quartos:parseInt(document.getElementById('as-q').value)||0,
+        fonte:document.getElementById('as-fonte').value,
+        ativo:true
+      });
+      cM();salvarTudo();abrirACM(i);
+    },'Adicionar');
+}
+
+function gerarPDFAcm(i){
+  var a=acmD[i];
+  var amostras=(a.amostras||[]).filter(function(s){return s.ativo!==false&&s.valor>0;});
+  var vals=amostras.map(function(s){return Number(s.valor);});
+  var media=vals.length?Math.round(vals.reduce(function(s,v){return s+v;},0)/vals.length):0;
+  var min=vals.length?Math.min.apply(null,vals):0;
+  var max=vals.length?Math.max.apply(null,vals):0;
+  var mediana=vals.length?vals.slice().sort(function(a,b){return a-b;})[Math.floor(vals.length/2)]:0;
+  var hoje=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+
+  var amostrasRows=amostras.map(function(s,si){
+    return '<tr>'+
+      '<td>'+(si+1)+'</td>'+
+      '<td>'+s.end+'</td>'+
+      '<td>'+s.tipo+'</td>'+
+      '<td style="text-align:right;font-weight:700">'+fmt(Number(s.valor))+'</td>'+
+      '<td style="text-align:center">'+(s.area||'—')+'</td>'+
+      '<td style="text-align:center">'+(s.quartos||'—')+'</td>'+
+      '<td>'+s.fonte+'</td>'+
+    '</tr>';
+  }).join('');
+
+  // Bar chart data
+  var maxVal=max||1;
+  var barChart=amostras.slice(0,10).map(function(s,si){
+    var pct=Math.round(Number(s.valor)/maxVal*100)||2;
+    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'+
+      '<div style="font-size:10px;color:#64748b;width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(si+1)+'. '+s.end+'</div>'+
+      '<div style="background:#e2e8f0;border-radius:4px;flex:1;height:18px">'+
+        '<div style="background:'+(Number(s.valor)===media?'#003DA5':Number(s.valor)===min?'#059669':Number(s.valor)===max?'#D42028':'#64748b')+';height:18px;border-radius:4px;width:'+pct+'%;display:flex;align-items:center;justify-content:flex-end;padding-right:4px">'+
+          '<span style="font-size:9px;color:#fff;font-weight:700">'+fmt(Number(s.valor))+'</span>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  var w=window.open('','_blank');
+  w.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'+
+    '<title>ACM — '+a.im+'</title>'+
+    '<style>'+
+    '*{box-sizing:border-box;margin:0;padding:0}'+
+    'body{font-family:Arial,sans-serif;font-size:11pt;color:#1e293b;background:#fff}'+
+    '.page{max-width:800px;margin:0 auto;padding:20px}'+
+    '.header{background:#0f1a35;color:#fff;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}'+
+    '.logo{font-size:20px;font-weight:900}.logo em{color:#D42028;font-style:normal}'+
+    '.title{font-size:14px;font-weight:700;text-align:right}'+
+    '.subtitle{font-size:11px;opacity:.7}'+
+    '.section{margin-bottom:20px}'+
+    'h2{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#0f1a35;border-bottom:2px solid #D42028;padding-bottom:4px;margin-bottom:12px}'+
+    '.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}'+
+    '.kpi{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;text-align:center}'+
+    '.kpi-l{font-size:9px;color:#64748b;text-transform:uppercase;margin-bottom:3px}'+
+    '.kpi-v{font-size:16px;font-weight:800}'+
+    'table{width:100%;border-collapse:collapse;font-size:10pt}'+
+    'th{background:#0f1a35;color:#fff;padding:6px 8px;text-align:left;font-size:9pt}'+
+    'td{padding:6px 8px;border-bottom:1px solid #f1f5f9}'+
+    'tr:nth-child(even) td{background:#f8fafc}'+
+    '.footer{margin-top:30px;padding-top:12px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:9pt;color:#64748b}'+
+    '.conclusao{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px;margin-bottom:16px}'+
+    '.val-sug{font-size:24px;font-weight:900;color:#059669}'+
+    '@media print{.no-print{display:none!important}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}'+
+    '</style></head><body><div class="page">'+
+    
+    '<div class="header">'+
+      '<div><div class="logo">IMÓVEIS RE/<em>MAX</em></div><div class="subtitle">Space — Caldas Novas GO</div></div>'+
+      '<div class="title"><div>ANÁLISE COMPARATIVA DE MERCADO</div><div class="subtitle">ACM — '+a.tipo+' | '+hoje+'</div></div>'+
+    '</div>'+
+
+    '<div class="section">'+
+      '<h2>Imóvel Objeto da Análise</h2>'+
+      '<table><tbody>'+
+        '<tr><td style="font-weight:700;width:30%">Imóvel</td><td>'+a.im+'</td><td style="font-weight:700;width:20%">Tipo</td><td>'+a.tipo+'</td></tr>'+
+        '<tr><td style="font-weight:700">Proprietário</td><td>'+a.prop+'</td><td style="font-weight:700">Corretor</td><td>'+a.cor+'</td></tr>'+
+        '<tr><td style="font-weight:700">Data</td><td>'+hoje+'</td><td style="font-weight:700">CRECI</td><td>GO-XXXXX</td></tr>'+
+      '</tbody></table>'+
+    '</div>'+
+
+    '<div class="section">'+
+      '<h2>Resumo Estatístico</h2>'+
+      '<div class="grid">'+
+        '<div class="kpi"><div class="kpi-l">Amostras</div><div class="kpi-v" style="color:#003DA5">'+amostras.length+'</div></div>'+
+        '<div class="kpi"><div class="kpi-l">Média</div><div class="kpi-v" style="color:#003DA5">'+fmt(media)+'</div></div>'+
+        '<div class="kpi"><div class="kpi-l">Mediana</div><div class="kpi-v">'+fmt(mediana)+'</div></div>'+
+        '<div class="kpi"><div class="kpi-l">Mínimo</div><div class="kpi-v" style="color:#059669">'+fmt(min)+'</div></div>'+
+        '<div class="kpi"><div class="kpi-l">Máximo</div><div class="kpi-v" style="color:#D42028">'+fmt(max)+'</div></div>'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="section">'+
+      '<h2>Distribuição de Valores</h2>'+
+      barChart+
+    '</div>'+
+
+    '<div class="section">'+
+      '<h2>Tabela de Amostras Comparativas</h2>'+
+      '<table><thead><tr><th>#</th><th>Endereço</th><th>Tipo</th><th>Valor</th><th>Área m²</th><th>Quartos</th><th>Fonte</th></tr></thead>'+
+      '<tbody>'+amostrasRows+'</tbody></table>'+
+    '</div>'+
+
+    '<div class="conclusao">'+
+      '<h2 style="margin-bottom:8px">Conclusão — Valor Sugerido de Mercado</h2>'+
+      '<div style="display:flex;align-items:center;gap:20px">'+
+        '<div class="val-sug">'+a.val+'</div>'+
+        '<div style="font-size:11pt;color:#166534">Com base na análise de '+amostras.length+' imóveis comparáveis na região de Caldas Novas - GO, o valor de mercado sugerido para o imóvel em análise é de <b>'+a.val+'</b>.</div>'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="footer">'+
+      '<div>'+a.cor+' — Corretor(a) RE/MAX Space | Caldas Novas - GO<br>Tatiana Basile — Diretora | Advogada | CRECI GO-XXXXX</div>'+
+      '<div style="text-align:right">RE/MAX Space<br>Ninguém no mundo vende mais imóveis que a RE/MAX!</div>'+
+    '</div>'+
+
+    '<div class="no-print" style="text-align:center;padding:16px;margin-top:20px">'+
+      '<button onclick="window.print()" style="background:#0f1a35;color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:14px;cursor:pointer">🖨️ Imprimir / Salvar PDF</button>'+
+    '</div>'+
+    '</div></body></html>');
+  w.document.close();
+}
+
 
 function pDocs(){
   var stOpts=['Imobiliária','Banco','Cartório','Concluído','Cancelado'];

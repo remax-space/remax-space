@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#0f1a35" rx="80"/>
+  <!-- Balloon/pin shape -->
+  <ellipse cx="256" cy="200" rx="110" ry="110" fill="#fff"/>
+  <polygon points="256,340 206,250 306,250" fill="#fff"/>
+  <!-- RE/MAX letters area -->
+  <rect x="170" y="155" width="172" height="90" rx="8" fill="#0f1a35"/>
+  <!-- RE text -->
+  <text x="182" y="215" font-family="Arial Black" font-size="48" font-weight="900" fill="#fff">RE/</text>
+  <!-- MAX in red -->
+  <text x="182" y="258" font-family="Arial Black" font-size="32" font-weight="900" fill="#D42028">MAX</text>
+  <!-- Red stripe bottom -->
+  <rect x="0" y="440" width="512" height="72" rx="0" fill="#D42028"/>
+  <text x="256" y="494" font-family="Arial" font-size="32" font-weight="700" fill="#fff" text-anchor="middle">Space</text>
+</svg>

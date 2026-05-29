@@ -2980,7 +2980,7 @@ function pAgenda(){
       '<div style="display:flex;gap:4px">' +
         '<button class="btn btn-sm btn-blue" onclick="eEvento(' + realIdx + ')">✏️</button>' +
         (ev.st !== 'Concluído' ? '<button class="btn btn-sm" style="background:#059669;color:#fff;border-color:#059669;font-size:10px;padding:3px 8px" onclick="concluirEvento(' + realIdx + ')">✓ OK</button>' : '<span style="background:#dcfce7;color:#166534;font-size:9px;padding:3px 8px;border-radius:8px;font-weight:700">✓ Feito</span>') +
-        '<button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5" onclick="delEvento(' + realIdx + ')">✕</button>' +
+        (ev.st!=='Concluído'?'<button class="btn btn-sm" style="background:#059669;color:#fff;border-color:#059669;font-size:10px" onclick="concluirEvento('+realIdx+')">✓ OK</button>':'<span style="background:#dcfce7;color:#166534;font-size:9px;padding:3px 8px;border-radius:8px">✓ Feito</span>')+'<button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5" onclick="delEvento(' + realIdx + ')">✕</button>' +
       '</div>' +
     '</div>';
   }
@@ -3049,7 +3049,7 @@ function nEvento(dtPre){
     '<div class="fg"><label>Titulo do Evento</label><input id="ne-t" placeholder="Ex: Visita - Casa Centro"></div>' +
     '<div class="fg2">' +
       '<div class="fg"><label>Tipo</label><select id="ne-tp">'+tipoOpts+'</select></div>' +
-      '<div class="fg"><label>Status</label><select id="ne-s"><option>Agendado</option><option>Confirmado</option><option>Realizado</option><option>Cancelado</option></select></div>' +
+      '<div class="fg"><label>Status</label><select id="ne-s"><option>Agendado</option><option>Confirmado</option><option>Concluído</option><option>Realizado</option><option>Cancelado</option></select></div>' +
     '</div>' +
     '<div class="fg2">' +
       '<div class="fg"><label>Corretor</label><select id="ne-c">'+corrSel(U?U.nome:'')+'</select></div>' +
@@ -3095,7 +3095,7 @@ function eEvento(i){
     '<div class="fg"><label>Titulo</label><input id="ee-t" value="'+ev.titulo+'"></div>' +
     '<div class="fg2">' +
       '<div class="fg"><label>Tipo</label><select id="ee-tp">'+tipoOpts+'</select></div>' +
-      '<div class="fg"><label>Status</label><select id="ee-s"><option>Agendado</option><option>Confirmado</option><option>Realizado</option><option>Cancelado</option></select></div>' +
+      '<div class="fg"><label>Status</label><select id="ee-s"><option>Agendado</option><option>Confirmado</option><option>Concluído</option><option>Realizado</option><option>Cancelado</option></select></div>' +
     '</div>' +
     '<div class="fg2">' +
       '<div class="fg"><label>Corretor</label><select id="ee-c">'+corrSel(ev.cor)+'</select></div>' +

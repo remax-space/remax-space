@@ -1,0 +1,50 @@
+{
+  "name": "RE/MAX Space \u2014 Caldas Novas",
+  "short_name": "RE/MAX Space",
+  "description": "Sistema de gest\u00e3o imobili\u00e1ria RE/MAX Space",
+  "start_url": "/remax-space/",
+  "scope": "/remax-space/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f1a35",
+  "theme_color": "#0f1a35",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "categories": [
+    "business",
+    "productivity"
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "url": "/remax-space/",
+      "description": "Dashboard principal"
+    },
+    {
+      "name": "Leads",
+      "url": "/remax-space/#leads",
+      "description": "Gest\u00e3o de leads"
+    }
+  ]
+}

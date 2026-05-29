@@ -921,7 +921,7 @@ function fStD(el,cid,val){
 
 // ===== SIDEBAR =====
 var NAV = [
-  {s:'Principal'},{id:'dashboard',l:'Dashboard'},{id:'leads',l:'Leads'},
+  {s:'Principal'},{id:'dashboard',l:'Dashboard'},{id:'whatsapp',l:'📱 WhatsApp'},{id:'leads',l:'Leads'},
   {s:'Venda'},{id:'prosp',l:'Prospeccao'},{id:'agenda',l:'📅 Agenda'},{id:'visitas',l:'Visitas'},{id:'acm',l:'ACM'},{id:'docs',l:'Documentacao'},{id:'contratos',l:'Contratos'},{id:'acoes',l:'Acoes no Imovel'},{id:'mcmv',l:'MCMV'},
   {s:'Locacao'},{id:'loc-c',l:'Contratos Ativos'},{id:'repasses',l:'💰 Repasses',a:true},{id:'loc-l',l:'Leads Locacao'},{id:'loc-v',l:'Vistorias'},{id:'boletos',l:'📨 Boletos',a:true},{id:'extrato',l:'📄 Extrato Prop.',a:true},{id:'os',l:'🔧 Ordens Serviço'},
   {s:'Portfolio'},{id:'iv',l:'Imoveis Venda'},{id:'prop',l:'Proprietarios'},
@@ -2181,7 +2181,7 @@ function gP(id){
   document.getElementById('pt').textContent = TITLES[id]||id;
   document.getElementById('pa').innerHTML = '';
   var pages = {
-    dashboard:pDash, leads:pLeads, prosp:pProsp, agenda:pAgenda, visitas:pVis,
+    dashboard:pDash, whatsapp:pWhatsApp, leads:pLeads, prosp:pProsp, agenda:pAgenda, visitas:pVis,
     acm:pAcm, docs:pDocs, contratos:pContratos, acoes:pAcoes, mcmv:pMCMV,
     'loc-c':pLC, 'loc-r':pLR, 'repasses':pRepasses, 'loc-l':pLL, 'loc-v':pLV, 'boletos':pBoletos, 'extrato':pExtrato, 'os':pOS,
     iv:pIV, prop:pProp,

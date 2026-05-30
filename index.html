@@ -316,8 +316,8 @@ var llD = [
 ]; // Leads Locação
 var metasD = {}; // {corretor: {cap:0, leads:0, vis:0, fech:0, com:0}}
 var docsD = [
-  {id:1,imovel:'Lago Azul - Joao Pedro',corretor:'T. Basile',cpf:true,rg:true,cert:true,renda:true,fgts:false,fotos:true,contrato:false,st:'Imobiliária',obs:''}
-]; // Documentação Comprador
+  {id:1,tipo:'Venda',perfil:'Comprador',cliente:'Lago Azul — João Pedro',corretor:'T. Basile',itens:{cpf:true,rg:true,renda:true,fgts:false,fotos:true,contrato:false},st:'Imobiliária',obs:''}
+]; // Documentação
 
 // ===== PERSISTÊNCIA GLOBAL =====
 function salvarTudo(){
@@ -3549,136 +3549,382 @@ function gerarPDFAcm(i){
 }
 
 
+// ===== DOCS — checklists por tipo =====
+var DOCS_TIPOS = {
+  'Venda': {
+    etapas: ['Imobiliária','Banco','Cartório','Concluído','Cancelado'],
+    perfis: ['Comprador','Vendedor'],
+    docs: {
+      'Comprador': [
+        {k:'cpf', l:'CPF'},
+        {k:'rg', l:'RG / CNH'},
+        {k:'cert_nasc', l:'Certidão de Nascimento/Casamento'},
+        {k:'renda', l:'Comprovante de Renda (3 últimos)'},
+        {k:'fgts', l:'Extrato FGTS'},
+        {k:'irpf', l:'Declaração IRPF'},
+        {k:'resid', l:'Comprovante de Residência'},
+        {k:'fotos', l:'Fotos do Imóvel'},
+        {k:'prop_cert', l:'Certidão Negativa de Débitos'},
+        {k:'contrato', l:'Contrato Assinado'}
+      ],
+      'Vendedor': [
+        {k:'cpf', l:'CPF'},
+        {k:'rg', l:'RG / CNH'},
+        {k:'cert_nasc', l:'Certidão de Nascimento/Casamento'},
+        {k:'matricula', l:'Matrícula do Imóvel (atualizada)'},
+        {k:'iptu', l:'IPTU (último exercício)'},
+        {k:'cert_neg', l:'Certidão Negativa de Débitos'},
+        {k:'cert_neg_imovel', l:'Certidão Negativa de Ônus Reais'},
+        {k:'procuracao', l:'Procuração (se aplicável)'},
+        {k:'fotos', l:'Fotos do Imóvel'},
+        {k:'contrato', l:'Contrato Assinado'}
+      ]
+    }
+  },
+  'Locação': {
+    etapas: ['Docs Pendentes','Análise','Aprovado','Contrato Assinado','Cancelado'],
+    perfis: ['Inquilino','Proprietário','Fiador'],
+    docs: {
+      'Inquilino': [
+        {k:'cpf', l:'CPF'},
+        {k:'rg', l:'RG / CNH'},
+        {k:'cert_nasc', l:'Certidão de Nascimento/Casamento'},
+        {k:'renda', l:'Comprovante de Renda (3 últimos)'},
+        {k:'resid', l:'Comprovante de Residência'},
+        {k:'irpf', l:'Declaração IRPF'},
+        {k:'cart_trab', l:'Carteira de Trabalho'},
+        {k:'fianca', l:'Comprovante de Fiança/Garantia'},
+        {k:'foto', l:'Foto 3x4'}
+      ],
+      'Proprietário': [
+        {k:'cpf', l:'CPF'},
+        {k:'rg', l:'RG / CNH'},
+        {k:'matricula', l:'Matrícula do Imóvel'},
+        {k:'iptu', l:'IPTU'},
+        {k:'cert_neg', l:'Certidão Negativa de Débitos'},
+        {k:'dados_banco', l:'Dados Bancários (repasse)'},
+        {k:'contrato', l:'Contrato Assinado'}
+      ],
+      'Fiador': [
+        {k:'cpf', l:'CPF'},
+        {k:'rg', l:'RG / CNH'},
+        {k:'renda', l:'Comprovante de Renda'},
+        {k:'resid', l:'Comprovante de Residência'},
+        {k:'matricula', l:'Matrícula Imóvel Próprio'},
+        {k:'cert_neg', l:'Certidão Negativa de Ônus'}
+      ]
+    }
+  },
+  'Contrato de Locação': {
+    etapas: ['Rascunho','Revisão','Assinatura Pendente','Assinado','Cancelado'],
+    perfis: ['Processo'],
+    docs: {
+      'Processo': [
+        {k:'min_assinada', l:'Minuta aprovada pelas partes'},
+        {k:'docs_inq', l:'Docs do Inquilino completos'},
+        {k:'docs_prop', l:'Docs do Proprietário completos'},
+        {k:'docs_fiador', l:'Docs do Fiador completos'},
+        {k:'vistoria', l:'Laudo de Vistoria de Entrada'},
+        {k:'fotos_vist', l:'Fotos da Vistoria'},
+        {k:'contrato_ass', l:'Contrato assinado — Inquilino'},
+        {k:'contrato_ass_prop', l:'Contrato assinado — Proprietário'},
+        {k:'contrato_ass_fiador', l:'Contrato assinado — Fiador'},
+        {k:'registro', l:'Registro em cartório (se aplicável)'},
+        {k:'chaves', l:'Entrega de chaves registrada'}
+      ]
+    }
+  },
+  'Contrato de Prestação de Serviços': {
+    etapas: ['Elaboração','Revisão','Assinatura Pendente','Assinado','Cancelado'],
+    perfis: ['Processo'],
+    docs: {
+      'Processo': [
+        {k:'cpf_prop', l:'CPF do Proprietário'},
+        {k:'rg_prop', l:'RG do Proprietário'},
+        {k:'matricula', l:'Matrícula do Imóvel'},
+        {k:'fotos', l:'Fotos do Imóvel'},
+        {k:'min_assinada', l:'Minuta aprovada'},
+        {k:'contrato_ass', l:'Contrato assinado — Proprietário'},
+        {k:'contrato_ass_imob', l:'Contrato assinado — Imobiliária'},
+        {k:'anuncio', l:'Anúncio publicado'}
+      ]
+    }
+  },
+  'MCMV': {
+    etapas: ['Pré-análise','Simulação','Documentação','Banco','Aprovado','Contrato','Concluído','Cancelado'],
+    perfis: ['Comprador'],
+    docs: {
+      'Comprador': [
+        {k:'cpf', l:'CPF'},
+        {k:'rg', l:'RG / CNH'},
+        {k:'cert_nasc', l:'Certidão de Nascimento/Casamento'},
+        {k:'resid', l:'Comprovante de Residência'},
+        {k:'renda', l:'Comprovante de Renda'},
+        {k:'cart_trab', l:'Carteira de Trabalho / Rescisão'},
+        {k:'fgts', l:'Extrato FGTS (autorizado)'},
+        {k:'irpf', l:'Declaração IRPF ou isenção'},
+        {k:'dec_nao_prop', l:'Declaração de Não Proprietário'},
+        {k:'sim_hab', l:'Simulação Habitacional aprovada'},
+        {k:'laudo', l:'Laudo de Avaliação do Imóvel'},
+        {k:'contrato', l:'Contrato assinado'}
+      ]
+    }
+  }
+};
+
+function docsGetList(tipo, perfil){
+  var t = DOCS_TIPOS[tipo];
+  if(!t) return [];
+  return (t.docs[perfil] || t.docs[Object.keys(t.docs)[0]] || []);
+}
+
+var _docsFilter = 'Todos';
+
 function pDocs(){
-  var stOpts=['Imobiliária','Banco','Cartório','Concluído','Cancelado'];
-
-  function bOk(v){ return v?'<span class="badge bg">✓</span>':'<span class="badge br">✗</span>'; }
-
   document.getElementById('pa').innerHTML='<button class="btn btn-red" onclick="nDocs()">+ Novo Checklist</button>';
 
-  var r='';
-  docsD.forEach(function(d,i){
-    var ok=[d.cpf,d.rg,d.cert,d.renda,d.fgts,d.fotos,d.contrato].filter(Boolean).length;
-    var total=7;
-    var pct=Math.round(ok/total*100);
-    r+='<tr>'+
-      '<td style="font-weight:700;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+d.imovel+'</td>'+
-      '<td style="font-size:11px">'+d.corretor+'</td>'+
-      '<td style="text-align:center">'+bOk(d.cpf)+'</td>'+
-      '<td style="text-align:center">'+bOk(d.rg)+'</td>'+
-      '<td style="text-align:center">'+bOk(d.cert)+'</td>'+
-      '<td style="text-align:center">'+bOk(d.renda)+'</td>'+
-      '<td style="text-align:center">'+bOk(d.fgts)+'</td>'+
-      '<td style="text-align:center">'+bOk(d.fotos)+'</td>'+
-      '<td style="text-align:center">'+bOk(d.contrato)+'</td>'+
-      '<td>'+
-        '<div style="display:flex;align-items:center;gap:6px">'+
-          '<div class="pg" style="flex:1;min-width:50px"><div class="pgf" style="width:'+pct+'%;background:'+(pct>=80?'#059669':pct>=50?'#d97706':'#D42028')+'"></div></div>'+
-          '<span style="font-size:10px;font-weight:700;min-width:28px">'+pct+'%</span>'+
+  // Filtros de tipo
+  var tipos = ['Todos','Venda','Locação','Contrato de Locação','Contrato de Prestação de Serviços','MCMV'];
+  var filtroHtml = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">';
+  tipos.forEach(function(t){
+    var ativo = _docsFilter===t;
+    filtroHtml += '<button onclick="docsSetFilter(\''+t+'\')" style="padding:5px 12px;border-radius:20px;border:1.5px solid '+(ativo?'#003DA5':'#d1d5db')+';background:'+(ativo?'#003DA5':'#fff')+';color:'+(ativo?'#fff':'#374151')+';font-size:12px;font-weight:600;cursor:pointer">'+t+'</button>';
+  });
+  filtroHtml += '</div>';
+
+  var lista = docsD.filter(function(d){ return _docsFilter==='Todos' || d.tipo===_docsFilter; });
+
+  // Cards ao invés de tabela
+  var cards = '';
+  lista.forEach(function(d,i){
+    var idx = docsD.indexOf(d);
+    var tipoInfo = DOCS_TIPOS[d.tipo] || {};
+    var docsList = docsGetList(d.tipo, d.perfil);
+    var total = docsList.length || 1;
+    var ok = docsList.filter(function(dc){ return d.itens && d.itens[dc.k]; }).length;
+    var pct = Math.round(ok/total*100);
+    var cor = pct>=80?'#059669':pct>=50?'#d97706':'#D42028';
+    var etapaCor = {'Concluído':'#059669','Assinado':'#059669','Cancelado':'#9ca3af','Aprovado':'#059669'}[d.st]||'#003DA5';
+
+    // badges dos docs
+    var docBadges = docsList.map(function(dc){
+      var v = d.itens && d.itens[dc.k];
+      return '<span title="'+dc.l+'" style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;background:'+(v?'#dcfce7':'#fee2e2')+';color:'+(v?'#166534':'#991b1b')+';margin:2px">'+
+        (v?'✓ ':'✗ ')+dc.l+'</span>';
+    }).join('');
+
+    cards += '<div style="background:#fff;border-radius:12px;padding:16px;border:1px solid #e5e7eb;margin-bottom:12px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">'+
+        '<div>'+
+          '<div style="font-weight:700;font-size:15px">'+d.cliente+'</div>'+
+          '<div style="font-size:11px;color:#6b7280;margin-top:2px">'+
+            '<span style="background:#eff6ff;color:#1d4ed8;padding:2px 8px;border-radius:10px;font-weight:600;margin-right:6px">'+d.tipo+'</span>'+
+            '<span style="background:#f3f4f6;color:#374151;padding:2px 8px;border-radius:10px;margin-right:6px">'+d.perfil+'</span>'+
+            (d.corretor?'<span style="color:#6b7280">'+d.corretor+'</span>':'')+'</div>'+
         '</div>'+
-      '</td>'+
-      '<td>'+sBadge(d.st)+'</td>'+
-      '<td style="display:flex;gap:3px">'+
-        '<button class="btn btn-sm btn-blue" onclick="eDocs('+i+')">Editar</button>'+
-        '<button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5" onclick="delDocs('+i+')">Del</button>'+
-      '</td>'+
-    '</tr>';
+        '<div style="display:flex;align-items:center;gap:8px">'+
+          '<span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:'+etapaCor+'22;color:'+etapaCor+'">'+d.st+'</span>'+
+          '<button class="btn btn-sm btn-blue" onclick="eDocs('+idx+')">Editar</button>'+
+          '<button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5" onclick="delDocs('+idx+')">Del</button>'+
+        '</div>'+
+      '</div>'+
+      '<div style="margin:12px 0 6px">'+
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'+
+          '<div style="flex:1;height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden">'+
+            '<div style="height:100%;width:'+pct+'%;background:'+cor+';border-radius:4px;transition:width .3s"></div>'+
+          '</div>'+
+          '<span style="font-size:12px;font-weight:700;color:'+cor+';min-width:36px">'+ok+'/'+total+' ('+pct+'%)</span>'+
+        '</div>'+
+        '<div style="display:flex;flex-wrap:wrap">'+docBadges+'</div>'+
+      '</div>'+
+      (d.obs?'<div style="font-size:11px;color:#6b7280;margin-top:4px;padding-top:8px;border-top:1px solid #f3f4f6">📝 '+d.obs+'</div>':'')+
+    '</div>';
   });
 
+  if(!lista.length) cards = '<div style="text-align:center;padding:40px;color:#9ca3af">Nenhum checklist encontrado</div>';
+
   document.getElementById('pc').innerHTML=
-    '<div class="card"><div class="chd"><h3>Checklist de Documentação — Compradores</h3></div>'+
-    '<div class="tw"><table><thead><tr>'+
-      '<th>Imóvel / Cliente</th><th>Corretor</th>'+
-      '<th>CPF</th><th>RG</th><th>Certidão</th><th>Renda</th><th>FGTS</th><th>Fotos</th><th>Contrato</th>'+
-      '<th>Progresso</th><th>Etapa</th><th>Ações</th>'+
-    '</tr></thead><tbody>'+r+'</tbody></table></div></div>';
+    '<div class="card"><div class="chd"><h3>Checklist de Documentação</h3></div>'+
+    '<div style="padding:16px">'+filtroHtml+cards+'</div></div>';
+}
+
+function docsSetFilter(t){ _docsFilter=t; pDocs(); }
+
+function docsFormTipo(tipo, perfil, itens){
+  var t = DOCS_TIPOS[tipo];
+  if(!t) return '';
+  var docsList = docsGetList(tipo, perfil);
+  var html = '<div style="background:#f9fafb;border-radius:8px;padding:12px;margin:8px 0">';
+  html += '<div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:10px;text-transform:uppercase">Documentos — marque os recebidos</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
+  docsList.forEach(function(dc){
+    var checked = itens && itens[dc.k] ? ' checked' : '';
+    html += '<label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;padding:6px;background:#fff;border-radius:6px;border:1px solid #e5e7eb">'+
+      '<input type="checkbox" id="dc-'+dc.k+'"'+checked+' style="width:14px;height:14px"> '+dc.l+'</label>';
+  });
+  html += '</div></div>';
+  return html;
+}
+
+function docsLerItens(tipo, perfil){
+  var docsList = docsGetList(tipo, perfil);
+  var itens = {};
+  docsList.forEach(function(dc){
+    var el = document.getElementById('dc-'+dc.k);
+    if(el) itens[dc.k] = el.checked;
+  });
+  return itens;
 }
 
 function nDocs(){
-  oM('+ Checklist de Documentação',
-    '<div class="fg2">'+
-      '<div class="fg"><label>Imóvel / Cliente</label><input id="nd-i" placeholder="Ex: Lago Azul - João Pedro"></div>'+
-      '<div class="fg"><label>Corretor</label><select id="nd-c">'+corrSel()+'</select></div>'+
-    '</div>'+
-    '<div style="background:#f9fafb;border-radius:8px;padding:12px;margin:8px 0">'+
-      '<div style="font-size:11px;font-weight:700;color:var(--lm);margin-bottom:10px;text-transform:uppercase">Documentos recebidos</div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
-        ['cpf:CPF','rg:RG','cert:Certidão Negativa','renda:Comprovante de Renda','fgts:Extrato FGTS','fotos:Fotos Imóvel','contrato:Contrato Assinado'].map(function(x){
-          var parts=x.split(':');
-          return '<label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" id="nd-'+parts[0]+'"> '+parts[1]+'</label>';
-        }).join('')+
+  var tipoAtual = (_docsFilter!=='Todos'?_docsFilter:'Venda');
+  var perfilAtual = DOCS_TIPOS[tipoAtual] ? Object.keys(DOCS_TIPOS[tipoAtual].docs)[0] : 'Comprador';
+
+  function getEtapas(t){ return (DOCS_TIPOS[t]||{etapas:['Pendente','Concluído']}).etapas; }
+  function getPerfis(t){ return (DOCS_TIPOS[t]||{perfis:['Processo']}).perfis; }
+
+  function renderForm(){
+    var t = document.getElementById('nd-tipo') ? document.getElementById('nd-tipo').value : tipoAtual;
+    var p = document.getElementById('nd-perfil') ? document.getElementById('nd-perfil').value : perfilAtual;
+    var perfis = getPerfis(t);
+    var etapas = getEtapas(t);
+    var mv = document.getElementById('mb');
+    if(!mv) return;
+    mv.innerHTML =
+      '<div class="fg2">'+
+        '<div class="fg"><label>Tipo de Processo</label>'+
+          '<select id="nd-tipo" onchange="docsRenderForm(\'nd\')">'+
+            Object.keys(DOCS_TIPOS).map(function(tp){ return '<option'+(tp===t?' selected':'')+'>'+tp+'</option>'; }).join('')+
+          '</select></div>'+
+        '<div class="fg"><label>Perfil do Cliente</label>'+
+          '<select id="nd-perfil" onchange="docsRenderForm(\'nd\')">'+
+            perfis.map(function(pf){ return '<option'+(pf===p?' selected':'')+'>'+pf+'</option>'; }).join('')+
+          '</select></div>'+
       '</div>'+
+      '<div class="fg2">'+
+        '<div class="fg"><label>Nome do Cliente / Imóvel</label><input id="nd-cli" placeholder="Ex: João Silva — Ap. Lago Azul"></div>'+
+        '<div class="fg"><label>Corretor</label><select id="nd-cor">'+corrSel()+'</select></div>'+
+      '</div>'+
+      docsFormTipo(t, p, {})+
+      '<div class="fg2">'+
+        '<div class="fg"><label>Etapa Atual</label><select id="nd-st">'+etapas.map(function(e){ return '<option>'+e+'</option>'; }).join('')+'</select></div>'+
+        '<div class="fg"><label>Observação</label><input id="nd-obs" placeholder="Obs adicional..."></div>'+
+      '</div>';
+  }
+
+  oM('+ Novo Checklist de Documentação', '', function(){
+    var t = document.getElementById('nd-tipo').value;
+    var p = document.getElementById('nd-perfil').value;
+    var cli = (document.getElementById('nd-cli')||{}).value||'';
+    if(!cli.trim()){alert('Informe o cliente/imóvel.');return;}
+    docsD.unshift({
+      id: Date.now(),
+      tipo: t, perfil: p,
+      cliente: cli,
+      corretor: document.getElementById('nd-cor').value,
+      itens: docsLerItens(t, p),
+      st: document.getElementById('nd-st').value,
+      obs: document.getElementById('nd-obs').value
+    });
+    cM(); salvarTudo(); pDocs();
+  }, 'Salvar');
+
+  // render inicial
+  setTimeout(renderForm, 50);
+}
+
+window.docsRenderForm = function(pref){
+  var t = (document.getElementById(pref+'-tipo')||{}).value||'Venda';
+  var p = (document.getElementById(pref+'-perfil')||{}).value||'Comprador';
+  var perfis = (DOCS_TIPOS[t]||{perfis:['Processo']}).perfis;
+  var etapas = (DOCS_TIPOS[t]||{etapas:['Pendente','Concluído']}).etapas;
+  // atualiza perfis
+  var selP = document.getElementById(pref+'-perfil');
+  if(selP){ selP.innerHTML = perfis.map(function(pf){ return '<option>'+pf+'</option>'; }).join(''); p = perfis[0]; }
+  // atualiza etapas
+  var selSt = document.getElementById(pref+'-st');
+  if(selSt){ selSt.innerHTML = etapas.map(function(e){ return '<option>'+e+'</option>'; }).join(''); }
+  // re-render docs
+  var area = document.getElementById(pref+'-docs-area');
+  if(area){ area.innerHTML = docsFormTipo(t, p, {}); }
+  // refaz form completo via renderForm se novo
+  if(pref==='nd'){
+    var mv = document.getElementById('mb');
+    var cli = (document.getElementById('nd-cli')||{}).value||'';
+    var obs = (document.getElementById('nd-obs')||{}).value||'';
+    if(mv){
+      mv.innerHTML =
+        '<div class="fg2">'+
+          '<div class="fg"><label>Tipo de Processo</label>'+
+            '<select id="nd-tipo" onchange="docsRenderForm(\'nd\')">'+
+              Object.keys(DOCS_TIPOS).map(function(tp){ return '<option'+(tp===t?' selected':'')+'>'+tp+'</option>'; }).join('')+
+            '</select></div>'+
+          '<div class="fg"><label>Perfil do Cliente</label>'+
+            '<select id="nd-perfil" onchange="docsRenderForm(\'nd\')">'+
+              perfis.map(function(pf){ return '<option>'+pf+'</option>'; }).join('')+
+            '</select></div>'+
+        '</div>'+
+        '<div class="fg2">'+
+          '<div class="fg"><label>Nome do Cliente / Imóvel</label><input id="nd-cli" value="'+cli+'" placeholder="Ex: João Silva — Ap. Lago Azul"></div>'+
+          '<div class="fg"><label>Corretor</label><select id="nd-cor">'+corrSel()+'</select></div>'+
+        '</div>'+
+        docsFormTipo(t, p, {})+
+        '<div class="fg2">'+
+          '<div class="fg"><label>Etapa Atual</label><select id="nd-st">'+etapas.map(function(e){ return '<option>'+e+'</option>'; }).join('')+'</select></div>'+
+          '<div class="fg"><label>Observação</label><input id="nd-obs" value="'+obs+'" placeholder="Obs adicional..."></div>'+
+        '</div>';
+    }
+  }
+};
+
+function eDocs(i){
+  var d = docsD[i];
+  var t = d.tipo||'Venda';
+  var p = d.perfil||(DOCS_TIPOS[t]?Object.keys(DOCS_TIPOS[t].docs)[0]:'Comprador');
+  var perfis = (DOCS_TIPOS[t]||{perfis:['Processo']}).perfis;
+  var etapas = (DOCS_TIPOS[t]||{etapas:['Pendente','Concluído']}).etapas;
+
+  oM('Editar Checklist — '+d.cliente,
+    '<div class="fg2">'+
+      '<div class="fg"><label>Tipo de Processo</label>'+
+        '<select id="ed-tipo" onchange="docsRenderForm(\'ed\')">'+
+          Object.keys(DOCS_TIPOS).map(function(tp){ return '<option'+(tp===t?' selected':'')+'>'+tp+'</option>'; }).join('')+
+        '</select></div>'+
+      '<div class="fg"><label>Perfil do Cliente</label>'+
+        '<select id="ed-perfil" onchange="docsRenderForm(\'ed\')">'+
+          perfis.map(function(pf){ return '<option'+(pf===p?' selected':'')+'>'+pf+'</option>'; }).join('')+
+        '</select></div>'+
     '</div>'+
     '<div class="fg2">'+
-      '<div class="fg"><label>Etapa Atual</label><select id="nd-s"><option>Imobiliária</option><option>Banco</option><option>Cartório</option><option>Concluído</option><option>Cancelado</option></select></div>'+
-      '<div class="fg"><label>Observação</label><input id="nd-o" placeholder="Obs adicional..."></div>'+
+      '<div class="fg"><label>Nome do Cliente / Imóvel</label><input id="ed-cli" value="'+d.cliente+'"></div>'+
+      '<div class="fg"><label>Corretor</label><select id="ed-cor">'+corrSel(d.corretor)+'</select></div>'+
+    '</div>'+
+    docsFormTipo(t, p, d.itens||{})+
+    '<div class="fg2">'+
+      '<div class="fg"><label>Etapa Atual</label><select id="ed-st">'+
+        etapas.map(function(e){ return '<option'+(e===d.st?' selected':'')+'>'+e+'</option>'; }).join('')+
+      '</select></div>'+
+      '<div class="fg"><label>Observação</label><input id="ed-obs" value="'+(d.obs||'')+'"></div>'+
     '</div>',
     function(){
-      var im=document.getElementById('nd-i').value.trim();
-      if(!im){alert('Informe o imóvel/cliente.');return;}
-      docsD.unshift({
-        id:docsD.length+1, imovel:im,
-        corretor:document.getElementById('nd-c').value,
-        cpf:document.getElementById('nd-cpf').checked,
-        rg:document.getElementById('nd-rg').checked,
-        cert:document.getElementById('nd-cert').checked,
-        renda:document.getElementById('nd-renda').checked,
-        fgts:document.getElementById('nd-fgts').checked,
-        fotos:document.getElementById('nd-fotos').checked,
-        contrato:document.getElementById('nd-contrato').checked,
-        st:document.getElementById('nd-s').value,
-        obs:document.getElementById('nd-o').value
-      });
+      var nt = document.getElementById('ed-tipo').value;
+      var np = document.getElementById('ed-perfil').value;
+      docsD[i].tipo = nt;
+      docsD[i].perfil = np;
+      docsD[i].cliente = document.getElementById('ed-cli').value || d.cliente;
+      docsD[i].corretor = document.getElementById('ed-cor').value;
+      docsD[i].itens = docsLerItens(nt, np);
+      docsD[i].st = document.getElementById('ed-st').value;
+      docsD[i].obs = document.getElementById('ed-obs').value;
       cM(); salvarTudo(); pDocs();
     }, 'Salvar');
 }
 
-function eDocs(i){
-  var d=docsD[i];
-  function ck(id,val){ return '<label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" id="ed-'+id+'"'+(val?' checked':'')+'>'; }
-  oM('Editar Documentação — '+d.imovel,
-    '<div class="fg2">'+
-      '<div class="fg"><label>Imóvel / Cliente</label><input id="ed-i" value="'+d.imovel+'"></div>'+
-      '<div class="fg"><label>Corretor</label><select id="ed-c">'+corrSel(d.corretor)+'</select></div>'+
-    '</div>'+
-    '<div style="background:#f9fafb;border-radius:8px;padding:12px;margin:8px 0">'+
-      '<div style="font-size:11px;font-weight:700;color:var(--lm);margin-bottom:10px;text-transform:uppercase">Documentos recebidos</div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
-        ck('cpf',d.cpf)+'CPF</label>'+
-        ck('rg',d.rg)+'RG</label>'+
-        ck('cert',d.cert)+'Certidão Negativa</label>'+
-        ck('renda',d.renda)+'Comprovante de Renda</label>'+
-        ck('fgts',d.fgts)+'Extrato FGTS</label>'+
-        ck('fotos',d.fotos)+'Fotos Imóvel</label>'+
-        ck('contrato',d.contrato)+'Contrato Assinado</label>'+
-      '</div>'+
-    '</div>'+
-    '<div class="fg2">'+
-      '<div class="fg"><label>Etapa</label><select id="ed-s">'+
-        ['Imobiliária','Banco','Cartório','Concluído','Cancelado'].map(function(s){return '<option'+(s===d.st?' selected':'')+'>'+s+'</option>';}).join('')+
-      '</select></div>'+
-      '<div class="fg"><label>Observação</label><input id="ed-o" value="'+(d.obs||'')+'"></div>'+
-    '</div>',
-    function(){
-      docsD[i].imovel=document.getElementById('ed-i').value||d.imovel;
-      docsD[i].corretor=document.getElementById('ed-c').value;
-      docsD[i].cpf=document.getElementById('ed-cpf').checked;
-      docsD[i].rg=document.getElementById('ed-rg').checked;
-      docsD[i].cert=document.getElementById('ed-cert').checked;
-      docsD[i].renda=document.getElementById('ed-renda').checked;
-      docsD[i].fgts=document.getElementById('ed-fgts').checked;
-      docsD[i].fotos=document.getElementById('ed-fotos').checked;
-      docsD[i].contrato=document.getElementById('ed-contrato').checked;
-      docsD[i].st=document.getElementById('ed-s').value;
-      docsD[i].obs=document.getElementById('ed-o').value;
-      cM(); salvarTudo(); pDocs();
-    }, 'Salvar');
-}
 
 function delDocs(i){
   excluirComSenha(
-    'Documentação — '+docsD[i].imovel,
-    'Remover checklist de documentação de <b>'+docsD[i].imovel+'</b>',
+    'Documentação — '+docsD[i].cliente,
+    'Remover checklist de <b>'+docsD[i].cliente+'</b>',
     function(){ docsD.splice(i,1); salvarTudo(); pDocs(); }
   );
 }

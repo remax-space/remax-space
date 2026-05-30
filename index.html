@@ -2779,6 +2779,13 @@ function delLead(i){
 
 
 // ===== PROSPECCAO =====
+function waMsgBoasVindasProsp(i){
+  var p=prD[i];
+  if(!p) return;
+  var msg='Olá, '+p.cli+'! Tudo bem?\n\nAqui é '+p.cor+' da RE/MAX Space em Caldas Novas.\n\n'+(p.imovel?'Vi que você tem interesse em '+p.imovel+'.\n\n':'')+'Podemos conversar? Quando seria um bom momento?\n\nRE/MAX Space 🔴⚪🔵';
+  abrirWA(p.tel||'', msg);
+}
+
 function pProsp(){
   document.getElementById('pa').innerHTML=
     '<button class="btn btn-red" onclick="nProsp()">+ Nova Prospecção</button>';
@@ -2818,7 +2825,7 @@ function pProsp(){
       '<td style="font-size:10px;color:var(--lm)">'+ultima+'</td>'+
       '<td style="display:flex;gap:3px">'+
         '<button class="btn btn-sm btn-blue" onclick="eProsp('+i+')">Ver</button>'+
-        '<button class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366" onclick="abrirWA(''+p.tel+'','Olá '+p.cli+'!')">📱</button>'+
+        '<button class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366" onclick="waMsgBoasVindasProsp('+i+')">📱</button>'+
       '</td>'+
     '</tr>';
   }).join('');

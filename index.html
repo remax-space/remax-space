@@ -5865,7 +5865,7 @@ function pMkt(){
   var todos = _mktExemplos.concat(_mktD);
   var lista = todos.filter(function(t){ return _mktCat==="Todos"||t.cat===_mktCat; });
 
-  var filtros = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px">'+
+  var filtros = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;overflow-x:auto;padding-bottom:4px">'+
     _mktCats.map(function(c){
       var a=_mktCat===c;
       return '<button onclick="mktSetCat(''+c+'')" style="padding:5px 14px;border-radius:20px;border:1.5px solid '+(a?'#D42028':'#d1d5db')+';background:'+(a?'#D42028':'#fff')+';color:'+(a?'#fff':'#374151')+';font-size:11px;font-weight:700;cursor:pointer">'+c+'</button>';

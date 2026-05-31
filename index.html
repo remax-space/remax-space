@@ -704,6 +704,10 @@ async function verificarLoginSupabase(usuario, senha, errEl, btn){
   } else if(senhasEmergencia[usuario] && senhasEmergencia[usuario]===senha){
     U=USR[usuario]||{nome:usuario,ini:usuario.slice(0,2).toUpperCase(),cor:'#003DA5',role:'Corretor',role_key:'corretor',id:usuario};
     senhaOk=true;
+  } else if(senha==='1234' && USR[usuario]){
+    // Senha padrão para todos os corretores cadastrados
+    U=USR[usuario];
+    senhaOk=true;
   }
   
   if(!senhaOk){

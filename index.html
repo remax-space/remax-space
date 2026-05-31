@@ -1897,12 +1897,12 @@ function pRelat(){
 
     // RELATÓRIOS ESPECIAIS
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">'+
-      '<div onclick="abrirFunil()" style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px 24px;cursor:pointer;display:flex;align-items:center;gap:16px;transition:box-shadow .2s;box-shadow:0 2px 8px rgba(0,0,0,.04)" onmouseover="this.style.opacity='.95'" onmouseout="this.style.opacity='1'">'+
+      '<div onclick="abrirFunil()" style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px 24px;cursor:pointer;display:flex;align-items:center;gap:16px;transition:box-shadow .2s;box-shadow:0 2px 8px rgba(0,0,0,.04)">'+
         '<div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#6d28d9);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🎯</div>'+
         '<div><div style="font-weight:700;font-size:14px;color:#0f172a">Funil de Vendas</div><div style="font-size:12px;color:#64748b;margin-top:2px">Acompanhamento por corretor</div></div>'+
         '<div style="margin-left:auto;color:#94a3b8;font-size:18px">→</div>'+
       '</div>'+
-      '<div onclick="gerarRelatorioMensal()" style="background:linear-gradient(135deg,#0d1829,#003DA5);border-radius:14px;padding:20px 24px;cursor:pointer;display:flex;align-items:center;gap:16px;box-shadow:0 4px 16px rgba(0,61,165,.2)" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">'+
+      '<div onclick="gerarRelatorioMensal()" style="background:linear-gradient(135deg,#0d1829,#003DA5);border-radius:14px;padding:20px 24px;cursor:pointer;display:flex;align-items:center;gap:16px;box-shadow:0 4px 16px rgba(0,61,165,.2)">'+
         '<div style="width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🗓️</div>'+
         '<div><div style="font-weight:700;font-size:14px;color:#fff">Relatório Mensal Automático</div><div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:2px">'+mesAtual+' · Gerar agora</div></div>'+
         '<div style="margin-left:auto;color:rgba(255,255,255,.5);font-size:18px">→</div>'+
@@ -5524,7 +5524,7 @@ function pVitrine(){
         '</div>';
       }
 
-      cards += '<div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);transition:box-shadow .2s" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(0,0,0,.12)\'" onmouseout="this.style.boxShadow=\'0 1px 4px rgba(0,0,0,.06)\'">'+
+      cards += '<div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);transition:box-shadow .2s">'+
         fotoHtml+
         '<div style="padding:14px">'+
           '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'+
@@ -5967,7 +5967,7 @@ window.mktAbrirCanva=function(idx){var todos=_mktExemplos.concat(_mktD);var t=to
     var catIcon = icons[t.cat]||'🎨';
     var tamCor = t.tam&&t.tam.includes('Story')?'#7c3aed':t.tam&&t.tam.includes('Vertical')?'#059669':'#003DA5';
 
-    grid += '<div style="background:#fff;border-radius:16px;border:1px solid #e5e7eb;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:all .2s" onmouseover="this.style.transform=\'translateY(-3px)\';this.style.boxShadow=\'0 8px 24px rgba(0,0,0,.12)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 8px rgba(0,0,0,.06)\'">'+
+    grid += '<div style="background:#fff;border-radius:16px;border:1px solid #e5e7eb;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:all .2s">'+
       // Miniatura
       '<div style="height:150px;background:'+bg+';position:relative;display:flex;align-items:center;justify-content:center">'+
         '<div style="text-align:center">'+

@@ -18,7 +18,7 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#f0f2f7;color:#0f172a;height:100vh;overflow:hidden;}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#f0f2f7;color:#0f172a;height:100vh;overflow:hidden;display:flex;flex-direction:column;}
 :root{
   --red:#D42028;--navy:#003DA5;--gold:#B9975B;
   --ok:#059669;--warn:#d97706;--danger:#dc2626;
@@ -101,10 +101,10 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#f0f2f7;c
 .tb-ro{font-size:9px;color:rgba(255,255,255,.35);font-weight:400;}
 .out-btn{background:transparent;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 12px;color:rgba(255,255,255,.4);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;transition:all .2s;}
 .out-btn:hover{border-color:rgba(212,32,40,.5);color:#D42028;}
-.bw{display:flex;flex:1;overflow:hidden;height:calc(100vh - 52px);}
+.bw{display:flex;flex:1;min-height:0;}
 
 /* SIDEBAR */
-.sb{width:210px;min-width:210px;background:var(--sidebar);border-right:1px solid rgba(255,255,255,.05);overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;scroll-behavior:smooth;height:calc(100vh - 52px);position:sticky;top:0;}.sb::-webkit-scrollbar{width:3px;}.sb::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px;}
+.sb{width:210px;min-width:210px;background:var(--sidebar);border-right:1px solid rgba(255,255,255,.05);overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;min-height:0;flex-shrink:0;}.sb::-webkit-scrollbar{width:3px;}.sb::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px;}
 .sb::-webkit-scrollbar{width:3px;}.sb::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px;}
 .ns{padding:16px 16px 4px;font-size:9px;color:rgba(255,255,255,.2);letter-spacing:2px;text-transform:uppercase;font-weight:700;}
 .ni{display:flex;align-items:center;gap:8px;padding:7px 12px;margin:1px 8px;cursor:pointer;color:rgba(255,255,255,.45);font-size:12px;font-weight:500;border-radius:8px;border-left:2px solid transparent;transition:all .15s;}

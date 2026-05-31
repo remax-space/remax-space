@@ -228,6 +228,7 @@ select.ied-s{border:1px solid #003DA5;border-radius:6px;padding:2px 8px;font-siz
 .upload-zone:hover{border-color:#003DA5;background:#f0f4ff;}
 .upload-zone input{display:none;}
 </style> src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -2527,25 +2528,110 @@ function pDashCorretor(){
       '</div>'+
     '</div>'+
 
-    // CORPO — 2 colunas
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">'+
-
-      '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
-        '<div style="padding:14px 20px;border-bottom:1px solid #edf2f7;display:flex;align-items:center;justify-content:space-between;background:#fafbfd">'+
-          '<div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Agenda de Hoje</div>'+
-          '<button onclick="gP(&quot;agenda&quot;)" style="font-size:10px;font-weight:700;color:#0d1f4e;background:none;border:1px solid #0d1f4e;border-radius:6px;padding:3px 10px;cursor:pointer;letter-spacing:.5px">VER TUDO</button>'+
+    // Funil de leads
+    var funil = [
+      {label:'Total Leads', n:meusLeads.length, cor:'#0d1f4e'},
+      {label:'Em Contato',  n:meusLeads.filter(function(l){return l.st==='Em contato'||l.st==='Morno';}).length, cor:'#1a4fa8'},
+      {label:'Visita Agend.',n:meusLeads.filter(function(l){return l.st==='Visita agendada';}).length, cor:'#1a6e3a'},
+      {label:'Proposta',    n:meusLeads.filter(function(l){return l.st==='Proposta';}).length, cor:'#b45309'},
+      {label:'Fechados',    n:fechados, cor:'#b91c1c'}
+    ];
+    var maxF = Math.max(funil[0].n, 1);
+    var funilHtml = funil.map(function(f, i){
+      var pct = Math.round(f.n/maxF*100);
+      var w = Math.max(pct, 8);
+      return '<div style="margin-bottom:10px">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'+
+          '<span style="font-size:11px;font-weight:600;color:#2d3748">'+f.label+'</span>'+
+          '<span style="font-size:13px;font-weight:800;color:'+f.cor+'">'+f.n+'</span>'+
         '</div>'+
-        '<div style="padding:4px 20px 8px">'+agendaHtml+'</div>'+
+        '<div style="background:#f0f4f8;border-radius:4px;height:10px">'+
+          '<div style="background:'+f.cor+';height:10px;border-radius:4px;width:'+w+'%;transition:width .5s ease"></div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+
+    // Status dos leads em pizza (via canvas)
+    var stCounts = {};
+    meusLeads.forEach(function(l){ stCounts[l.st]=(stCounts[l.st]||0)+1; });
+    var stLabels=Object.keys(stCounts);
+    var stVals=stLabels.map(function(k){return stCounts[k];});
+    var stCores=['#0d1f4e','#1a6e3a','#b45309','#b91c1c','#5b21b6','#0e7490','#92400e'];
+
+    // Prospecção por status
+    var prospStatus = {};
+    meusProsp.forEach(function(p){ prospStatus[p.st]=(prospStatus[p.st]||0)+1; });
+
+    document.getElementById('pc').innerHTML +=
+
+      // LINHA 2 — Funil + Gráfico
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">'+
+
+        '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
+          '<div style="padding:14px 20px;border-bottom:1px solid #edf2f7;background:#fafbfd;display:flex;align-items:center;justify-content:space-between">'+
+            '<div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Funil de Vendas</div>'+
+            '<span style="font-size:10px;font-weight:700;color:#0d1f4e">'+meusLeads.length+' leads</span>'+
+          '</div>'+
+          '<div style="padding:16px 20px">'+funilHtml+'</div>'+
+        '</div>'+
+
+        '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
+          '<div style="padding:14px 20px;border-bottom:1px solid #edf2f7;background:#fafbfd">'+
+            '<div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Leads por Status</div>'+
+          '</div>'+
+          '<div style="padding:16px 20px;display:flex;align-items:center;justify-content:center">'+
+            '<canvas id="chart-status" width="220" height="220"></canvas>'+
+          '</div>'+
+        '</div>'+
       '</div>'+
 
-      '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
-        '<div style="padding:14px 20px;border-bottom:1px solid #edf2f7;display:flex;align-items:center;justify-content:space-between;background:#fafbfd">'+
-          '<div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Leads Quentes</div>'+
-          '<button onclick="gP(&quot;leads&quot;)" style="font-size:10px;font-weight:700;color:#b91c1c;background:none;border:1px solid #b91c1c;border-radius:6px;padding:3px 10px;cursor:pointer;letter-spacing:.5px">VER TODOS</button>'+
+      // LINHA 3 — Agenda + Leads quentes
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">'+
+
+        '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
+          '<div style="padding:14px 20px;border-bottom:1px solid #edf2f7;display:flex;align-items:center;justify-content:space-between;background:#fafbfd">'+
+            '<div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Agenda de Hoje</div>'+
+            '<button onclick="gP(&quot;agenda&quot;)" style="font-size:10px;font-weight:700;color:#0d1f4e;background:none;border:1px solid #0d1f4e;border-radius:6px;padding:3px 10px;cursor:pointer;letter-spacing:.5px">VER TUDO</button>'+
+          '</div>'+
+          '<div style="padding:4px 20px 8px">'+agendaHtml+'</div>'+
         '</div>'+
-        '<div style="padding:4px 20px 8px">'+leadsHtml+'</div>'+
-      '</div>'+
-    '</div>';
+
+        '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
+          '<div style="padding:14px 20px;border-bottom:1px solid #edf2f7;display:flex;align-items:center;justify-content:space-between;background:#fafbfd">'+
+            '<div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Leads Quentes</div>'+
+            '<button onclick="gP(&quot;leads&quot;)" style="font-size:10px;font-weight:700;color:#b91c1c;background:none;border:1px solid #b91c1c;border-radius:6px;padding:3px 10px;cursor:pointer;letter-spacing:.5px">VER TODOS</button>'+
+          '</div>'+
+          '<div style="padding:4px 20px 8px">'+leadsHtml+'</div>'+
+        '</div>'+
+      '</div>';
+
+    // Renderizar gráfico pizza
+    setTimeout(function(){
+      var cv = document.getElementById('chart-status');
+      if(!cv || !window.Chart || stLabels.length===0) return;
+      new Chart(cv, {
+        type: 'doughnut',
+        data: {
+          labels: stLabels,
+          datasets:[{data:stVals, backgroundColor:stCores.slice(0,stLabels.length), borderWidth:2, borderColor:'#fff'}]
+        },
+        options:{
+          responsive:false,
+          plugins:{
+            legend:{position:'right', labels:{font:{size:10}, padding:8, boxWidth:12}},
+            tooltip:{callbacks:{label:function(c){return ' '+c.label+': '+c.raw;}}}
+          },
+          cutout:'65%'
+        }
+      });
+    }, 300);
+  }catch(err){
+    console.error('pDash erro:',err);
+    document.getElementById('pc').innerHTML='<div style="padding:20px;color:#8896a5">Erro: '+err.message+'</div>';
+  }
+}
+
+
 }
 
 

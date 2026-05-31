@@ -5526,7 +5526,14 @@ window.vitGerarLista = function(){
   if(!lista.length){alert('Nenhum imóvel com esses filtros.');return;}
 
   function qrUrl(u){return 'https://api.qrserver.com/v1/create-qr-code/?size=90x90&data='+encodeURIComponent(u||'https://remaxspace.com.br');}
-  function fotoProxy(u){ if(!u) return ''; return 'https://wsrv.nl/?url='+encodeURIComponent(u)+'&w=600&h=300&fit=cover'; }
+  function fotoSrc(fotos){
+    var f=(fotos||[]).filter(Boolean)[0]||'';
+    if(!f) return '';
+    // Se já é unsplash, drive público ou imgbb — usa direto
+    if(/unsplash|imgbb|imgur|googleusercontent|drive\.google/i.test(f)) return f;
+    // Senão tenta wsrv.nl como proxy
+    return 'https://wsrv.nl/?url='+encodeURIComponent(f)+'&w=600&h=300&fit=cover&default=1';
+  }
 
   // Texto WhatsApp
   var txt='🏠 *IMÓVEIS DISPONÍVEIS — RE/MAX Space*\n📍 Caldas Novas · GO\n━━━━━━━━━━━━━━━━━━━━━━\n\n';
@@ -5550,7 +5557,7 @@ window.vitGerarLista = function(){
   var cards=lista.map(function(v,i){
     var val=v.valor?(v.op==='Locação'?'R$ '+Number(v.valor).toLocaleString('pt-BR')+'/mês':'R$ '+Number(v.valor).toLocaleString('pt-BR')):'Consulte';
     var foto=(v.fotos||[]).filter(Boolean)[0]||'';
-    var fotoSrc = foto ? fotoProxy(foto) : '';
+    var fSrc=fotoSrc(v.fotos);
     var opCor=v.op==='Venda'?'#003DA5':'#059669';
     var qrLink=v.linkOrigem||'https://remaxspace.com.br';
     var tags=[];
@@ -5560,7 +5567,7 @@ window.vitGerarLista = function(){
     if(v.banheiros) tags.push('🚿 '+v.banheiros+' ban.');
     return '<div style="background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.12);margin-bottom:20px;border:1px solid #e5e7eb">'+
       '<div style="position:relative;height:200px;background:linear-gradient(135deg,#0f1a35,#003DA5);overflow:hidden">'+
-        (fotoSrc?'<img src="'+fotoSrc+'" style="width:100%;height:100%;object-fit:cover" crossorigin="anonymous">':'<div style="height:100%;display:flex;align-items:center;justify-content:center;font-size:56px">🏠</div>')+
+        (fSrc?'<img src="'+fSrc+'" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">':'<div style="height:100%;display:flex;align-items:center;justify-content:center;font-size:56px">🏠</div>')+
         '<div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,rgba(0,0,0,.1) 50%,transparent 100%)"></div>'+
         '<div style="position:absolute;top:14px;left:14px;display:flex;gap:8px">'+
           '<span style="background:'+opCor+';color:#fff;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:.5px">'+v.op.toUpperCase()+'</span>'+
@@ -5612,7 +5619,7 @@ window.vitGerarLista = function(){
         '<button onclick="var t=document.getElementById(\'vit-lista-txt\').value;window.open(\'https://wa.me/?text=\'+encodeURIComponent(t),\'_blank\')" style="flex:1;padding:12px;background:#25D366;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">📤 WhatsApp</button>'+
       '</div>'+
     '</div>';
-  document.getElementById('mc').onclick=cM;
+  var mc = document.getElementById('mc'); if(mc) mc.onclick=cM;
 };
 
 window.vitAba=function(aba){

@@ -5537,11 +5537,98 @@ window.vitImportarLink = async function(){
   if(btn){ btn.disabled=true; btn.textContent='Carregando...'; }
 
   try{
-    // Buscar HTML da página via allorigins (evita CORS)
+    // Buscar HTML via allorigins
     var proxyUrl = 'https://api.allorigins.win/get?url='+encodeURIComponent(url);
     var r = await fetch(proxyUrl);
     var j = await r.json();
     var html = j.contents||'';
+
+    // 1. Extrair JSON-LD (dados estruturados que sites imobiliários usam)
+    var jsonLdData = '';
+    var jsonLdMatches = html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi)||[];
+    jsonLdMatches.forEach(function(m){ jsonLdData += m + '\n'; });
+
+    // 2. Extrair meta tags (og:title, og:description, og:image, price etc)
+    var metaTags = '';
+    var metaMatches = html.match(/<meta[^>]+>/gi)||[];
+    metaMatches.forEach(function(m){ metaTags += m + '\n'; });
+
+    // 3. Extrair texto limpo (sem nav/footer/scripts)
+    var tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    tmp.querySelectorAll('script,style,nav,footer,header,aside').forEach(function(el){el.remove();});
+    var texto = (tmp.innerText||tmp.textContent||'').replace(/\s+/g,' ').trim().slice(0,3000);
+
+    // 4. Extrair imagens com regex mais abrangente
+    var imgUrls = [];
+    // URLs diretas de imagem
+    var imgDirect = html.match(/https?:\/\/[^"'\s<>]+\.(jpg|jpeg|png|webp)(\?[^"'\s<>]*)?/gi)||[];
+    // Propriedades og:image
+    var ogImages = html.match(/content="(https?:\/\/[^"]+\.(jpg|jpeg|png|webp)[^"]*)"/gi)||[];
+    ogImages = ogImages.map(function(m){ var x=m.match(/content="([^"]+)"/); return x?x[1]:''; });
+    // src de img tags
+    var srcImages = html.match(/src="(https?:\/\/[^"]+\.(jpg|jpeg|png|webp)[^"]*)"/gi)||[];
+    srcImages = srcImages.map(function(m){ var x=m.match(/src="([^"]+)"/); return x?x[1]:''; });
+
+    imgUrls = ogImages.concat(srcImages).concat(imgDirect)
+      .filter(Boolean)
+      .filter(function(u){ return u.length>20 && !u.includes('logo') && !u.includes('icon') && !u.includes('avatar') && !u.includes('sprite'); })
+      .filter(function(u,i,a){ return a.indexOf(u)===i; })
+      .slice(0,5);
+
+    if(st){ st.style.color='#2563eb'; st.textContent='🤖 IA extraindo dados do anúncio...'; }
+
+    // 5. Montar prompt rico com todos os dados coletados
+    var prompt = 'Extraia dados de um anúncio imobiliário a partir das informações abaixo.\n\nURL: '+url+'\n\nMETA TAGS:\n'+metaTags.slice(0,1500)+'\n\nJSON-LD (dados estruturados):\n'+jsonLdData.slice(0,1500)+'\n\nTEXTO DA PÁGINA:\n'+texto+'\n\nIMAGENS ENCONTRADAS:\n'+JSON.stringify(imgUrls)+'\n\nInstruções:\n- valor: extraia o preço numérico (apenas número, sem R$, sem pontos)\n- quartos: número de dormitórios/quartos\n- area: metragem em m² (apenas número)\n- fotos: use as URLs de imagem encontradas acima que pareçam fotos do imóvel\n- Se um dado não estiver disponível, use 0 para números ou string vazia\n\nRetorne APENAS JSON válido:\n{"titulo":"","op":"Venda","tipo":"Casa","bairro":"","valor":0,"area":0,"quartos":0,"banheiros":0,"vagas":0,"descricao":"","fotos":[]}';
+
+    var system = 'Extrai dados de anúncios imobiliários e retorna APENAS JSON válido sem nenhum texto extra. op: "Venda" ou "Locação". tipo: Casa/Apartamento/Flat\\/Apart-Hotel/Chalé/Terreno\\/Lote/Chácara/Fazenda/Kitnet/Sala Comercial/Outro. Valores numéricos puros sem formatação.';
+
+    var txt = await callClaude(prompt, system, 1000);
+    txt = txt.replace(/```json|```/g,'').trim();
+    var inicio = txt.indexOf('{'); var fim = txt.lastIndexOf('}');
+    if(inicio>=0 && fim>inicio) txt = txt.slice(inicio, fim+1);
+    var info = JSON.parse(txt);
+
+    // 6. Preencher campos
+    function set(id,val){ var el=document.getElementById(id); if(el&&val!==undefined&&val!==null&&val!==''&&val!==0) el.value=val; }
+    function setNum(id,val){ var el=document.getElementById(id); if(el&&val) el.value=val; }
+    set('vf-titulo', info.titulo);
+    set('vf-bairro', info.bairro);
+    setNum('vf-valor',    info.valor);
+    setNum('vf-area',     info.area);
+    setNum('vf-quartos',  info.quartos);
+    setNum('vf-banheiros',info.banheiros);
+    setNum('vf-vagas',    info.vagas);
+    var desc = document.getElementById('vf-desc'); if(desc&&info.descricao) desc.value=info.descricao;
+
+    var selOp = document.getElementById('vf-op');
+    if(selOp){ selOp.value=(info.op==='Locação'||info.op==='Aluguel'||/loca|alugu/i.test(info.op))?'Locação':'Venda'; }
+
+    var selTipo = document.getElementById('vf-tipo');
+    if(selTipo&&info.tipo){
+      for(var ii=0;ii<selTipo.options.length;ii++){
+        if(selTipo.options[ii].value===info.tipo||selTipo.options[ii].text===info.tipo){ selTipo.selectedIndex=ii; break; }
+      }
+    }
+
+    var todasFotos = (info.fotos||[]).concat(imgUrls).filter(Boolean).filter(function(u,i,a){return a.indexOf(u)===i;}).slice(0,5);
+    todasFotos.forEach(function(f,i){ var el=document.getElementById('vf-foto'+i); if(el) el.value=f; });
+
+    var resumo = [];
+    if(info.valor) resumo.push('R$ '+Number(info.valor).toLocaleString('pt-BR'));
+    if(info.quartos) resumo.push(info.quartos+' quartos');
+    if(info.area) resumo.push(info.area+'m²');
+    if(todasFotos.length) resumo.push(todasFotos.length+' foto(s)');
+
+    if(st){ st.style.color='#059669'; st.textContent='✅ Preenchido! '+(resumo.length?'('+resumo.join(', ')+') ':'')+' Confira e ajuste se necessário.'; }
+
+  } catch(e){
+    console.error('vitImportarLink erro:',e);
+    if(st){ st.style.color='#D42028'; st.textContent='❌ Não consegui extrair os dados. Tente outro link ou preencha manualmente.'; }
+  } finally {
+    if(btn){ btn.disabled=false; btn.textContent='✨ Preencher com IA'; }
+  }
+};
 
     // Extrair texto limpo do HTML (remover tags)
     var tmp = document.createElement('div');
@@ -5605,7 +5692,7 @@ window.vitImportarLink = async function(){
 
   } catch(e){
     console.error('vitImportarLink erro:',e);
-    if(st){ st.style.color='#D42028'; st.textContent='❌ Não consegui extrair os dados automaticamente. Tente outro link ou preencha manualmente.'; }
+    if(st){ st.style.color='#D42028'; st.textContent='❌ Não consegui extrair os dados. Tente outro link ou preencha manualmente.'; }
   } finally {
     if(btn){ btn.disabled=false; btn.textContent='✨ Preencher com IA'; }
   }
@@ -5621,9 +5708,6 @@ function vitFormHtml(v){
       '<input id="vf-import-url" placeholder="Cole o link do iList, ZAP, OLX..." style="flex:1;border:1px solid #bfdbfe;border-radius:8px;padding:9px 12px;font-size:13px">'+
       '<button onclick="vitImportarLink()" style="padding:9px 18px;background:#003DA5;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">✨ Preencher com IA</button>'+
     '</div>'+
-    '<div id="vf-import-status" style="font-size:11px;color:#6b7280;margin-top:6px"></div>'+
-  '</div>'+
-  '<div class="fg2">'+
     '<div class="fg"><label>Operação *</label>'+
       '<select id="vf-op">'+
         ['Venda','Locação'].map(function(o){ return '<option'+(o===(v.op||'Venda')?' selected':'')+'>'+o+'</option>'; }).join('')+

@@ -2561,7 +2561,7 @@ function pDashAdmin(){
     if(ldD.length>0) alertas.push({ic:'👥',cor:'#003DA5',bg:'linear-gradient(135deg,#eff6ff,#f5f8ff)',tc:'#1e3a8a',txt:'<b>'+ldD.length+' leads</b> de venda no pipeline',tag:'PIPELINE',tagbg:'#003DA5',pri:2});
     alertas.sort(function(a,b){return a.pri-b.pri;});
 
-    var alertHtml = alertas.map(function(a){
+    var alertCards = alertas.map(function(a){
       return '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:'+a.bg+';border-radius:12px;margin-bottom:8px;border:1px solid '+a.cor+'22">'+
         '<div style="font-size:22px;flex-shrink:0">'+a.ic+'</div>'+
         '<div style="flex:1;font-size:12px;color:'+a.tc+'">'+a.txt+'</div>'+
@@ -2619,7 +2619,7 @@ function pDashAdmin(){
             '<div style="background:#dc2626;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">'+alertas.length+' itens</div>'+
           '</div>'+
           '<div style="padding:14px 16px">'+
-            (alertHtml||'<div style="text-align:center;padding:24px;color:#94a3b8;font-size:13px">✅ Tudo em dia!</div>')+
+            (alertCards||'<div style="text-align:center;padding:24px;color:#94a3b8;font-size:13px">✅ Tudo em dia!</div>')+
           '</div>'+
         '</div>'+
 

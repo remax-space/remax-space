@@ -5856,7 +5856,7 @@ function mktThumbHtml(thumb){
   return thumbs[thumb]||'linear-gradient(135deg,#374151,#1f2937)';
 }
 
-function pMkt(){
+window.mktAbrirCanva=function(idx){var todos=_mktExemplos.concat(_mktD);var t=todos[idx];if(t&&t.canva)window.open(t.canva,"_blank");else alert("Link do Canva não configurado.");};function pMkt(){
   var isAdm = isAdmin();
   document.getElementById('pa').innerHTML = isAdm
     ? '<button class="btn btn-red" onclick="nMktTemplate()">+ Adicionar Template</button>'
@@ -5882,7 +5882,7 @@ function pMkt(){
     '</div>';
   }
 
-  lista.forEach(function(t){
+  lista.forEach(function(t,idx){
     var temCanva = !!t.canva;
     var isCustom = !!t._custom;
     var bg = mktThumbHtml(t.thumb||'post-imovel');
@@ -5890,7 +5890,7 @@ function pMkt(){
     var catIcon = icons[t.cat]||'🎨';
     var tamCor = t.tam&&t.tam.includes('Story')?'#7c3aed':t.tam&&t.tam.includes('Vertical')?'#059669':'#003DA5';
 
-    grid += '<div style="background:#fff;border-radius:16px;border:1px solid #e5e7eb;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:all .2s" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.12)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 8px rgba(0,0,0,.06)'">'+
+    grid += '<div style="background:#fff;border-radius:16px;border:1px solid #e5e7eb;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:all .2s" onmouseover="this.style.transform=\'translateY(-3px)\';this.style.boxShadow=\'0 8px 24px rgba(0,0,0,.12)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 8px rgba(0,0,0,.06)\'">'+
       // Miniatura
       '<div style="height:150px;background:'+bg+';position:relative;display:flex;align-items:center;justify-content:center">'+
         '<div style="text-align:center">'+
@@ -5902,7 +5902,7 @@ function pMkt(){
           ? '<div style="position:absolute;top:10px;right:10px;background:#00C4CC;color:#fff;font-size:9px;font-weight:800;padding:3px 8px;border-radius:20px">✓ CANVA</div>'
           : (isAdm?'<div style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,.4);color:#fff;font-size:9px;padding:3px 8px;border-radius:20px">Sem link</div>':'')+
         '')+
-        (isAdm&&isCustom?'<button onclick="event.stopPropagation();delMktTemplate(''+t.id+'')" style="position:absolute;top:10px;left:10px;background:rgba(212,32,40,.8);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;line-height:22px;text-align:center">×</button>':'')+
+        // delete button removed
       '</div>'+
       // Info
       '<div style="padding:14px">'+
@@ -5917,10 +5917,10 @@ function pMkt(){
         '<div style="display:flex;gap:6px;align-items:center">'+
           '<span style="background:'+tamCor+'22;color:'+tamCor+';padding:3px 8px;border-radius:20px;font-size:9px;font-weight:700;flex-shrink:0">'+t.tam+'</span>'+
           (temCanva
-            ? '<button onclick="window.open(''+t.canva+'','_blank')" style="flex:1;padding:8px;background:#00C4CC;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">✏️ Editar no Canva</button>'
+            ? '<button onclick="mktAbrirCanva(idx)" style="flex:1;padding:8px;background:#00C4CC;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">✏️ Editar no Canva</button>'
             : '<button onclick="mktSemLink()" style="flex:1;padding:8px;background:#f3f4f6;color:#9ca3af;border:1px dashed #d1d5db;border-radius:8px;font-size:11px;cursor:pointer">'+(isAdm?'🔗 Adicionar link':'Em breve')+'</button>'
           )+
-          (isAdm&&isCustom?'<button onclick="eMktTemplate(''+t.id+'')" style="padding:8px;background:#eff6ff;color:#003DA5;border:1px solid #bfdbfe;border-radius:8px;font-size:11px;cursor:pointer">✏️</button>':'')+
+          (isAdm&&isCustom?'<button onclick="eMktTemplate(idx)" style="padding:8px;background:#eff6ff;color:#003DA5;border:1px solid #bfdbfe;border-radius:8px;font-size:11px;cursor:pointer">✏️</button>':'')+
         '</div>'+
       '</div>'+
     '</div>';

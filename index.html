@@ -1027,7 +1027,9 @@ var TITLES = {
   fd:'Dashboard Financeiro',fr:'Contas a Receber',fp:'Contas a Pagar',frp:'Repasses a Proprietarios',
   'cad-cor':'Cadastro de Corretores','cad-prop':'Cadastro de Proprietarios','cad-inq':'Cadastro de Inquilinos',
   rank:'Ranking',
-  relat:'Relatórios Gerenciais'
+  relat:'Relatórios Gerenciais',
+  modelos:'Modelos de Contratos',
+  'modelos-cor':'Contrato de Representação'
 };
 // ===== GERADOR DE CONTRATO DE LOCAÇÃO COM IA =====
 async function gerarContratoIA(i){
@@ -2419,7 +2421,7 @@ function gP(id){
     fd:pFD, dre:pDRE, fr:pFR, fp:pFP,
     'cad-cor':pCadCor, 'cad-prop':pCadProp, 'cad-inq':pCadInq,
     rank:pRank, metas:pMetas, historico:pHistorico, recrut:pRecrutar, perms:pPermissoes,
-    relat:pRelat
+    relat:pRelat, modelos:pModelos, 'modelos-cor':pModeloRepresentacao
   };
   if(pages[id]) pages[id](); else pDash();
 }
@@ -8842,6 +8844,306 @@ if('serviceWorker' in navigator){
     caches.keys().then(function(keys){ keys.forEach(function(k){ caches.delete(k); }); });
   }
 }
+
+// ===== MODELOS DE CONTRATOS (só admin) =====
+var MODELOS_ADM = [
+  {
+    cat:'Locação',cor:'#0d1f4e',icone:'🏠',
+    docs:[
+      {nome:'Contrato de Locação Residencial',desc:'Modelo padrão para locação de imóveis residenciais'},
+      {nome:'Contrato de Locação Comercial',desc:'Modelo para locação de salas e espaços comerciais'},
+      {nome:'Contrato de Locação por Temporada',desc:'Locação por período determinado — temporada'},
+      {nome:'Aditivo de Reajuste',desc:'Aditivo contratual para reajuste de valor de aluguel'},
+      {nome:'Aditivo de Prorrogação',desc:'Prorrogação de prazo do contrato de locação'},
+    ]
+  },
+  {
+    cat:'Representação',cor:'#1a6e3a',icone:'🤝',
+    docs:[
+      {nome:'Contrato de Representação / Gestão Exclusiva',desc:'Captação exclusiva com autorização de venda'},
+      {nome:'Autorização de Venda Simples',desc:'Autorização não exclusiva para intermediação'},
+      {nome:'Renovação de Representação',desc:'Renovação do prazo de exclusividade'},
+    ]
+  },
+  {
+    cat:'Prestação de Serviços',cor:'#5b21b6',icone:'⚙️',
+    docs:[
+      {nome:'Contrato de Prestação de Serviços Imobiliários',desc:'Serviços de consultoria e intermediação'},
+      {nome:'Proposta de Compra e Venda',desc:'Proposta formal com condições de pagamento'},
+      {nome:'Instrumento Particular de Compra e Venda',desc:'Compromisso de compra e venda'},
+    ]
+  },
+  {
+    cat:'Notificações',cor:'#b45309',icone:'📨',
+    docs:[
+      {nome:'Notificação de Rescisão Contratual',desc:'Comunicação formal de rescisão de contrato'},
+      {nome:'Notificação de Inadimplência',desc:'Notificação por falta de pagamento'},
+      {nome:'Notificação de Desocupação',desc:'Comunicado formal para desocupação do imóvel'},
+      {nome:'Notificação Extrajudicial',desc:'Notificação com valor legal extrajudicial'},
+    ]
+  },
+  {
+    cat:'Declarações',cor:'#0e7490',icone:'📋',
+    docs:[
+      {nome:'Declaração de Quitação',desc:'Declaração de inexistência de débitos'},
+      {nome:'Declaração de Residência',desc:'Declaração de endereço para fins legais'},
+      {nome:'Declaração de Vistoria',desc:'Declaração de estado do imóvel na entrega'},
+      {nome:'Declaração de Anuência',desc:'Anuência de proprietário ou cônjuge'},
+    ]
+  },
+  {
+    cat:'Recibos',cor:'#b91c1c',icone:'🧾',
+    docs:[
+      {nome:'Recibo de Aluguel',desc:'Comprovante de pagamento de aluguel'},
+      {nome:'Recibo de Comissão',desc:'Comprovante de pagamento de honorários'},
+      {nome:'Recibo de Depósito / Caução',desc:'Comprovante de depósito de garantia'},
+      {nome:'Recibo de Entrega de Chaves',desc:'Confirmação de entrega das chaves do imóvel'},
+    ]
+  }
+];
+
+function pModelos(){
+  if(!isA()){
+    document.getElementById('pc').innerHTML='<div style="text-align:center;padding:60px;color:#94a3b8">Acesso restrito ao administrador.</div>';
+    return;
+  }
+
+  var html='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">';
+
+  MODELOS_ADM.forEach(function(cat){
+    html+='<div style="background:#fff;border-radius:14px;border:1px solid #e8edf2;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04)">'+
+      '<div style="background:'+cat.cor+';padding:16px 20px;display:flex;align-items:center;gap:10px">'+
+        '<div style="font-size:24px">'+cat.icone+'</div>'+
+        '<div>'+
+          '<div style="font-size:13px;font-weight:800;color:#fff">'+cat.cat+'</div>'+
+          '<div style="font-size:11px;color:rgba(255,255,255,.6)">'+cat.docs.length+' modelos</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="padding:8px 0">';
+
+    cat.docs.forEach(function(doc){
+      html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #f8fafc;cursor:pointer" onclick="abrirModelo(''+doc.nome+'')">'+
+        '<div>'+
+          '<div style="font-size:12px;font-weight:600;color:#0d1829">'+doc.nome+'</div>'+
+          '<div style="font-size:10px;color:#94a3b8;margin-top:1px">'+doc.desc+'</div>'+
+        '</div>'+
+        '<div style="display:flex;gap:6px;flex-shrink:0;margin-left:8px">'+
+          '<button onclick="event.stopPropagation();baixarModelo(''+doc.nome+'')" style="background:#eff6ff;color:#0d1f4e;border:none;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer">⬇ Baixar</button>'+
+        '</div>'+
+      '</div>';
+    });
+
+    html+='</div></div>';
+  });
+
+  html+='</div>'+
+    '<div style="margin-top:20px;background:#fafbfd;border-radius:12px;border:1px solid #e8edf2;padding:20px">'+
+      '<div style="font-size:12px;font-weight:700;color:#0d1829;margin-bottom:8px">📌 Como usar os modelos</div>'+
+      '<div style="font-size:12px;color:#64748b;line-height:1.8">'+
+        '• Clique em <b>Baixar</b> para obter o modelo em Word (.docx) pronto para preencher<br>'+
+        '• Os modelos seguem o padrão jurídico da RE/MAX Space e podem ser editados<br>'+
+        '• Após assinar, salve o documento no Drive do sistema para registro<br>'+
+        '• Dúvidas sobre cláusulas: consulte Tatiana Basile — Especialista em Contratos'+
+      '</div>'+
+    '</div>';
+
+  document.getElementById('pc').innerHTML=html;
+}
+
+function abrirModelo(nome){
+  oM('📄 '+nome,
+    '<div style="padding:10px 0">'+
+      '<div style="font-size:12px;color:#64748b;margin-bottom:16px">Escolha o que deseja fazer com este modelo:</div>'+
+      '<div style="display:flex;flex-direction:column;gap:10px">'+
+        '<button onclick="baixarModelo(''+nome+'')" style="background:#0d1f4e;color:#fff;border:none;border-radius:8px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;text-align:left">⬇️ Baixar modelo em branco (.docx)</button>'+
+        '<button onclick="cM()" style="background:#f1f5f9;color:#334155;border:none;border-radius:8px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;text-align:left">✕ Fechar</button>'+
+      '</div>'+
+    '</div>',
+    null, null, true
+  );
+}
+
+function baixarModelo(nome){
+  // Gera um documento Word básico via blob
+  var content_doc = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<!DOCTYPE html>'+
+    '<html><head><meta charset="UTF-8"><title>'+nome+'</title>'+
+    '<style>body{font-family:Arial,sans-serif;font-size:12pt;line-height:1.8;margin:3cm 2.5cm;color:#000}'+
+    'h1{text-align:center;font-size:14pt;text-transform:uppercase;margin-bottom:30px}'+
+    '.campo{border-bottom:1px solid #000;display:inline-block;min-width:200px}&nbsp;'+
+    'p{margin-bottom:12px;text-align:justify}'+
+    '.assinatura{margin-top:60px;display:grid;grid-template-columns:1fr 1fr;gap:40px}'+
+    '.ass-linha{border-top:1px solid #000;padding-top:8px;text-align:center;font-size:10pt}</style></head>'+
+    '<body>'+
+    '<div style="text-align:center;margin-bottom:10px"><img style="height:50px" src="" alt="RE/MAX Space"></div>'+
+    '<h1>'+nome+'</h1>'+
+    '<p><b>Data:</b> _________________ de _________________ de _______</p>'+
+    '<p><b>Local:</b> Caldas Novas — Goiás</p>'+
+    '<br><p>As partes abaixo identificadas celebram o presente instrumento nas condições a seguir:</p>'+
+    '<p><b>PARTE 1 — CONTRATANTE:</b></p>'+
+    '<p>Nome: _______________________________________________<br>'+
+    'CPF: _____________________ RG: _____________________<br>'+
+    'Endereço: _____________________________________________</p>'+
+    '<p><b>PARTE 2 — CONTRATADA:</b></p>'+
+    '<p>RE/MAX Space Consultoria Imobiliária Ltda<br>'+
+    'CNPJ: XX.XXX.XXX/0001-XX<br>'+
+    'Caldas Novas — Goiás</p>'+
+    '<br><p><b>CLÁUSULA 1ª — DO OBJETO</b></p>'+
+    '<p>_____________________________________________________________________________________________________________</p>'+
+    '<p><b>CLÁUSULA 2ª — DO PRAZO</b></p>'+
+    '<p>_____________________________________________________________________________________________________________</p>'+
+    '<p><b>CLÁUSULA 3ª — DO VALOR E FORMA DE PAGAMENTO</b></p>'+
+    '<p>_____________________________________________________________________________________________________________</p>'+
+    '<p><b>CLÁUSULA 4ª — DAS OBRIGAÇÕES DAS PARTES</b></p>'+
+    '<p>_____________________________________________________________________________________________________________</p>'+
+    '<p><b>CLÁUSULA 5ª — DO FORO</b></p>'+
+    '<p>Fica eleito o foro da Comarca de Caldas Novas — GO para dirimir quaisquer controvérsias.</p>'+
+    '<div class="assinatura">'+
+    '<div class="ass-linha">Contratante<br>Nome: ___________________<br>CPF: ___________________</div>'+
+    '<div class="ass-linha">RE/MAX Space<br>Tatiana Basile — CRECI GO-XXXXX<br>Especialista em Contratos</div>'+
+    '</div>'+
+    '<br><p style="text-align:center;font-size:10pt;color:#666">Testemunhas:<br>1. ___________________________ CPF: ________________<br>2. ___________________________ CPF: ________________</p>'+
+    '</body></html>';
+
+  var blob = new Blob([content_doc], {type:'application/msword'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = nome.replace(/[^a-zA-Z0-9 ]/g,'') + '.doc';
+  a.click();
+  URL.revokeObjectURL(url);
+  cM();
+}
+
+// Modelo de Representação — acesso também para corretores
+function pModeloRepresentacao(){
+  var html=
+    '<div style="background:#fff;border-radius:14px;border:1px solid #e8edf2;overflow:hidden;max-width:900px;margin:0 auto">'+
+      '<div style="background:#1a6e3a;padding:20px 28px;display:flex;align-items:center;gap:12px">'+
+        '<div style="font-size:28px">🤝</div>'+
+        '<div>'+
+          '<div style="font-size:15px;font-weight:800;color:#fff">Contrato de Representação / Gestão Exclusiva</div>'+
+          '<div style="font-size:12px;color:rgba(255,255,255,.6)">Captação com exclusividade — RE/MAX Space</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="padding:24px 28px">'+
+        '<div style="font-size:12px;color:#64748b;margin-bottom:20px;background:#f0fdf4;border-radius:8px;padding:12px 16px;border-left:3px solid #1a6e3a">'+
+          '📌 Preencha os dados do proprietário e imóvel abaixo. O contrato será gerado automaticamente para download.'+
+        '</div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">'+
+          '<div><div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Dados do Proprietário</div>'+
+            mCampo('Nome completo','mod-prop-nome','text')+
+            mCampo('CPF','mod-prop-cpf','text')+
+            mCampo('RG','mod-prop-rg','text')+
+            mCampo('Telefone','mod-prop-tel','text')+
+            mCampo('E-mail','mod-prop-email','email')+
+            mCampo('Endereço completo','mod-prop-end','text')+
+          '</div>'+
+          '<div><div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Dados do Imóvel</div>'+
+            mCampo('Tipo do imóvel','mod-im-tipo','text')+
+            mCampo('Endereço do imóvel','mod-im-end','text')+
+            mCampo('Área (m²)','mod-im-area','text')+
+            mCampo('Valor de venda (R$)','mod-im-valor','text')+
+            mCampo('Prazo de exclusividade (dias)','mod-im-prazo','number')+
+            mCampo('Comissão (%)','mod-im-com','number')+
+          '</div>'+
+        '</div>'+
+        '<div style="margin-bottom:16px"><div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Corretor Responsável</div>'+
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">'+
+            mCampo('Nome do corretor','mod-cor-nome','text')+
+            mCampo('CRECI','mod-cor-creci','text')+
+          '</div>'+
+        '</div>'+
+        '<div style="display:flex;gap:10px;justify-content:flex-end">'+
+          '<button onclick="gerarModeloRep()" style="background:#1a6e3a;color:#fff;border:none;border-radius:8px;padding:12px 24px;font-size:13px;font-weight:700;cursor:pointer">📄 Gerar e Baixar Contrato</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+
+  document.getElementById('pc').innerHTML=html;
+}
+
+function mCampo(label, id, tipo){
+  return '<div style="margin-bottom:10px">'+
+    '<label style="font-size:11px;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">'+label+'</label>'+
+    '<input id="'+id+'" type="'+tipo+'" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#0d1829">'+
+  '</div>';
+}
+
+function gerarModeloRep(){
+  var g=function(id){return (document.getElementById(id)||{}).value||'_______________';};
+  var nome=g('mod-prop-nome'), cpf=g('mod-prop-cpf'), rg=g('mod-prop-rg');
+  var tel=g('mod-prop-tel'), email=g('mod-prop-email'), end=g('mod-prop-end');
+  var imTipo=g('mod-im-tipo'), imEnd=g('mod-im-end'), imArea=g('mod-im-area');
+  var imValor=g('mod-im-valor'), prazo=g('mod-im-prazo')||'180', com=g('mod-im-com')||'6';
+  var corNome=g('mod-cor-nome')||U.nome, corCreci=g('mod-cor-creci');
+  var hoje=new Date().toLocaleDateString('pt-BR');
+
+  var doc='<!DOCTYPE html><html><head><meta charset="UTF-8">'+
+    '<style>body{font-family:Arial,sans-serif;font-size:11pt;line-height:1.8;margin:2.5cm;color:#000}'+
+    'h1{text-align:center;font-size:13pt;text-transform:uppercase;margin-bottom:6px}'+
+    '.sub{text-align:center;font-size:10pt;color:#444;margin-bottom:30px}'+
+    'h2{font-size:11pt;font-weight:bold;margin-top:20px;margin-bottom:6px}'+
+    'p{margin-bottom:10px;text-align:justify}'+
+    '.ass{margin-top:60px;display:grid;grid-template-columns:1fr 1fr;gap:40px;text-align:center}'+
+    '.al{border-top:1px solid #000;padding-top:8px;font-size:10pt}'+
+    '@media print{body{margin:2cm}}</style></head><body>'+
+    '<div style="text-align:center;margin-bottom:6px"><b>RE/MAX SPACE — CALDAS NOVAS</b></div>'+
+    '<h1>Contrato de Representação Imobiliária<br>com Exclusividade</h1>'+
+    '<div class="sub">Caldas Novas — GO, '+hoje+'</div>'+
+
+    '<h2>DAS PARTES</h2>'+
+    '<p><b>OUTORGANTE (PROPRIETÁRIO):</b> '+nome+', portador do CPF nº '+cpf+', RG nº '+rg+', '+
+    'residente e domiciliado em '+end+', telefone '+tel+', e-mail '+email+'.</p>'+
+    '<p><b>OUTORGADA (IMOBILIÁRIA):</b> RE/MAX Space Consultoria Imobiliária, com sede em Caldas Novas — GO, '+
+    'representada pela Corretora Tatiana Basile, inscrita no CRECI/GO, e pelo Corretor '+corNome+
+    (corCreci?', CRECI nº '+corCreci:'')+'.</p>'+
+
+    '<h2>CLÁUSULA 1ª — DO OBJETO</h2>'+
+    '<p>O presente instrumento tem por objeto a autorização exclusiva conferida pelo OUTORGANTE à OUTORGADA '+
+    'para promover a intermediação imobiliária referente ao imóvel: <b>'+imTipo+'</b>, localizado em <b>'+imEnd+'</b>'+
+    (imArea&&imArea!=='_______________'?', com área de '+imArea+' m²':'')+', doravante denominado simplesmente "IMÓVEL".</p>'+
+
+    '<h2>CLÁUSULA 2ª — DA EXCLUSIVIDADE E DO PRAZO</h2>'+
+    '<p>A presente autorização é concedida em caráter de EXCLUSIVIDADE, pelo prazo de <b>'+prazo+' ('+
+    (prazo==='180'?'cento e oitenta':prazo==='90'?'noventa':prazo==='120'?'cento e vinte':prazo)+
+    ') dias</b>, contados da data de assinatura deste instrumento, renovável por igual período, salvo manifestação contrária das partes.</p>'+
+    '<p>Durante a vigência desta exclusividade, o OUTORGANTE se compromete a não celebrar qualquer outro instrumento de representação com terceiros para o mesmo imóvel, sob pena de responder pelas comissões devidas à OUTORGADA.</p>'+
+
+    '<h2>CLÁUSULA 3ª — DO VALOR E DA COMISSÃO</h2>'+
+    '<p>O imóvel é ofertado pelo valor de <b>R$ '+imValor+'</b>. A comissão devida à OUTORGADA é de <b>'+com+'% ('+
+    (com==='6'?'seis':com==='5'?'cinco':com==='7'?'sete':com)+'por cento)</b> sobre o valor efetivo da transação, a ser paga no ato da assinatura do instrumento definitivo ou liberação do financiamento.</p>'+
+
+    '<h2>CLÁUSULA 4ª — DAS OBRIGAÇÕES DA OUTORGADA</h2>'+
+    '<p>A OUTORGADA se compromete a: (i) divulgar o imóvel em portais imobiliários, redes sociais e demais canais de marketing; (ii) realizar visitas com potenciais compradores; (iii) apresentar propostas ao OUTORGANTE; (iv) acompanhar toda a negociação até a conclusão da transação.</p>'+
+
+    '<h2>CLÁUSULA 5ª — DAS OBRIGAÇÕES DO OUTORGANTE</h2>'+
+    '<p>O OUTORGANTE se compromete a: (i) manter o imóvel disponível para visitas; (ii) fornecer toda a documentação necessária; (iii) não negociar diretamente com compradores apresentados pela OUTORGADA sem o seu conhecimento.</p>'+
+
+    '<h2>CLÁUSULA 6ª — DO FORO</h2>'+
+    '<p>Fica eleito o foro da Comarca de Caldas Novas — Estado de Goiás para dirimir quaisquer controvérsias oriundas deste instrumento, com renúncia expressa a qualquer outro, por mais privilegiado que seja.</p>'+
+
+    '<p>Por estarem justas e acordadas, as partes assinam o presente instrumento em 2 (duas) vias de igual teor e forma.</p>'+
+
+    '<div class="ass">'+
+    '<div class="al">'+nome+'<br>CPF: '+cpf+'<br><span style="font-size:9pt;color:#666">Proprietário</span></div>'+
+    '<div class="al">Tatiana Basile / '+corNome+'<br>RE/MAX Space — Caldas Novas<br><span style="font-size:9pt;color:#666">Corretora Responsável</span></div>'+
+    '</div>'+
+    '<p style="text-align:center;margin-top:40px;font-size:10pt">Testemunhas:<br>'+
+    '1. _________________________________ CPF: _______________________<br>'+
+    '2. _________________________________ CPF: _______________________</p>'+
+    '</body></html>';
+
+  var blob=new Blob([doc],{type:'application/msword'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;
+  a.download='Contrato_Representacao_'+nome.split(' ')[0]+'_'+new Date().toISOString().slice(0,10)+'.doc';
+  a.click();
+  URL.revokeObjectURL(url);
+  alert('Contrato gerado e baixado com sucesso!');
+}
+
 </script>
 </body>
 </html>

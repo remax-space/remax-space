@@ -359,6 +359,7 @@ function salvarTudo(){
         dc:(typeof docsD!=='undefined'?docsD:[]),
         os:(typeof osD!=='undefined'?osD:[]),
         vit:(typeof vitD!=='undefined'?vitD:[]),
+        mkt:(typeof _mktD!=='undefined'?_mktD:[]),
         lg:(typeof logAcoes!=='undefined'?logAcoes:[]),
         bl:(typeof boletosD!=='undefined'?boletosD:[]),
         com:(typeof COMISSOES!=='undefined'?COMISSOES:[]),
@@ -404,6 +405,7 @@ async function carregarDados(){
       if(e.sn) Object.assign(senhas, e.sn);
       if(e.os) osD = e.os;
       if(e.vit) vitD = e.vit;
+      if(e.mkt) _mktD = e.mkt;
       if(e.lg) logAcoes = e.lg;
       if(e.bl) boletosD = e.bl;
       if(e.com) COMISSOES = e.com;
@@ -5821,342 +5823,188 @@ function delVitrine(idx){
   );
 }
 
-// ===== MARKETING =====
+// ===== MARKETING — Catálogo Canva =====
 var _mktCat = 'Todos';
-var _mktTemplates = [
-  {id:'post-imovel', cat:'Imóveis', nome:'Post Imóvel — Oportunidade', tam:'Feed 1:1', desc:'Banner vermelho com foto, título e dados do corretor'},
-  {id:'post-venda',  cat:'Imóveis', nome:'Post Venda/Locação', tam:'Feed 4:5', desc:'Foto grande + rodapé azul com ícone e preço'},
-  {id:'post-novidade', cat:'Imóveis', nome:'Post Novidade', tam:'Feed 4:5', desc:'Fundo azul hexagonal com foto e corretor'},
-  {id:'post-4fotos', cat:'Imóveis', nome:'Post Grade 4 Fotos', tam:'Feed 4:5', desc:'Grade 2x2 com detalhes do imóvel'},
-  {id:'story-3fotos', cat:'Imóveis', nome:'Story 3 Fotos', tam:'Story 9:16', desc:'Fundo azul + grade de fotos + frase de impacto'},
-  {id:'post-luxo',   cat:'Institucional', nome:'Post Elegância & Luxo', tam:'Feed 1:1', desc:'Foto imóvel com banner translúcido e logo'},
-  {id:'post-remax',  cat:'Institucional', nome:'A RE/MAX está pronta', tam:'Story 9:16', desc:'Foto família + texto institucional'},
-  {id:'crecha',      cat:'Institucional', nome:'Crachá / Credencial', tam:'Vertical', desc:'Crachá editável com foto, nome e CRECI'},
+var _mktD = []; // templates cadastrados pelo admin
+
+var _mktCats = ['Todos','Imóveis Venda','Imóveis Locação','Institucional','Recrutamento','MCMV','Redes Sociais'];
+
+var _mktExemplos = [
+  {id:'t1', cat:'Imóveis Venda',   nome:'Post Oportunidade Imperdível', tam:'Feed 1:1',  desc:'Banner vermelho com foto, título e dados do corretor', canva:'', thumb:'post-imovel'},
+  {id:'t2', cat:'Imóveis Venda',   nome:'Post Venda — Rodapé Azul',     tam:'Feed 4:5',  desc:'Foto grande + rodapé azul com operação e preço',       canva:'', thumb:'post-venda'},
+  {id:'t3', cat:'Imóveis Venda',   nome:'Post Grade 4 Fotos',           tam:'Feed 4:5',  desc:'Grade 2×2 com detalhes do imóvel',                     canva:'', thumb:'post-4fotos'},
+  {id:'t4', cat:'Imóveis Locação', nome:'Post Novidade!',               tam:'Feed 4:5',  desc:'Fundo azul hexagonal com foto e corretor',             canva:'', thumb:'post-novidade'},
+  {id:'t5', cat:'Imóveis Locação', nome:'Story 3 Fotos',                tam:'Story 9:16',desc:'Fundo azul + grade de fotos + frase de impacto',       canva:'', thumb:'story-3fotos'},
+  {id:'t6', cat:'Institucional',   nome:'Post Elegância & Luxo',        tam:'Feed 1:1',  desc:'Foto imóvel com banner translúcido',                   canva:'', thumb:'post-luxo'},
+  {id:'t7', cat:'Institucional',   nome:'A RE/MAX está pronta',         tam:'Story 9:16',desc:'Foto família + texto institucional',                   canva:'', thumb:'post-remax'},
+  {id:'t8', cat:'Institucional',   nome:'Crachá / Credencial',          tam:'Vertical',  desc:'Crachá editável com foto, nome, CRECI e ano',         canva:'', thumb:'crecha'},
+  {id:'t9', cat:'Recrutamento',    nome:'Post Recrutamento Mulheres',   tam:'Feed 1:1',  desc:'Art de captação focada em mulheres em transição',      canva:'', thumb:'post-remax'},
 ];
+
+function mktThumbHtml(thumb){
+  var thumbs = {
+    'post-imovel':  'linear-gradient(135deg,#4a7c9f,#2a5c8f)',
+    'post-venda':   'linear-gradient(135deg,#0f1a35,#003DA5)',
+    'post-novidade':'linear-gradient(135deg,#003DA5,#0055cc)',
+    'post-4fotos':  'linear-gradient(135deg,#1a3a5c,#0f1a35)',
+    'story-3fotos': 'linear-gradient(135deg,#0f1a35,#1a2a4a)',
+    'post-luxo':    'linear-gradient(135deg,#4a7c9f,#6a9cbf)',
+    'post-remax':   'linear-gradient(135deg,#333,#555)',
+    'crecha':       'linear-gradient(135deg,#0f1a35,#003DA5)',
+  };
+  var icons = {'post-imovel':'🏠','post-venda':'🔑','post-novidade':'✨','post-4fotos':'📸','story-3fotos':'📱','post-luxo':'💎','post-remax':'👨‍👩‍👧','crecha':'🪪'};
+  return thumbs[thumb]||'linear-gradient(135deg,#374151,#1f2937)';
+}
 
 function pMkt(){
   var isAdm = isAdmin();
-  document.getElementById('pa').innerHTML = '';
+  document.getElementById('pa').innerHTML = isAdm
+    ? '<button class="btn btn-red" onclick="nMktTemplate()">+ Adicionar Template</button>'
+    : '';
 
-  var cats = ['Todos','Imóveis','Institucional'];
+  var todos = _mktExemplos.concat(_mktD);
+  var lista = todos.filter(function(t){ return _mktCat==="Todos"||t.cat===_mktCat; });
+
   var filtros = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px">'+
-    cats.map(function(c){
+    _mktCats.map(function(c){
       var a=_mktCat===c;
-      return '<button onclick="mktSetCat(\''+c+'\')" style="padding:6px 16px;border-radius:20px;border:1.5px solid '+(a?'#D42028':'#d1d5db')+';background:'+(a?'#D42028':'#fff')+';color:'+(a?'#fff':'#374151')+';font-size:12px;font-weight:700;cursor:pointer">'+c+'</button>';
+      return '<button onclick="mktSetCat(''+c+'')" style="padding:5px 14px;border-radius:20px;border:1.5px solid '+(a?'#D42028':'#d1d5db')+';background:'+(a?'#D42028':'#fff')+';color:'+(a?'#fff':'#374151')+';font-size:11px;font-weight:700;cursor:pointer">'+c+'</button>';
     }).join('')+
   '</div>';
 
-  var lista = _mktTemplates.filter(function(t){ return _mktCat==='Todos'||t.cat===_mktCat; });
+  var grid = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px">';
 
-  var grid = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px">';
+  if(!lista.length){
+    grid += '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:#9ca3af">'+
+      '<div style="font-size:48px;margin-bottom:12px">🎨</div>'+
+      '<div style="font-size:16px;font-weight:600">Nenhum template nesta categoria</div>'+
+      (isAdm?'<div style="font-size:13px;margin-top:6px">Clique em "+ Adicionar Template" para cadastrar</div>':'')+
+    '</div>';
+  }
+
   lista.forEach(function(t){
-    var tamCor = t.tam.includes('Story')?'#7c3aed':t.tam.includes('Vertical')?'#059669':'#003DA5';
-    grid += '<div style="background:#fff;border-radius:16px;border:1px solid #e5e7eb;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);cursor:pointer;transition:all .2s" onmouseover="this.style.transform=\'translateY(-4px)\';this.style.boxShadow=\'0 8px 24px rgba(0,0,0,.12)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 8px rgba(0,0,0,.06)\'" onclick="mktAbrirEditor(\''+t.id+'\')">'+
-      // Preview miniatura
-      '<div style="height:160px;background:linear-gradient(135deg,#0f1a35 0%,#003DA5 100%);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">'+
-        mktMiniatura(t.id)+
-      '</div>'+
-      '<div style="padding:14px">'+
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'+
-          '<div style="font-weight:700;font-size:14px;color:#111827">'+t.nome+'</div>'+
+    var temCanva = !!t.canva;
+    var isCustom = !!t._custom;
+    var bg = mktThumbHtml(t.thumb||'post-imovel');
+    var icons = {'Imóveis Venda':'🔑','Imóveis Locação':'🏡','Institucional':'🏢','Recrutamento':'👥','MCMV':'🏗️','Redes Sociais':'📱'};
+    var catIcon = icons[t.cat]||'🎨';
+    var tamCor = t.tam&&t.tam.includes('Story')?'#7c3aed':t.tam&&t.tam.includes('Vertical')?'#059669':'#003DA5';
+
+    grid += '<div style="background:#fff;border-radius:16px;border:1px solid #e5e7eb;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:all .2s" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.12)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 8px rgba(0,0,0,.06)'">'+
+      // Miniatura
+      '<div style="height:150px;background:'+bg+';position:relative;display:flex;align-items:center;justify-content:center">'+
+        '<div style="text-align:center">'+
+          '<div style="font-size:36px;margin-bottom:6px">'+(t.thumb?({'post-imovel':'🏠','post-venda':'🔑','post-novidade':'✨','post-4fotos':'📸','story-3fotos':'📱','post-luxo':'💎','post-remax':'👨‍👩‍👧','crecha':'🪪'})[t.thumb]||'🎨':'🎨')+'</div>'+
+          '<div style="font-size:9px;color:rgba(255,255,255,.7);font-weight:600;letter-spacing:1px">'+t.tam+'</div>'+
         '</div>'+
-        '<div style="font-size:11px;color:#6b7280;margin-bottom:10px">'+t.desc+'</div>'+
-        '<div style="display:flex;justify-content:space-between;align-items:center">'+
-          '<span style="background:'+tamCor+'22;color:'+tamCor+';padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700">'+t.tam+'</span>'+
-          '<button onclick="event.stopPropagation();mktAbrirEditor(\''+t.id+'\')" style="padding:6px 14px;background:#D42028;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">✏️ Criar arte</button>'+
+        // Badge canva
+        (temCanva
+          ? '<div style="position:absolute;top:10px;right:10px;background:#00C4CC;color:#fff;font-size:9px;font-weight:800;padding:3px 8px;border-radius:20px">✓ CANVA</div>'
+          : (isAdm?'<div style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,.4);color:#fff;font-size:9px;padding:3px 8px;border-radius:20px">Sem link</div>':'')+
+        '')+
+        (isAdm&&isCustom?'<button onclick="event.stopPropagation();delMktTemplate(''+t.id+'')" style="position:absolute;top:10px;left:10px;background:rgba(212,32,40,.8);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;line-height:22px;text-align:center">×</button>':'')+
+      '</div>'+
+      // Info
+      '<div style="padding:14px">'+
+        '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px">'+
+          '<span style="font-size:16px">'+catIcon+'</span>'+
+          '<div>'+
+            '<div style="font-weight:700;font-size:13px;color:#111827;line-height:1.3">'+t.nome+'</div>'+
+            '<div style="font-size:10px;color:#6b7280;margin-top:2px">'+t.cat+'</div>'+
+          '</div>'+
+        '</div>'+
+        '<div style="font-size:11px;color:#9ca3af;margin-bottom:12px;line-height:1.4">'+t.desc+'</div>'+
+        '<div style="display:flex;gap:6px;align-items:center">'+
+          '<span style="background:'+tamCor+'22;color:'+tamCor+';padding:3px 8px;border-radius:20px;font-size:9px;font-weight:700;flex-shrink:0">'+t.tam+'</span>'+
+          (temCanva
+            ? '<button onclick="window.open(''+t.canva+'','_blank')" style="flex:1;padding:8px;background:#00C4CC;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">✏️ Editar no Canva</button>'
+            : '<button onclick="mktSemLink()" style="flex:1;padding:8px;background:#f3f4f6;color:#9ca3af;border:1px dashed #d1d5db;border-radius:8px;font-size:11px;cursor:pointer">'+(isAdm?'🔗 Adicionar link':'Em breve')+'</button>'
+          )+
+          (isAdm&&isCustom?'<button onclick="eMktTemplate(''+t.id+'')" style="padding:8px;background:#eff6ff;color:#003DA5;border:1px solid #bfdbfe;border-radius:8px;font-size:11px;cursor:pointer">✏️</button>':'')+
         '</div>'+
       '</div>'+
     '</div>';
   });
   grid += '</div>';
 
+  // Banner instruções para admin
+  var banner = isAdm ? '<div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:12px;padding:16px;margin-bottom:20px;border:1px solid #bfdbfe;display:flex;gap:14px;align-items:flex-start">'+
+    '<div style="font-size:24px">💡</div>'+
+    '<div>'+
+      '<div style="font-weight:700;color:#1d4ed8;margin-bottom:4px">Como adicionar seus templates do Canva</div>'+
+      '<div style="font-size:12px;color:#3b82f6;line-height:1.6">'+
+        '1. Abra o template no Canva → clique em <b>Compartilhar</b><br>'+
+        '2. Clique em <b>Mais</b> → <b>Template</b> → copie o link<br>'+
+        '3. Clique em <b>"+ Adicionar Template"</b> e cole o link<br>'+
+        '4. Os corretores clicam e abrem direto no Canva para editar'+
+      '</div>'+
+    '</div>'+
+  '</div>' : '';
+
   document.getElementById('pc').innerHTML =
     '<div class="card"><div class="chd"><h3>🎨 Templates de Marketing</h3></div>'+
-    '<div style="padding:16px">'+filtros+grid+'</div></div>';
-}
-
-function mktMiniatura(id){
-  var m = {
-    'post-imovel': '<div style="width:120px;height:120px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.3)"><div style="height:70px;background:#4a7c9f"></div><div style="background:#D42028;padding:4px 6px;font-size:7px;font-weight:700;color:#fff">OPORTUNIDADE!</div><div style="padding:4px;display:flex;justify-content:space-between;align-items:center"><div style="font-size:6px;color:#333;font-weight:700">Nome Corretor</div><div style="font-size:5px;font-weight:900;color:#003DA5">REMAX Space</div></div></div>',
-    'post-venda':  '<div style="width:100px;height:130px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.3)"><div style="height:80px;background:#4a7c9f"></div><div style="background:#0f1a35;padding:6px;display:flex;align-items:center;gap:4px"><div style="width:14px;height:14px;background:#D42028;border-radius:50%"></div><div><div style="font-size:8px;font-weight:900;color:#fff">VENDE</div><div style="font-size:6px;color:#aaa">Condomínio</div></div></div></div>',
-    'post-novidade':'<div style="width:100px;height:130px;background:#003DA5;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.3);position:relative"><div style="position:absolute;top:8px;right:8px;font-size:9px;font-weight:900;color:#fff">NOVIDADE!</div><div style="position:absolute;top:20px;left:8px;right:8px;height:70px;background:#4a7c9f;border-radius:4px"></div><div style="position:absolute;bottom:8px;left:8px;font-size:6px;color:#fff;font-weight:700">REMAX Space</div></div>',
-    'post-4fotos': '<div style="width:110px;height:140px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.3)"><div style="padding:4px;background:#0f1a35;font-size:6px;color:#fff;font-weight:700">REMAX Space · R$ 000.000</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:2px;height:80px"><div style="background:#4a7c9f;border-radius:2px"></div><div style="background:#6a9cbf;border-radius:2px"></div><div style="background:#7ab3d0;border-radius:2px"></div><div style="background:#5a8caf;border-radius:2px"></div></div><div style="padding:4px;font-size:5px;color:#333">3 Quartos · 2 Banheiros · 1 Vaga</div></div>',
-    'story-3fotos':'<div style="width:80px;height:130px;background:#0f1a35;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.3)"><div style="padding:6px;display:flex;justify-content:flex-end"><div style="font-size:5px;font-weight:900;color:#fff">REMAX Space</div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;padding:4px"><div style="height:24px;background:#4a7c9f;border-radius:2px"></div><div style="height:24px;background:#6a9cbf;border-radius:2px"></div><div style="height:24px;background:#5a8caf;border-radius:2px"></div></div><div style="padding:6px;font-size:7px;font-weight:900;color:#fff;line-height:1.3">O imóvel certo no endereço certo</div></div>',
-    'post-luxo':   '<div style="width:120px;height:120px;background:#4a7c9f;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.3);position:relative"><div style="position:absolute;top:8px;left:0;right:0;background:rgba(200,220,240,.85);padding:4px 8px"><div style="font-size:9px;font-weight:900;color:#0f1a35">ELEGÂNCIA</div><div style="font-size:7px;color:#333">LUXO</div></div><div style="position:absolute;bottom:0;left:0;right:0;background:#fff;padding:4px;text-align:center"><div style="font-size:6px;font-weight:900;color:#003DA5">REMAX Space</div></div></div>',
-    'post-remax':  '<div style="width:80px;height:130px;background:#555;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.3);position:relative"><div style="position:absolute;right:0;bottom:30px;left:0;padding:6px;background:rgba(0,0,0,.5)"><div style="font-size:6px;color:#fff;font-weight:700;line-height:1.4">A REMAX ESTÁ PRONTA PARA VOCÊ.</div></div><div style="position:absolute;bottom:0;left:0;right:0;background:#003DA5;padding:4px;font-size:6px;font-weight:900;color:#fff;text-align:center">RE/MAX</div></div>',
-    'crecha':      '<div style="width:90px;height:130px;background:#0f1a35;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.3);position:relative"><div style="height:70px;background:#D42028;margin:8px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:18px">👤</div><div style="background:#fff;margin:0 8px;border-radius:4px;padding:3px;text-align:center;font-size:7px;font-weight:700;color:#0f1a35">RE/MAX Space</div><div style="padding:4px;text-align:center;font-size:5px;font-weight:700;color:#fff;margin-top:4px">IMÓVEIS RE/MAX Space</div></div>',
-  };
-  return m[id]||'<div style="font-size:32px">🎨</div>';
+    '<div style="padding:16px">'+banner+filtros+grid+'</div></div>';
 }
 
 window.mktSetCat = function(c){ _mktCat=c; pMkt(); };
 
-window.mktAbrirEditor = function(id){
-  var tpl = _mktTemplates.find(function(t){return t.id===id;});
-  if(!tpl) return;
-
-  // Campos editáveis por template
-  var campos = mktGetCampos(id);
-  var formHtml = '<div style="display:grid;gap:10px;margin-bottom:16px">'+
-    campos.map(function(c){
-      if(c.type==='textarea') return '<div><label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px">'+c.label+'</label><textarea id="mf-'+c.id+'" style="width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:8px;font-size:13px;resize:none;height:60px">'+c.val+'</textarea></div>';
-      return '<div><label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px">'+c.label+'</label><input id="mf-'+c.id+'" type="'+(c.type||'text')+'" value="'+c.val+'" style="width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:8px;font-size:13px"></div>';
-    }).join('')+
-  '</div>';
-
-  var previewHtml = '<div id="mkt-preview" style="display:flex;justify-content:center;margin-bottom:16px">'+
-    mktRenderPreview(id, mktGetVals(campos))+
-  '</div>';
-
-  oM('✏️ '+tpl.nome,
-    previewHtml+formHtml+
-    '<div style="display:flex;gap:8px;margin-top:4px">'+
-      '<button onclick="mktAtualizar(\''+id+'\')" style="flex:1;padding:12px;background:#003DA5;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">👁️ Atualizar preview</button>'+
-      '<button onclick="mktDownload(\''+id+'\')" style="flex:1;padding:12px;background:#D42028;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">⬇️ Baixar imagem</button>'+
-    '</div>',
-    null,'Fechar',true);
+window.mktSemLink = function(){
+  alert('Link do Canva não configurado ainda.\nFale com a administração.');
 };
 
-function mktGetCampos(id){
-  var u = U||{};
-  var nomeCorretor = u.nome||'Nome Corretor';
-  var tel = '(64) 93500-4028';
-  var ano = new Date().getFullYear();
-
-  var base = [
-    {id:'nome', label:'Nome do Corretor', val:nomeCorretor},
-    {id:'tel',  label:'Telefone', val:tel},
-  ];
-  var imovel = [
-    {id:'titulo', label:'Título / Chamada', val:'Oportunidade imperdível!'},
-    {id:'subtit', label:'Descrição do imóvel', val:'Casa em terreno de 860m² por somente R$ 990mil'},
-    {id:'foto1',  label:'Link da Foto 1 (imóvel)', val:''},
-  ];
-  var mapas = {
-    'post-imovel': imovel.concat(base),
-    'post-venda':  [{id:'op',label:'Operação (VENDE / ALUGA)',val:'VENDE'},{id:'cond',label:'Nome do Imóvel/Condomínio',val:'Condomínio Alphàbeta'},{id:'preco',label:'Preço',val:'R$ 1.999.000'},{id:'foto1',label:'Link da Foto',val:''}].concat(base),
-    'post-novidade':[{id:'foto1',label:'Link da Foto',val:''},{id:'texto',label:'Texto editável',val:'Novo na carteira!',type:'textarea'}].concat(base),
-    'post-4fotos': [{id:'local',label:'Cidade/Bairro',val:'Caldas Novas - GO'},{id:'preco',label:'Preço',val:'R$ 450.000,00'},{id:'foto1',label:'Link Foto 1',val:''},{id:'foto2',label:'Link Foto 2',val:''},{id:'foto3',label:'Link Foto 3',val:''},{id:'foto4',label:'Link Foto 4',val:''},{id:'q',label:'Quartos',val:'3'},{id:'ban',label:'Banheiros',val:'2'},{id:'vag',label:'Vagas',val:'1'}].concat(base),
-    'story-3fotos': [{id:'frase',label:'Frase de impacto',val:'O imóvel certo no endereço certo'},{id:'foto1',label:'Link Foto 1',val:''},{id:'foto2',label:'Link Foto 2',val:''},{id:'foto3',label:'Link Foto 3',val:''}].concat(base),
-    'post-luxo':   [{id:'tag1',label:'Palavra destaque 1',val:'ELEGÂNCIA'},{id:'tag2',label:'Palavra destaque 2',val:'LUXO'},{id:'foto1',label:'Link da Foto',val:''}],
-    'post-remax':  base,
-    'crecha':      [{id:'nome',label:'Nome do Corretor',val:nomeCorretor},{id:'cargo',label:'Cargo',val:'Corretor de Imóveis'},{id:'creci',label:'CRECI',val:'12345-F'},{id:'ano',label:'Ano',val:String(ano)},{id:'foto1',label:'Link da Foto do Corretor',val:''}],
-  };
-  return mapas[id]||base;
-}
-
-function mktGetVals(campos){
-  var v={};
-  campos.forEach(function(c){
-    var el=document.getElementById('mf-'+c.id);
-    v[c.id]=el?el.value:c.val;
-  });
-  return v;
-}
-
-window.mktAtualizar = function(id){
-  var campos = mktGetCampos(id);
-  var vals = mktGetVals(campos);
-  var prev = document.getElementById('mkt-preview');
-  if(prev) prev.innerHTML = mktRenderPreview(id, vals);
-};
-
-function mktRenderPreview(id, v){
-  var html = mktGetArtHtml(id, v);
-  return '<div id="mkt-art-'+id+'" style="transform-origin:top center;transform:scale(0.5);margin-bottom:-200px">'+html+'</div>';
-}
-
-function mktGetArtHtml(id, v){
-  // Logo SVG inline RE/MAX Space
-  var balaoCss = '<div style="width:36px;height:42px;position:relative;flex-shrink:0">'+
-    '<div style="width:36px;height:36px;border-radius:50%;border:2.5px solid #fff;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr">'+
-      '<div style="background:#8B0000"></div>'+
-      '<div style="background:#D42028"></div>'+
-      '<div style="background:#fff;display:flex;align-items:center;justify-content:center"><div style="width:60%;height:2px;background:#e5e7eb"></div></div>'+
-      '<div style="background:#003DA5"></div>'+
+function nMktTemplate(){
+  oM('+ Novo Template',
+    '<div class="fg2">'+
+      '<div class="fg"><label>Nome do Template</label><input id="mt-nome" placeholder="Ex: Post Imóvel Venda"></div>'+
+      '<div class="fg"><label>Categoria</label><select id="mt-cat">'+_mktCats.filter(function(c){return c!=="Todos";}).map(function(c){return '<option>'+c+'</option>';}).join('')+'</select></div>'+
     '</div>'+
-    '<div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:10px solid #003DA5"></div>'+
-  '</div>';
-  var logo = '<div style="display:flex;align-items:center;gap:8px">'+
-    balaoCss+
-    '<div>'+
-      '<div style="font-size:7px;color:rgba(255,255,255,.6);letter-spacing:3px;font-family:Arial;text-transform:uppercase">Imóveis</div>'+
-      '<div style="font-size:20px;font-weight:900;color:#fff;line-height:1;letter-spacing:-1px;font-family:Impact,Arial Black,Arial">RE/MAX</div>'+
-      '<div style="font-size:13px;font-weight:700;color:#fff;font-family:Arial;letter-spacing:1px">Space</div>'+
-      '<div style="font-size:7px;color:rgba(255,255,255,.45);font-family:Arial">CRECI: 41.377-J</div>'+
+    '<div class="fg2">'+
+      '<div class="fg"><label>Tamanho</label><select id="mt-tam"><option>Feed 1:1</option><option>Feed 4:5</option><option>Story 9:16</option><option>Vertical</option><option>Horizontal</option></select></div>'+
+      '<div class="fg"><label>Emoji ícone</label><input id="mt-icon" value="🎨" style="font-size:20px"></div>'+
     '</div>'+
-  '</div>';
-
-  var fotoStyle = function(url){ return url?'background:url(\''+url+'\') center/cover no-repeat':'background:linear-gradient(135deg,#2a4a6a,#4a7ca0)'; };
-
-  var arts = {
-    'post-imovel': '<div style="width:600px;height:600px;position:relative;overflow:hidden;font-family:Arial,sans-serif;'+fotoStyle(v.foto1)+'">'+
-      '<div style="position:absolute;top:30px;left:30px;right:30px;background:#D42028;border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px">'+
-        '<div style="width:44px;height:44px;background:linear-gradient(135deg,#8B0000,#D42028,#003DA5);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;flex-shrink:0"><div style="font-size:9px;font-weight:900;color:#fff;font-family:Arial Black">R/M</div></div>'+
-        '<div><div style="font-size:22px;font-weight:900;color:#fff">'+(v.titulo||'Oportunidade imperdível!')+'</div><div style="font-size:14px;color:rgba(255,255,255,.9)">'+(v.subtit||'')+'</div></div>'+
-      '</div>'+
-      '<div style="position:absolute;bottom:0;left:0;right:0;background:#0f1a35;padding:16px 24px;display:flex;align-items:center;justify-content:space-between">'+
-        '<div style="display:flex;align-items:center;gap:12px">'+
-          '<div style="width:52px;height:52px;border-radius:50%;background:#D42028;display:flex;align-items:center;justify-content:center;font-size:20px">👤</div>'+
-          '<div><div style="font-weight:800;font-size:16px;color:#fff">'+(v.nome||'Nome Corretor')+'</div><div style="font-size:13px;color:#aaa">'+(v.tel||'(64) 93500-4028')+'</div></div>'+
-        '</div>'+
-        logo+
-      '</div>'+
-    '</div>',
-
-    'post-venda': '<div style="width:480px;height:600px;position:relative;overflow:hidden;font-family:Arial,sans-serif;background:#fff">'+
-      '<div style="height:420px;'+fotoStyle(v.foto1)+'"></div>'+
-      '<div style="background:#0f1a35;padding:20px 24px;display:flex;align-items:center;justify-content:space-between">'+
-        '<div style="display:flex;align-items:center;gap:12px">'+
-          '<div style="width:40px;height:40px;background:linear-gradient(135deg,#D42028,#003DA5);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;border:2px solid #fff;flex-shrink:0"></div>'+
-          '<div><div style="font-size:24px;font-weight:900;color:#fff">'+(v.op||'VENDE')+'</div><div style="font-size:13px;color:#aaa">'+(v.cond||'Nome do Imóvel')+'</div><div style="font-size:13px;color:#aaa">'+(v.preco||'')+'</div></div>'+
-        '</div>'+
-        logo+
-      '</div>'+
-    '</div>',
-
-    'post-novidade': '<div style="width:480px;height:600px;position:relative;overflow:hidden;font-family:Arial,sans-serif;background:#003DA5">'+
-      '<div style="position:absolute;inset:0;opacity:.15;background-image:repeating-linear-gradient(60deg,#fff 0,#fff 1px,transparent 0,transparent 50%);background-size:20px 35px"></div>'+
-      '<div style="position:relative;padding:20px;display:flex;justify-content:space-between;align-items:flex-start">'+
-        '<div style="width:36px;height:36px;background:linear-gradient(135deg,#8B0000,#D42028 50%,#003DA5);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;border:2px solid #fff;flex-shrink:0"></div>'+
-        '<div style="font-size:28px;font-weight:900;color:#fff">NOVIDADE!</div>'+
-      '</div>'+
-      '<div style="position:relative;margin:0 20px;height:300px;border-radius:12px;overflow:hidden;'+fotoStyle(v.foto1)+'"></div>'+
-      '<div style="position:relative;padding:16px 20px">'+
-        '<div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:16px">'+(v.texto||'Novo na carteira!')+'</div>'+
-        '<div style="display:flex;align-items:center;gap:10px">'+
-          '<div style="width:44px;height:44px;border-radius:50%;background:#D42028;display:flex;align-items:center;justify-content:center;font-size:18px">👤</div>'+
-          '<div><div style="font-weight:800;font-size:15px;color:#fff">'+(v.nome||'Nome Corretor')+'</div><div style="font-size:12px;color:rgba(255,255,255,.8)">'+(v.tel||'')+'</div></div>'+
-        '</div>'+
-      '</div>'+
-      '<div style="position:relative;padding:0 20px 16px">'+logo+'</div>'+
-    '</div>',
-
-    'post-4fotos': '<div style="width:480px;height:600px;background:#fff;font-family:Arial,sans-serif;display:flex;flex-direction:column;overflow:hidden">'+
-      '<div style="background:#0f1a35;padding:12px 16px;display:flex;align-items:center;justify-content:space-between">'+
-        logo+
-        '<div style="text-align:right"><div style="font-size:12px;color:#aaa">'+(v.local||'Caldas Novas - GO')+'</div><div style="font-size:20px;font-weight:900;color:#fff">'+(v.preco||'R$ 000.000')+'</div></div>'+
-      '</div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;flex:1">'+
-        '<div style="'+fotoStyle(v.foto1)+'"></div>'+
-        '<div style="'+fotoStyle(v.foto2)+'"></div>'+
-        '<div style="'+fotoStyle(v.foto3)+'"></div>'+
-        '<div style="'+fotoStyle(v.foto4)+'"></div>'+
-      '</div>'+
-      '<div style="padding:14px 16px;display:flex;align-items:center;gap:16px;border-top:1px solid #f0f0f0">'+
-        '<div style="display:flex;flex-direction:column;align-items:center">'+
-          '<div style="width:52px;height:52px;border-radius:50%;background:#e5e7eb;overflow:hidden">'+
-            (v.foto1?'':'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px">👤</div>')+
-          '</div>'+
-          '<div style="font-size:11px;font-weight:700;color:#0f1a35;margin-top:4px;text-align:center">'+(v.nome||'Nome Corretor')+'</div>'+
-          '<div style="font-size:10px;color:#6b7280">'+(v.tel||'')+'</div>'+
-        '</div>'+
-        '<div style="flex:1;border-left:2px solid #e5e7eb;padding-left:16px">'+
-          '<div style="font-size:12px;font-weight:800;color:#003DA5;margin-bottom:6px">Detalhes do imóvel</div>'+
-          '<div style="font-size:13px;color:#374151">🛏 '+(v.q||'0')+' Quartos</div>'+
-          '<div style="font-size:13px;color:#374151">🚿 '+(v.ban||'0')+' Banheiros</div>'+
-          '<div style="font-size:13px;color:#374151">🚗 '+(v.vag||'0')+' Vaga(s) de Garagem</div>'+
-        '</div>'+
-      '</div>'+
-    '</div>',
-
-    'story-3fotos': '<div style="width:360px;height:640px;background:#0f1a35;font-family:Arial,sans-serif;position:relative;overflow:hidden;display:flex;flex-direction:column">'+
-      '<div style="position:absolute;inset:0;opacity:.1;background:repeating-linear-gradient(-45deg,transparent,transparent 40px,rgba(255,255,255,.1) 40px,rgba(255,255,255,.1) 41px)"></div>'+
-      '<div style="position:relative;padding:20px;display:flex;align-items:center;gap:12px">'+
-        '<div style="width:32px;height:32px;background:linear-gradient(135deg,#D42028,#8B0000);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;border:2px solid rgba(255,255,255,.5);flex-shrink:0"></div>'+
-        logo+
-      '</div>'+
-      '<div style="position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;margin:0 12px;height:180px;border-radius:10px;overflow:hidden">'+
-        '<div style="'+fotoStyle(v.foto1)+'"></div>'+
-        '<div style="'+fotoStyle(v.foto2)+'"></div>'+
-        '<div style="'+fotoStyle(v.foto3)+'"></div>'+
-      '</div>'+
-      '<div style="position:relative;flex:1;padding:20px;display:flex;flex-direction:column;justify-content:space-between">'+
-        '<div style="font-size:32px;font-weight:900;color:#fff;line-height:1.2">'+(v.frase||'O imóvel certo no endereço certo')+'</div>'+
-        '<div style="display:flex;align-items:center;gap:12px">'+
-          '<div style="width:56px;height:56px;border-radius:50%;background:#D42028;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px">👤</div>'+
-          '<div><div style="font-size:16px;font-weight:800;color:#fff">'+(v.nome||'Nome Corretor')+'</div><div style="font-size:13px;color:rgba(255,255,255,.7)">'+(v.tel||'')+'</div></div>'+
-        '</div>'+
-      '</div>'+
-    '</div>',
-
-    'post-luxo': '<div style="width:600px;height:600px;position:relative;overflow:hidden;font-family:Arial,sans-serif;'+fotoStyle(v.foto1)+'">'+
-      '<div style="position:absolute;top:0;left:0;right:0;background:rgba(200,220,240,.88);padding:20px 24px">'+
-        '<div style="font-size:36px;font-weight:900;color:#0f1a35;letter-spacing:-1px">'+(v.tag1||'ELEGÂNCIA')+'</div>'+
-        '<div style="font-size:22px;color:#003DA5;font-weight:500">'+(v.tag2||'LUXO')+'</div>'+
-      '</div>'+
-      '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.95);padding:16px 24px;display:flex;align-items:center;justify-content:space-between">'+
-        logo+
-        '<div style="display:grid;grid-template-columns:repeat(3,20px);gap:4px;opacity:.3">'+Array(9).fill('<div style="width:20px;height:20px;border:2px solid #003DA5;border-radius:2px"></div>').join('')+'</div>'+
-      '</div>'+
-    '</div>',
-
-    'post-remax': '<div style="width:360px;height:640px;background:#555;font-family:Arial,sans-serif;position:relative;overflow:hidden">'+
-      '<div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(180,0,0,.3) 0%,transparent 40%,rgba(0,0,0,.5) 70%)"></div>'+
-      '<div style="position:absolute;top:0;left:0;right:0;background:#D42028;height:8px"></div>'+
-      '<div style="position:absolute;bottom:0;left:0;right:0;background:#003DA5;height:8px"></div>'+
-      '<div style="position:absolute;bottom:60px;left:0;right:0;padding:20px">'+
-        '<div style="font-size:18px;color:#fff;font-weight:300;margin-bottom:8px">O imóvel pode estar em qualquer fase.</div>'+
-        '<div style="font-size:24px;font-weight:900;color:#fff;margin-bottom:16px">A REMAX ESTÁ PRONTA PARA VOCÊ.</div>'+
-        '<svg width="32" height="32" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><ellipse cx="256" cy="200" rx="110" ry="110" fill="#fff"/><polygon points="256,340 206,250 306,250" fill="#fff"/></svg>'+
-        '<div style="font-size:28px;font-weight:900;color:#fff;margin-top:4px">RE/MAX</div>'+
-        '<div style="font-size:14px;color:rgba(255,255,255,.8);margin-top:4px">IMÓVEIS PRONTOS PARA VOCÊ</div>'+
-        '<div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:8px">remaxspace.com.br</div>'+
-      '</div>'+
-    '</div>',
-
-    'crecha': '<div style="width:380px;height:520px;background:linear-gradient(160deg,#0f1a35 0%,#003DA5 100%);font-family:Arial,sans-serif;position:relative;overflow:hidden;border-radius:16px">'+
-      // Linhas decorativas
-      '<div style="position:absolute;inset:0;opacity:.1;background-image:repeating-linear-gradient(135deg,#fff 0,#fff 1px,transparent 0,transparent 30px);background-size:42px 42px"></div>'+
-      // Foto
-      '<div style="position:relative;margin:24px auto 0;width:200px;height:200px;background:#D42028;border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center">'+
-        ('{foto1}'?'<img src="{foto1}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">':'')+'<div style="font-size:60px;position:absolute">👤</div>'+
-      '</div>'+
-      // Nome em pill branco
-      '<div style="position:relative;background:#fff;margin:20px 24px 0;border-radius:40px;padding:14px 20px;text-align:center">'+
-        '<div style="font-size:20px;font-weight:900;color:#0f1a35">'+(v.nome||'Nome do Corretor')+'</div>'+
-        '<div style="font-size:12px;color:#6b7280;margin-top:2px">'+(v.cargo||'Corretor de Imóveis')+'</div>'+
-        '<div style="font-size:11px;color:#9ca3af">CRECI: '+(v.creci||'00000-F')+'</div>'+
-      '</div>'+
-      // Logo + ano
-      '<div style="position:relative;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;margin-top:8px">'+
-        logo+
-        '<div style="text-align:right"><div style="font-size:11px;color:rgba(255,255,255,.5)">Credencial</div><div style="font-size:18px;font-weight:900;color:#D42028">'+(v.ano||new Date().getFullYear())+'</div></div>'+
-      '</div>'+
-    '</div>',
-  };
-  return arts[id]||'<div style="padding:40px;color:#fff;text-align:center">Template em construção</div>';
+    '<div class="fg"><label>Descrição curta</label><input id="mt-desc" placeholder="Para que serve este template?"></div>'+
+    '<div class="fg"><label>Link do Canva (Template)</label><input id="mt-canva" placeholder="https://www.canva.com/design/..."></div>',
+    function(){
+      var nome = (document.getElementById('mt-nome')||{}).value||'';
+      if(!nome.trim()){alert('Informe o nome.');return;}
+      _mktD.push({
+        id:'c'+Date.now(),
+        _custom:true,
+        nome:nome,
+        cat:document.getElementById('mt-cat').value,
+        tam:document.getElementById('mt-tam').value,
+        thumb:document.getElementById('mt-icon').value,
+        desc:document.getElementById('mt-desc').value||'',
+        canva:document.getElementById('mt-canva').value||''
+      });
+      salvarTudo(); cM(); pMkt();
+    },'Salvar');
 }
 
-window.mktDownload = function(id){
-  var campos = mktGetCampos(id);
-  var vals = mktGetVals(campos);
-  var artHtml = mktGetArtHtml(id, vals);
-  var tpl = _mktTemplates.find(function(t){return t.id===id;})||{nome:'Arte'};
-
-  var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Arte RE/MAX Space — '+tpl.nome+'</title>'+
-    '<style>*{margin:0;padding:0;box-sizing:border-box;}'+
-    'body{background:#1a1a2e;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;font-family:Arial,sans-serif;}'+
-    'h2{color:#fff;margin-bottom:24px;font-size:18px;opacity:.7;}'+
-    '.art-wrap{box-shadow:0 20px 60px rgba(0,0,0,.5);border-radius:12px;overflow:hidden;}'+
-    '.actions{margin-top:24px;display:flex;gap:12px;}'+
-    '.btn{padding:14px 28px;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;}'+
-    '.btn-print{background:#D42028;color:#fff;}'+
-    '.btn-close{background:rgba(255,255,255,.15);color:#fff;}'+
-    '@media print{body{background:#fff;padding:0;}h2,.actions{display:none!important;}.art-wrap{box-shadow:none;border-radius:0;}}'+
-    '</style></head><body>'+
-    '<h2>'+tpl.nome+' · RE/MAX Space</h2>'+
-    '<div class="art-wrap">'+artHtml+'</div>'+
-    '<div class="actions">'+
-      '<button class="btn btn-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>'+
-      '<button class="btn btn-close" onclick="window.close()">✕ Fechar</button>'+
+function eMktTemplate(id){
+  var t = _mktD.find(function(x){return x.id===id;});
+  if(!t) return;
+  oM('Editar Template — '+t.nome,
+    '<div class="fg2">'+
+      '<div class="fg"><label>Nome</label><input id="mt-nome" value="'+t.nome+'"></div>'+
+      '<div class="fg"><label>Categoria</label><select id="mt-cat">'+_mktCats.filter(function(c){return c!=="Todos";}).map(function(c){return '<option'+(c===t.cat?" selected":"")+'>'+c+'</option>';}).join('')+'</select></div>'+
     '</div>'+
-    '</body></html>';
+    '<div class="fg"><label>Link do Canva</label><input id="mt-canva" value="'+(t.canva||"")+'"></div>'+
+    '<div class="fg"><label>Descrição</label><input id="mt-desc" value="'+(t.desc||"")+'"></div>',
+    function(){
+      t.nome=document.getElementById('mt-nome').value||t.nome;
+      t.cat=document.getElementById('mt-cat').value;
+      t.canva=document.getElementById('mt-canva').value||'';
+      t.desc=document.getElementById('mt-desc').value||'';
+      salvarTudo(); cM(); pMkt();
+    },'Salvar');
+}
 
-  var w = window.open('','_blank');
-  w.document.write(html);
-  w.document.close();
-};
+function delMktTemplate(id){
+  var i=_mktD.findIndex(function(x){return x.id===id;});
+  if(i>=0){ _mktD.splice(i,1); salvarTudo(); pMkt(); }
+}
+
 
 function pIV(){
   document.getElementById('pa').innerHTML='<button class="btn btn-red" onclick="nIV()">+ Novo Imovel</button>';

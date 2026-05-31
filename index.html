@@ -5968,9 +5968,20 @@ function mktRenderPreview(id, v){
 
 function mktGetArtHtml(id, v){
   // Logo SVG inline RE/MAX Space
-  var logo = '<div style="display:flex;align-items:center;gap:6px">'+
-    '<svg width="28" height="28" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><ellipse cx="256" cy="200" rx="110" ry="110" fill="#fff"/><polygon points="256,340 206,250 306,250" fill="#fff"/><rect x="170" y="155" width="172" height="90" rx="8" fill="#0f1a35"/><text x="182" y="215" font-family="Arial Black" font-size="48" font-weight="900" fill="#fff">RE/</text><text x="182" y="258" font-family="Arial Black" font-size="32" font-weight="900" fill="#D42028">MAX</text></svg>'+
-    '<div><div style="font-size:9px;color:#aaa;letter-spacing:2px">IMÓVEIS</div><div style="font-size:22px;font-weight:900;color:#fff;line-height:1;letter-spacing:-1px">RE/MAX</div><div style="font-size:14px;font-weight:700;color:#fff">Space</div><div style="font-size:8px;color:#aaa">CRECI: 41.377-J</div></div>'+
+  var logo = '<div style="display:flex;align-items:center;gap:8px">'+
+    '<div style="width:32px;height:38px;position:relative">'+
+      '<div style="width:32px;height:32px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;background:linear-gradient(135deg,#8B0000 0%,#D42028 50%,#003DA5 50%,#001f5c 100%);border:2px solid #fff;position:relative;overflow:hidden">'+
+        '<div style="position:absolute;top:50%;left:0;right:0;height:3px;background:#fff;transform:translateY(-50%)"></div>'+
+        '<div style="position:absolute;top:0;bottom:0;left:50%;width:2px;background:rgba(255,255,255,.4)"></div>'+
+      '</div>'+
+      '<div style="position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid #003DA5"></div>'+
+    '</div>'+
+    '<div>'+
+      '<div style="font-size:8px;color:rgba(255,255,255,.6);letter-spacing:2px;font-family:Arial">IMÓVEIS</div>'+
+      '<div style="font-size:18px;font-weight:900;color:#fff;line-height:1;letter-spacing:-0.5px;font-family:Arial Black,Arial">RE/MAX</div>'+
+      '<div style="font-size:12px;font-weight:700;color:#fff;font-family:Arial">Space</div>'+
+      '<div style="font-size:7px;color:rgba(255,255,255,.5);font-family:Arial">CRECI: 41.377-J</div>'+
+    '</div>'+
   '</div>';
 
   var fotoStyle = function(url){ return url?'background:url(\''+url+'\') center/cover no-repeat':'background:linear-gradient(135deg,#2a4a6a,#4a7ca0)'; };
@@ -5978,7 +5989,7 @@ function mktGetArtHtml(id, v){
   var arts = {
     'post-imovel': '<div style="width:600px;height:600px;position:relative;overflow:hidden;font-family:Arial,sans-serif;'+fotoStyle(v.foto1)+'">'+
       '<div style="position:absolute;top:30px;left:30px;right:30px;background:#D42028;border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px">'+
-        '<svg width="44" height="44" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><ellipse cx="256" cy="200" rx="110" ry="110" fill="#fff"/><polygon points="256,340 206,250 306,250" fill="#fff"/><rect x="170" y="155" width="172" height="90" rx="8" fill="#D42028"/><text x="182" y="215" font-family="Arial Black" font-size="48" font-weight="900" fill="#fff">RE/</text><text x="182" y="258" font-family="Arial Black" font-size="32" font-weight="900" fill="#8B0000">MAX</text></svg>'+
+        '<div style="width:44px;height:44px;background:linear-gradient(135deg,#8B0000,#D42028,#003DA5);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;flex-shrink:0"><div style="font-size:9px;font-weight:900;color:#fff;font-family:Arial Black">R/M</div></div>'+
         '<div><div style="font-size:22px;font-weight:900;color:#fff">'+(v.titulo||'Oportunidade imperdível!')+'</div><div style="font-size:14px;color:rgba(255,255,255,.9)">'+(v.subtit||'')+'</div></div>'+
       '</div>'+
       '<div style="position:absolute;bottom:0;left:0;right:0;background:#0f1a35;padding:16px 24px;display:flex;align-items:center;justify-content:space-between">'+
@@ -5994,7 +6005,7 @@ function mktGetArtHtml(id, v){
       '<div style="height:420px;'+fotoStyle(v.foto1)+'"></div>'+
       '<div style="background:#0f1a35;padding:20px 24px;display:flex;align-items:center;justify-content:space-between">'+
         '<div style="display:flex;align-items:center;gap:12px">'+
-          '<svg width="40" height="40" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><ellipse cx="256" cy="200" rx="110" ry="110" fill="#D42028"/><polygon points="256,340 206,250 306,250" fill="#D42028"/><rect x="140" y="130" width="232" height="150" rx="20" fill="#fff"/><text x="148" y="220" font-family="Arial Black" font-size="70" font-weight="900" fill="#D42028">R</text><text x="210" y="220" font-family="Arial Black" font-size="50" font-weight="900" fill="#003DA5">/M</text></svg>'+
+          '<div style="width:40px;height:40px;background:linear-gradient(135deg,#D42028,#003DA5);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;border:2px solid #fff;flex-shrink:0"></div>'+
           '<div><div style="font-size:24px;font-weight:900;color:#fff">'+(v.op||'VENDE')+'</div><div style="font-size:13px;color:#aaa">'+(v.cond||'Nome do Imóvel')+'</div><div style="font-size:13px;color:#aaa">'+(v.preco||'')+'</div></div>'+
         '</div>'+
         logo+
@@ -6004,7 +6015,7 @@ function mktGetArtHtml(id, v){
     'post-novidade': '<div style="width:480px;height:600px;position:relative;overflow:hidden;font-family:Arial,sans-serif;background:#003DA5">'+
       '<div style="position:absolute;inset:0;opacity:.15;background-image:repeating-linear-gradient(60deg,#fff 0,#fff 1px,transparent 0,transparent 50%);background-size:20px 35px"></div>'+
       '<div style="position:relative;padding:20px;display:flex;justify-content:space-between;align-items:flex-start">'+
-        '<svg width="36" height="36" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><ellipse cx="256" cy="200" rx="110" ry="110" fill="#fff"/><polygon points="256,340 206,250 306,250" fill="#fff"/><rect x="170" y="155" width="172" height="90" rx="8" fill="#003DA5"/><text x="182" y="215" font-family="Arial Black" font-size="48" font-weight="900" fill="#fff">RE/</text><text x="182" y="258" font-family="Arial Black" font-size="32" font-weight="900" fill="#D42028">MAX</text></svg>'+
+        '<div style="width:36px;height:36px;background:linear-gradient(135deg,#8B0000,#D42028 50%,#003DA5);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;border:2px solid #fff;flex-shrink:0"></div>'+
         '<div style="font-size:28px;font-weight:900;color:#fff">NOVIDADE!</div>'+
       '</div>'+
       '<div style="position:relative;margin:0 20px;height:300px;border-radius:12px;overflow:hidden;'+fotoStyle(v.foto1)+'"></div>'+
@@ -6049,7 +6060,7 @@ function mktGetArtHtml(id, v){
     'story-3fotos': '<div style="width:360px;height:640px;background:#0f1a35;font-family:Arial,sans-serif;position:relative;overflow:hidden;display:flex;flex-direction:column">'+
       '<div style="position:absolute;inset:0;opacity:.1;background:repeating-linear-gradient(-45deg,transparent,transparent 40px,rgba(255,255,255,.1) 40px,rgba(255,255,255,.1) 41px)"></div>'+
       '<div style="position:relative;padding:20px;display:flex;align-items:center;gap:12px">'+
-        '<svg width="32" height="32" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><ellipse cx="256" cy="200" rx="110" ry="110" fill="#D42028"/><polygon points="256,340 206,250 306,250" fill="#D42028"/></svg>'+
+        '<div style="width:32px;height:32px;background:linear-gradient(135deg,#D42028,#8B0000);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;border:2px solid rgba(255,255,255,.5);flex-shrink:0"></div>'+
         logo+
       '</div>'+
       '<div style="position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;margin:0 12px;height:180px;border-radius:10px;overflow:hidden">'+

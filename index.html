@@ -2400,6 +2400,7 @@ function gP(id){
   document.querySelectorAll('.ni').forEach(function(e){e.classList.remove('active');});
   var n=document.getElementById('n-'+id); if(n) n.classList.add('active');
   document.getElementById('pt').textContent = TITLES[id]||id;
+  var ca=document.getElementById('ca'); if(ca) ca.scrollTop=0;
   document.getElementById('pa').innerHTML = '';
   var pages = {
     dashboard:pDash, whatsapp:pWhatsApp, leads:pLeads, prosp:pProsp, agenda:pAgenda, visitas:pVis,

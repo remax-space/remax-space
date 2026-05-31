@@ -2743,141 +2743,145 @@ var ORIGENS_CAT = {
 };
 
 function pLeads(){
-  document.getElementById('pa').innerHTML='<button class="btn btn-red" onclick="nLead()">+ Novo Lead</button>';
-  var tot=ldD.length;
-  var fec=ldD.filter(function(l){return l.st==='Fechado';}).length;
-  var quentes=ldD.filter(function(l){return iaScore(l)>=60&&l.st!=='Fechado'&&l.st!=='Perdido';}).length;
-  var refs=ldD.filter(function(l){return l.orig_cat==='Referenciamento';}).length;
-  var conv=tot>0?Math.round(fec/tot*100):0;
+  var isAdmin=isA();
+  var dados=isAdmin?ldD:ldD.filter(function(l){return l.cor===U.nome;});
 
-  // Por categoria de origem
-  var catCount={};
-  ldD.forEach(function(l){catCount[l.orig_cat||'Outros']=(catCount[l.orig_cat||'Outros']||0)+1;});
-  var catCores={'Digital':'#003DA5','Portal':'#7c3aed','Orgânico':'#059669','Referenciamento':'#B9975B','Outros':'#64748b'};
-  var byCAT='';
-  Object.keys(catCount).sort(function(a,b){return catCount[b]-catCount[a];}).forEach(function(cat){
-    var pct=Math.round(catCount[cat]/tot*100);
-    byCAT+='<div style="margin-bottom:10px">'+
-      '<div style="display:flex;justify-content:space-between;margin-bottom:3px">'+
-        '<span style="font-size:11px;font-weight:700;color:'+(catCores[cat]||'#333')+'">'+cat+'</span>'+
-        '<span style="font-size:11px;font-weight:700">'+catCount[cat]+' ('+pct+'%)</span>'+
-      '</div>'+
-      '<div style="background:#f3f4f6;border-radius:4px;height:6px">'+
-        '<div style="background:'+(catCores[cat]||'#333')+';height:6px;border-radius:4px;width:'+pct+'%"></div>'+
-      '</div></div>';
-  });
-
-  // Por corretor
-  var byC='';
-  COR.forEach(function(c){
-    var n=ldD.filter(function(l){return l.cor===c.nome;}).length; if(!n) return;
-    var nf=ldD.filter(function(l){return l.cor===c.nome&&l.st==='Fechado';}).length;
-    var conv2=n>0?Math.round(nf/n*100):0;
-    byC+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'+
-      '<div style="width:28px;height:28px;border-radius:50%;background:'+c.cor+';display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">'+c.initials+'</div>'+
-      '<div style="flex:1"><div style="font-size:12px;font-weight:700">'+c.nome+'</div>'+
-      '<div style="font-size:10px;color:var(--lm)">'+n+' leads · '+nf+' fechados · '+conv2+'% conv.</div></div>'+
-      '<span class="badge bb">'+n+'</span></div>';
-  });
-
-  // Referenciamentos
-  var refs_html='';
-  var refsData=ldD.filter(function(l){return l.orig_cat==='Referenciamento';});
-  if(refsData.length>0){
-    refs_html='<div class="card" style="border-left:4px solid #B9975B;margin-bottom:10px">'+
-      '<div class="chd"><h3 style="color:#B9975B">🤝 Referenciamentos RE/MAX ('+refsData.length+')</h3></div>'+
-      '<div class="tw"><table><thead><tr><th>Cliente</th><th>Tipo</th><th>Origem</th><th>Corretor Ref.</th><th>Faixa</th><th>Corretor</th><th>Status</th><th>IA</th></tr></thead><tbody>'+
-      refsData.map(function(l,idx){
-        var score=iaScore(l);
-        return '<tr>'+
-          '<td style="font-weight:700">'+l.nome+'</td>'+
-          '<td><span class="badge bgr" style="font-size:9px">'+l.tipo+'</span></td>'+
-          '<td style="font-size:11px">'+l.ref_remax+'</td>'+
-          '<td style="font-size:11px;color:var(--lm)">'+l.ref_cor+'</td>'+
-          '<td style="font-size:11px">'+l.faixa+'</td>'+
-          '<td style="font-size:11px">'+l.cor+'</td>'+
-          '<td>'+sBadge(l.st)+'</td>'+
-          '<td>'+iaLabel(score)+'</td>'+
-        '</tr>';
-      }).join('')+
-      '</tbody></table></div></div>';
-  }
-
-  // Tabela principal
-  var tr='';
-  var filtered=ldD.slice().sort(function(a,b){return iaScore(b)-iaScore(a);});
-  filtered.forEach(function(l,i){
-    var realIdx=ldD.indexOf(l);
-    var score=iaScore(l);
-    var isRef=l.orig_cat==='Referenciamento';
-    tr+='<tr data-sr="'+(l.nome+l.orig+(l.orig_cat||'')+l.cor+l.st+l.tipo+(l.ref_remax||'')).toLowerCase()+'">'+
-      '<td style="font-size:11px;white-space:nowrap">'+l.dt+' '+l.hr+'</td>'+
-      '<td>'+
-        '<div style="font-size:10px;font-weight:700;color:'+(catCores[l.orig_cat||'Outros']||'#333')+'">'+
-          (l.orig_cat||'Outros')+'</div>'+
-        '<div style="font-size:10px;color:var(--lm)">'+l.orig+'</div>'+
-        (isRef?'<div style="font-size:9px;color:#B9975B">🤝 '+l.ref_remax+'</div>':'')+
-      '</td>'+
-      '<td><span class="badge bgr" style="font-size:9px">'+l.tipo+'</span></td>'+
-      '<td style="font-weight:700">'+l.nome+'</td>'+
-      '<td><a href="tel:'+l.tel+'" style="color:var(--navy);font-size:11px;text-decoration:none">'+l.tel+'</a></td>'+
-      '<td style="font-size:11px">'+l.cor+'</td>'+
-      '<td style="font-size:11px;color:var(--lm)">'+l.faixa+'</td>'+
-      '<td>'+sBadge(l.st)+'</td>'+
-      '<td>'+iaLabel(score)+'<div style="font-size:9px;color:var(--lm);text-align:center">'+score+'pts</div></td>'+
-      '<td style="display:flex;gap:3px">'+
-        '<button class="btn btn-sm btn-blue" onclick="eLead('+realIdx+')">Editar</button>'+
-        '<button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5" onclick="delLead('+realIdx+')">Del</button>'+
-      '</td>'+
-    '</tr>';
-  });
-
-  document.getElementById('pc').innerHTML=
-    '<div class="g4" style="margin-bottom:12px">'+
-      '<div class="kc blue"><div class="kc-l">Total</div><div class="kc-v">'+tot+'</div></div>'+
-      '<div class="kc" style="border-left:3px solid #dc2626"><div class="kc-l">🔥 Quentes</div><div class="kc-v" style="color:#dc2626">'+quentes+'</div></div>'+
-      '<div class="kc green"><div class="kc-l">Fechados</div><div class="kc-v">'+fec+'</div></div>'+
-      '<div class="kc gold"><div class="kc-l">Conversão</div><div class="kc-v">'+conv+'%</div></div>'+
-    '</div>'+
-    (refs>0?'<div class="alt alt-y" style="margin-bottom:10px;cursor:pointer" onclick="document.getElementById(\'sec-refs\').scrollIntoView({behavior:\'smooth\'})">🤝 '+refs+' lead(s) por referenciamento RE/MAX — clique para ver</div>':'')+
-    '<div class="g2" style="margin-bottom:12px">'+
-      '<div class="card"><div class="chd"><h3>Por Canal de Origem</h3></div><div class="cbd">'+byCAT+'</div></div>'+
-      '<div class="card"><div class="chd"><h3>Por Corretor</h3></div><div class="cbd">'+byC+'</div></div>'+
-    '</div>'+
-    '<div id="sec-refs">'+refs_html+'</div>'+
-    '<div class="card">'+
-      '<div class="fbar">'+
-        '<input class="sinp" id="ld-s" placeholder="Buscar nome, origem, tipo..." style="flex:2">'+
-        '<select class="sinp" id="ld-fc" style="width:150px"><option value="">Todos corretores</option>'+COR.map(function(c){return '<option>'+c.nome+'</option>';}).join('')+'</select>'+
-        '<select class="sinp" id="ld-fo" style="width:140px"><option value="">Todos canais</option><option>Digital</option><option>Portal</option><option>Orgânico</option><option>Referenciamento</option><option>Outros</option></select>'+
-        '<select class="sinp" id="ld-fs" style="width:130px"><option value="">Todos status</option><option>Novo</option><option>Em contato</option><option>Visita agendada</option><option>Proposta</option><option>Fechado</option><option>Perdido</option></select>'+
-        '<select class="sinp" id="ld-fia" style="width:110px"><option value="">Todos IA</option><option value="quente">🔥 Quente</option><option value="morno">🌡️ Morno</option><option value="frio">❄️ Frio</option></select>'+
-      '</div>'+
-      '<div class="tw"><table><thead><tr><th>Data/Hora</th><th>Canal / Origem</th><th>Tipo</th><th>Nome</th><th>Tel</th><th>Corretor</th><th>Faixa</th><th>Status</th><th>IA Score</th><th>Ações</th></tr></thead><tbody id="ld-b">'+tr+'</tbody></table></div>'+
+  document.getElementById('pa').innerHTML=
+    '<div style="display:flex;gap:8px">'+
+    '<button style="background:#0d1f4e;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer" onclick="nLead()">+ Novo Lead</button>'+
+    '<button id="btn-lista" style="background:#fff;color:#0d1f4e;border:1px solid #0d1f4e;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer" onclick="leadsView('lista')">☰ Lista</button>'+
+    '<button id="btn-kanban" style="background:#0d1f4e;color:#fff;border:1px solid #0d1f4e;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer" onclick="leadsView('kanban')">▦ Kanban</button>'+
     '</div>';
 
-  function filtLD(){
-    var q=document.getElementById('ld-s').value.toLowerCase();
-    var fc=document.getElementById('ld-fc').value.toLowerCase();
-    var fo=document.getElementById('ld-fo').value.toLowerCase();
-    var fs=document.getElementById('ld-fs').value.toLowerCase();
-    var fia=document.getElementById('ld-fia').value;
-    document.querySelectorAll('#ld-b tr').forEach(function(tr){
-      var sr=tr.dataset.sr||'';
-      var score=parseInt(tr.querySelector('td:nth-child(9) div')&&tr.querySelector('td:nth-child(9) div').textContent)||0;
-      var iaOk=true;
-      if(fia==='quente') iaOk=score>=60;
-      else if(fia==='morno') iaOk=score>=35&&score<60;
-      else if(fia==='frio') iaOk=score<35;
-      var ok=(!q||sr.indexOf(q)>=0)&&(!fc||sr.indexOf(fc)>=0)&&(!fo||sr.indexOf(fo)>=0)&&(!fs||sr.indexOf(fs)>=0)&&iaOk;
-      tr.style.display=ok?'':'none';
+  var tot=dados.length;
+  var fec=dados.filter(function(l){return l.st==='Fechado';}).length;
+  var quentes=dados.filter(function(l){return iaScore(l)>=60&&l.st!=='Fechado'&&l.st!=='Perdido';}).length;
+  var conv=tot>0?Math.round(fec/tot*100):0;
+  var novos=dados.filter(function(l){return l.st==='Novo';}).length;
+  var catCores={'Digital':'#0d1f4e','Portal':'#5b21b6','Orgânico':'#1a6e3a','Referenciamento':'#b45309','Outros':'#64748b'};
+
+  var catCount={};
+  dados.forEach(function(l){catCount[l.orig_cat||'Outros']=(catCount[l.orig_cat||'Outros']||0)+1;});
+  var canalHtml='';
+  Object.keys(catCount).sort(function(a,b){return catCount[b]-catCount[a];}).forEach(function(cat){
+    var pct=Math.round(catCount[cat]/Math.max(tot,1)*100);
+    var cor=catCores[cat]||'#64748b';
+    canalHtml+='<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;font-weight:700;color:'+cor+'">'+cat+'</span><span style="font-size:11px;font-weight:800;color:#0d1829">'+catCount[cat]+' <span style="font-weight:400;color:#64748b">('+pct+'%)</span></span></div><div style="background:#edf2f7;border-radius:4px;height:7px"><div style="background:'+cor+';height:7px;border-radius:4px;width:'+pct+'%"></div></div></div>';
+  });
+
+  var stCount={};
+  dados.forEach(function(l){stCount[l.st]=(stCount[l.st]||0)+1;});
+  var stLabels=Object.keys(stCount);
+  var stVals=stLabels.map(function(k){return stCount[k];});
+  var stCores2=['#0d1f4e','#1a6e3a','#b45309','#b91c1c','#5b21b6','#0e7490','#64748b'];
+
+  var corHtml='';
+  if(isAdmin){
+    COR.forEach(function(c){
+      var n=ldD.filter(function(l){return l.cor===c.nome;}).length; if(!n) return;
+      var nf=ldD.filter(function(l){return l.cor===c.nome&&l.st==='Fechado';}).length;
+      var conv2=n>0?Math.round(nf/n*100):0;
+      corHtml+='<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f4f6f8"><div style="width:32px;height:32px;border-radius:8px;background:'+c.cor+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;flex-shrink:0">'+c.initials+'</div><div style="flex:1"><div style="font-size:12px;font-weight:700;color:#0d1829">'+c.nome+'</div><div style="font-size:10px;color:#64748b">'+n+' leads · '+nf+' fechados</div></div><div style="text-align:right"><div style="font-size:13px;font-weight:800;color:#0d1f4e">'+n+'</div><div style="font-size:10px;color:'+(conv2>=20?'#1a6e3a':'#64748b')+'">'+conv2+'% conv.</div></div></div>';
     });
   }
-  document.getElementById('ld-s').oninput=filtLD;
-  document.getElementById('ld-fc').onchange=filtLD;
-  document.getElementById('ld-fo').onchange=filtLD;
-  document.getElementById('ld-fs').onchange=filtLD;
-  document.getElementById('ld-fia').onchange=filtLD;
+
+  var pc=document.getElementById('pc');
+  pc.innerHTML=
+    '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px">'+
+      lKpi('Total Leads',tot,'cadastrados','#0d1f4e')+
+      lKpi('Quentes',quentes,'score ≥60','#b91c1c')+
+      lKpi('Novos',novos,'sem contato','#b45309')+
+      lKpi('Fechados',fec,'negócios','#1a6e3a')+
+      lKpi('Conversão',conv+'%','taxa geral','#5b21b6')+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:'+(isAdmin?'1fr 1fr 1fr':'1fr 1fr')+';gap:14px;margin-bottom:18px">'+
+      '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden"><div style="padding:14px 20px;border-bottom:1px solid #edf2f7;background:#fafbfd"><div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Por Canal de Origem</div></div><div style="padding:16px 20px">'+canalHtml+'</div></div>'+
+      '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden"><div style="padding:14px 20px;border-bottom:1px solid #edf2f7;background:#fafbfd"><div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Por Status</div></div><div style="padding:16px 20px;display:flex;justify-content:center"><canvas id="chart-leads-status" width="180" height="180"></canvas></div></div>'+
+      (isAdmin?'<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden"><div style="padding:14px 20px;border-bottom:1px solid #edf2f7;background:#fafbfd"><div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Por Corretor</div></div><div style="padding:4px 20px 12px">'+corHtml+'</div></div>':'')+
+    '</div>'+
+    '<div id="leads-view-area"></div>';
+
+  if(stLabels.length>0){
+    setTimeout(function(){
+      var cv=document.getElementById('chart-leads-status');
+      if(!cv||!window.Chart) return;
+      new Chart(cv,{type:'doughnut',data:{labels:stLabels,datasets:[{data:stVals,backgroundColor:stCores2.slice(0,stLabels.length),borderWidth:2,borderColor:'#fff'}]},options:{responsive:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:5,boxWidth:10}}},cutout:'55%'}});
+    },300);
+  }
+
+  window._ldDados=dados;
+  window._ldAdmin=isAdmin;
+  leadsView('kanban');
+}
+
+function lKpi(label,val,sub,cor){
+  return '<div style="background:#fff;border-radius:12px;padding:18px 20px;border:1px solid #e8edf2;border-top:3px solid '+cor+'"><div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">'+label+'</div><div style="font-size:28px;font-weight:900;color:#0d1829;letter-spacing:-1px;margin-bottom:3px">'+val+'</div><div style="font-size:11px;color:#64748b">'+sub+'</div></div>';
+}
+
+function leadsView(view){
+  var area=document.getElementById('leads-view-area'); if(!area) return;
+  var dados=window._ldDados||ldD;
+  var isAdmin=window._ldAdmin!==undefined?window._ldAdmin:isA();
+  var catCores={'Digital':'#0d1f4e','Portal':'#5b21b6','Orgânico':'#1a6e3a','Referenciamento':'#b45309','Outros':'#64748b'};
+
+  var btnL=document.getElementById('btn-lista'), btnK=document.getElementById('btn-kanban');
+  if(btnL){btnL.style.background=view==='lista'?'#0d1f4e':'#fff'; btnL.style.color=view==='lista'?'#fff':'#0d1f4e';}
+  if(btnK){btnK.style.background=view==='kanban'?'#0d1f4e':'#fff'; btnK.style.color=view==='kanban'?'#fff':'#0d1f4e';}
+
+  if(view==='kanban'){
+    var cols=[{st:'Novo',cor:'#64748b'},{st:'Em contato',cor:'#0d1f4e'},{st:'Visita agendada',cor:'#1a6e3a'},{st:'Proposta',cor:'#b45309'},{st:'Fechado',cor:'#1a6e3a'},{st:'Perdido',cor:'#b91c1c'}];
+    var h='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px">';
+    cols.forEach(function(col){
+      var ls=dados.filter(function(l){return l.st===col.st;});
+      h+='<div style="background:#f8fafc;border-radius:12px;padding:12px;min-height:180px;border:1px solid #e8edf2"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:9px;font-weight:800;color:'+col.cor+';letter-spacing:1px;text-transform:uppercase">'+col.st+'</div><div style="background:'+col.cor+';color:#fff;font-size:10px;font-weight:800;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center">'+ls.length+'</div></div>';
+      ls.forEach(function(l){
+        var ri=ldD.indexOf(l);
+        h+='<div style="background:#fff;border-radius:8px;padding:10px 12px;margin-bottom:8px;border:1px solid #e8edf2;cursor:pointer" onclick="eLead('+ri+')"><div style="font-size:12px;font-weight:700;color:#0d1829;margin-bottom:3px">'+l.nome+'</div><div style="font-size:10px;color:#64748b;margin-bottom:5px">'+l.tipo+' · '+l.faixa+'</div>'+(isAdmin?'<div style="font-size:10px;color:#94a3b8;margin-bottom:5px">'+l.cor+'</div>':'')+iaLabel(iaScore(l))+'</div>';
+      });
+      if(!ls.length) h+='<div style="text-align:center;padding:16px;color:#94a3b8;font-size:11px">Nenhum</div>';
+      h+='</div>';
+    });
+    h+='</div>';
+    area.innerHTML=h;
+
+  } else {
+    var filtered=dados.slice().sort(function(a,b){return iaScore(b)-iaScore(a);});
+    var tr='';
+    filtered.forEach(function(l){
+      var ri=ldD.indexOf(l); var score=iaScore(l);
+      tr+='<tr style="border-bottom:1px solid #f4f6f8" data-sr="'+(l.nome+l.orig+(l.orig_cat||'')+l.cor+l.st+l.tipo).toLowerCase()+'">'+
+        '<td style="padding:10px 12px;font-size:10px;color:#64748b">'+l.dt+'</td>'+
+        '<td style="padding:10px 12px"><div style="font-size:10px;font-weight:700;color:'+(catCores[l.orig_cat||'Outros']||'#64748b')+'">'+( l.orig_cat||'Outros')+'</div><div style="font-size:10px;color:#94a3b8">'+l.orig+'</div></td>'+
+        '<td style="padding:10px 12px"><span style="background:#f1f5f9;color:#334155;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px">'+l.tipo+'</span></td>'+
+        '<td style="padding:10px 12px;font-weight:700;color:#0d1829;font-size:13px">'+l.nome+'</td>'+
+        '<td style="padding:10px 12px"><a href="tel:'+l.tel+'" style="color:#0d1f4e;font-size:11px;font-weight:600;text-decoration:none">'+l.tel+'</a></td>'+
+        (isAdmin?'<td style="padding:10px 12px;font-size:11px;color:#4a5568">'+l.cor+'</td>':'')+
+        '<td style="padding:10px 12px;font-size:11px;color:#4a5568">'+l.faixa+'</td>'+
+        '<td style="padding:10px 12px">'+sBadge(l.st)+'</td>'+
+        '<td style="padding:10px 12px">'+iaLabel(score)+'</td>'+
+        '<td style="padding:10px 12px"><div style="display:flex;gap:4px"><button style="background:#eff6ff;color:#0d1f4e;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer" onclick="eLead('+ri+')">Editar</button><button style="background:#fef2f2;color:#b91c1c;border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer" onclick="delLead('+ri+')">✕</button></div></td>'+
+      '</tr>';
+    });
+    area.innerHTML='<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden"><div style="padding:12px 16px;border-bottom:1px solid #edf2f7;background:#fafbfd;display:flex;gap:8px;flex-wrap:wrap"><input id="ld-s" placeholder="🔍 Buscar nome, origem..." style="flex:2;min-width:160px;padding:7px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">'+(isAdmin?'<select id="ld-fc" style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px"><option value="">Todos corretores</option>'+COR.map(function(c){return '<option>'+c.nome+'</option>';}).join('')+'</select>':'')+
+    '<select id="ld-fo" style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px"><option value="">Todos canais</option><option>Digital</option><option>Portal</option><option>Orgânico</option><option>Referenciamento</option><option>Outros</option></select><select id="ld-fs" style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px"><option value="">Todos status</option><option>Novo</option><option>Em contato</option><option>Visita agendada</option><option>Proposta</option><option>Fechado</option><option>Perdido</option></select></div>'+
+    '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr style="background:#fafbfd"><th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #edf2f7">Data</th><th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #edf2f7">Canal</th><th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #edf2f7">Tipo</th><th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #edf2f7">Nome</th><th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #edf2f7">Tel</th>'+
+    (isAdmin?'<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #edf2f7">Corretor</th>':'')+
+    '<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #edf2f7">Faixa</th><th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #edf2f7">Status</th><th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #edf2f7">IA</th><th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #edf2f7">Ações</th></tr></thead><tbody id="ld-b">'+tr+'</tbody></table></div></div>';
+
+    setTimeout(function(){
+      function filtLD(){
+        var q=(document.getElementById('ld-s')||{value:''}).value.toLowerCase();
+        var fo=(document.getElementById('ld-fo')||{value:''}).value.toLowerCase();
+        var fs=(document.getElementById('ld-fs')||{value:''}).value.toLowerCase();
+        document.querySelectorAll('#ld-b tr').forEach(function(row){
+          var sr=row.dataset.sr||'';
+          var ok=(!q||sr.includes(q))&&(!fo||sr.includes(fo))&&(!fs||sr.includes(fs));
+          row.style.display=ok?'':'none';
+        });
+      }
+      ['ld-s','ld-fo','ld-fs'].forEach(function(id){var el=document.getElementById(id);if(el){el.addEventListener('input',filtLD);el.addEventListener('change',filtLD);}});
+    },100);
+  }
 }
 
 function nLead(){

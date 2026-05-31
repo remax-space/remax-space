@@ -828,7 +828,7 @@ function doLogout() {
   document.getElementById('lu').value = '';
   document.getElementById('lp').value = '';
 }
-function isA() { return U && (U.id==='tbasile' || U.role==='Administrador'); }
+function isA() { return U && (U.id==='tbasile' || U.role==='Administrador' || U.role==='admin' || U.role_key==='admin' || U.role_key==='gerente'); }
 
 function menuUser() {
   oM('Opcoes do Usuario',

@@ -5630,74 +5630,6 @@ window.vitImportarLink = async function(){
   }
 };
 
-    // Extrair texto limpo do HTML (remover tags)
-    var tmp = document.createElement('div');
-    tmp.innerHTML = html;
-    // remover scripts e styles
-    tmp.querySelectorAll('script,style,nav,footer,header').forEach(function(el){el.remove();});
-    var texto = tmp.innerText||tmp.textContent||'';
-    // Limitar tamanho para não estourar tokens
-    texto = texto.replace(/\s+/g,' ').trim().slice(0,4000);
-
-    // Extrair URLs de imagens do HTML original
-    var imgUrls = [];
-    var imgMatches = html.match(/https?:\/\/[^"'\s]+\.(jpg|jpeg|png|webp)[^"'\s]*/gi)||[];
-    imgUrls = imgMatches.filter(function(u,i,a){ return a.indexOf(u)===i; }).slice(0,5);
-
-    if(st){ st.style.color='#2563eb'; st.textContent='🤖 IA analisando o anúncio...'; }
-
-    // Chamar IA para extrair dados estruturados
-    var prompt = 'Analise este conteúdo de um anúncio imobiliário e extraia as informações.\n\nURL: '+url+'\n\nCONTEÚDO:\n'+texto+'\n\nFOTOS ENCONTRADAS: '+JSON.stringify(imgUrls)+'\n\nRetorne APENAS um JSON válido (sem markdown, sem texto extra) com exatamente estas chaves:\n{"titulo":"título atrativo do imóvel","op":"Venda","tipo":"Casa","bairro":"bairro ou cidade","valor":0,"area":0,"quartos":0,"banheiros":0,"vagas":0,"descricao":"descrição atrativa em 2-3 frases","fotos":["url1","url2"]}';
-
-    var system = 'Você extrai dados de anúncios imobiliários e retorna APENAS JSON válido. op deve ser "Venda" ou "Locação". tipo deve ser um de: Casa, Apartamento, Flat/Apart-Hotel, Chalé, Terreno/Lote, Chácara, Fazenda, Kitnet, Sala Comercial, Outro. Valores numéricos sem formatação. Nunca retorne markdown ou texto fora do JSON.';
-
-    var txt = await callClaude(prompt, system, 800);
-    txt = txt.replace(/```json|```/g,'').trim();
-    // pegar só o JSON
-    var inicio = txt.indexOf('{');
-    var fim = txt.lastIndexOf('}');
-    if(inicio>=0 && fim>inicio) txt = txt.slice(inicio, fim+1);
-
-    var info = JSON.parse(txt);
-
-    // Preencher campos
-    function set(id,val){ var el=document.getElementById(id); if(el&&val!==undefined&&val!==null&&val!=='') el.value=val; }
-    set('vf-titulo', info.titulo);
-    set('vf-bairro', info.bairro);
-    set('vf-valor',  info.valor||0);
-    set('vf-area',   info.area||0);
-    set('vf-quartos',    info.quartos||0);
-    set('vf-banheiros',  info.banheiros||0);
-    set('vf-vagas',      info.vagas||0);
-    var desc = document.getElementById('vf-desc'); if(desc&&info.descricao) desc.value = info.descricao;
-
-    // Operação
-    var selOp = document.getElementById('vf-op');
-    if(selOp){ selOp.value = (info.op==='Locação'||info.op==='Aluguel'||info.op==='locacao')?'Locação':'Venda'; }
-
-    // Tipo
-    var selTipo = document.getElementById('vf-tipo');
-    if(selTipo && info.tipo){
-      for(var i=0;i<selTipo.options.length;i++){
-        if(selTipo.options[i].value===info.tipo||selTipo.options[i].text===info.tipo){ selTipo.selectedIndex=i; break; }
-      }
-    }
-
-    // Fotos — combinar as da IA com as extraídas do HTML
-    var todasFotos = (info.fotos||[]).concat(imgUrls).filter(Boolean).filter(function(u,i,a){return a.indexOf(u)===i;}).slice(0,5);
-    todasFotos.forEach(function(f,i){ set('vf-foto'+i, f); });
-
-    var qtdFotos = todasFotos.length;
-    if(st){ st.style.color='#059669'; st.textContent='✅ Preenchido! '+(qtdFotos?qtdFotos+' foto(s) encontrada(s). ':'')+' Confira e ajuste se necessário.'; }
-
-  } catch(e){
-    console.error('vitImportarLink erro:',e);
-    if(st){ st.style.color='#D42028'; st.textContent='❌ Não consegui extrair os dados. Tente outro link ou preencha manualmente.'; }
-  } finally {
-    if(btn){ btn.disabled=false; btn.textContent='✨ Preencher com IA'; }
-  }
-};
-
 function vitFormHtml(v){
   v = v||{};
   var fotos = v.fotos||['','','','',''];
@@ -5708,6 +5640,9 @@ function vitFormHtml(v){
       '<input id="vf-import-url" placeholder="Cole o link do iList, ZAP, OLX..." style="flex:1;border:1px solid #bfdbfe;border-radius:8px;padding:9px 12px;font-size:13px">'+
       '<button onclick="vitImportarLink()" style="padding:9px 18px;background:#003DA5;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">✨ Preencher com IA</button>'+
     '</div>'+
+    '<div id="vf-import-status" style="font-size:11px;color:#6b7280;margin-top:6px"></div>'+
+  '</div>'+
+  '<div class="fg2">'+
     '<div class="fg"><label>Operação *</label>'+
       '<select id="vf-op">'+
         ['Venda','Locação'].map(function(o){ return '<option'+(o===(v.op||'Venda')?' selected':'')+'>'+o+'</option>'; }).join('')+

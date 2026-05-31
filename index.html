@@ -310,6 +310,7 @@ function getSB(){
 var logAcoes = [];
 var boletosD = [];
 var osD = []; // Ordens de Serviço
+var vitD = []; // Vitrine de Imóveis
 var llD = [
   {id:1,dt:'2026-05-16',nome:'Ana Claudia Santos',tel:'(64)9 9222-3333',tipo:'Casa',faixa:'R$ 800–1.200',bairro:'Centro',quartos:'2',pet:false,cor:'Meirielli',st:'Novo',obs:''},
   {id:2,dt:'2026-05-15',nome:'Pedro Henrique Lima',tel:'(64)9 9444-5555',tipo:'Kitnet',faixa:'R$ 600–900',bairro:'Jd. Turistas',quartos:'1',pet:false,cor:'T. Basile',st:'Em contato',obs:'Tem cachorro pequeno'}
@@ -336,6 +337,7 @@ function salvarTudo(){
         mt:(typeof metasD!=='undefined'?metasD:{}),
         dc:(typeof docsD!=='undefined'?docsD:[]),
         os:(typeof osD!=='undefined'?osD:[]),
+        vit:(typeof vitD!=='undefined'?vitD:[]),
         lg:(typeof logAcoes!=='undefined'?logAcoes:[]),
         bl:(typeof boletosD!=='undefined'?boletosD:[]),
         com:(typeof COMISSOES!=='undefined'?COMISSOES:[]),
@@ -380,6 +382,7 @@ async function carregarDados(){
       if(e.cc && e.cc.length > 0) corCad = e.cc;
       if(e.sn) Object.assign(senhas, e.sn);
       if(e.os) osD = e.os;
+      if(e.vit) vitD = e.vit;
       if(e.lg) logAcoes = e.lg;
       if(e.bl) boletosD = e.bl;
       if(e.com) COMISSOES = e.com;
@@ -933,7 +936,7 @@ var NAV = [
   {s:'Principal'},{id:'dashboard',l:'Dashboard'},{id:'whatsapp',l:'📱 WhatsApp'},{id:'leads',l:'Leads'},
   {s:'Venda'},{id:'prosp',l:'Prospeccao'},{id:'agenda',l:'📅 Agenda'},{id:'visitas',l:'Visitas'},{id:'acm',l:'ACM'},{id:'docs',l:'Documentacao'},{id:'contratos',l:'Contratos'},{id:'acoes',l:'Acoes no Imovel'},{id:'mcmv',l:'MCMV'},
   {s:'Locacao'},{id:'loc-c',l:'Contratos Ativos'},{id:'repasses',l:'💰 Repasses',a:true},{id:'loc-l',l:'Leads Locacao'},{id:'loc-v',l:'Vistorias'},{id:'boletos',l:'📨 Boletos',a:true},{id:'extrato',l:'📄 Extrato Prop.',a:true},{id:'os',l:'🔧 Ordens Serviço'},
-  {s:'Portfolio'},{id:'iv',l:'Imoveis Venda'},{id:'prop',l:'Proprietarios'},
+  {s:'Portfolio'},{id:'vitrine',l:'🏠 Vitrine Imóveis'},{id:'iv',l:'Imoveis Venda'},{id:'prop',l:'Proprietarios'},
   {s:'Financeiro',a:true},{id:'fd',l:'Dashboard Financeiro',a:true},{id:'dre',l:'📊 DRE + Comissões',a:true},{id:'fr',l:'A Receber',a:true},{id:'fp',l:'Contas a Pagar',a:true},
   {s:'Cadastros',a:true},{id:'cad-cor',l:'Corretores',a:true},{id:'cad-prop',l:'Proprietarios Cad.',a:true},{id:'cad-inq',l:'Inquilinos',a:true},
   {s:'Equipe',a:true},{id:'rank',l:'Ranking',a:true},{id:'metas',l:'Metas',a:true},{id:'historico',l:'Historico Mensal',a:true},{id:'recrut',l:'🎯 Recrutamento',a:true},
@@ -970,7 +973,7 @@ var TITLES = {
   dashboard:'Dashboard Geral',leads:'Leads',prosp:'Prospeccao',visitas:'Agenda de Visitas',
   acm:'ACM',docs:'Documentacao',contratos:'Contratos',acoes:'Acoes no Imovel',mcmv:'MCMV',
   'loc-c':'Contratos de Locacao','repasses':'Repasses — Visão Unificada','loc-l':'Leads de Locacao','extrato':'Extrato do Proprietário','os':'Ordens de Serviço','loc-v':'Vistorias','boletos':'Envio de Boletos',
-  iv:'Imoveis para Venda',prop:'Proprietarios',
+  iv:'Imoveis para Venda',prop:'Proprietarios',vitrine:'🏠 Vitrine de Imóveis',
   fd:'Dashboard Financeiro',fr:'Contas a Receber',fp:'Contas a Pagar',frp:'Repasses a Proprietarios',
   'cad-cor':'Cadastro de Corretores','cad-prop':'Cadastro de Proprietarios','cad-inq':'Cadastro de Inquilinos',
   rank:'Ranking',
@@ -2252,7 +2255,7 @@ function pPermissoes(){
     {id:'dashboard',l:'Dashboard'},{id:'leads',l:'Leads'},{id:'prosp',l:'Prospecção'},
     {id:'agenda',l:'Agenda'},{id:'visitas',l:'Visitas'},{id:'acm',l:'ACM'},{id:'contratos',l:'Contratos'},
     {id:'acoes',l:'Ações Imóvel'},{id:'mcmv',l:'MCMV'},{id:'loc-c',l:'Locação'},
-    {id:'repasses',l:'Repasses'},{id:'boletos',l:'Boletos'},{id:'iv',l:'Imóveis Venda'},
+    {id:'repasses',l:'Repasses'},{id:'boletos',l:'Boletos'},{id:'vitrine',l:'Vitrine Imóveis'},{id:'iv',l:'Imóveis Venda'},
     {id:'fd',l:'Fin. Dashboard'},{id:'fr',l:'A Receber'},{id:'fp',l:'Contas Pagar'},
     {id:'dre',l:'DRE'},{id:'rank',l:'Ranking'},{id:'relat',l:'Relatórios'}
   ];
@@ -2301,7 +2304,7 @@ function gP(id){
     dashboard:pDash, whatsapp:pWhatsApp, leads:pLeads, prosp:pProsp, agenda:pAgenda, visitas:pVis,
     acm:pAcm, docs:pDocs, contratos:pContratos, acoes:pAcoes, mcmv:pMCMV,
     'loc-c':pLC, 'loc-r':pLR, 'repasses':pRepasses, 'loc-l':pLL, 'loc-v':pLV, 'boletos':pBoletos, 'extrato':pExtrato, 'os':pOS,
-    iv:pIV, prop:pProp,
+    iv:pIV, prop:pProp, vitrine:pVitrine,
     fd:pFD, dre:pDRE, fr:pFR, fp:pFP,
     'cad-cor':pCadCor, 'cad-prop':pCadProp, 'cad-inq':pCadInq,
     rank:pRank, metas:pMetas, historico:pHistorico, recrut:pRecrutar, perms:pPermissoes,
@@ -5325,6 +5328,290 @@ function gerarPost(i){
   };
 
   abrirGerador();
+}
+
+// ===== VITRINE DE IMÓVEIS =====
+var _vitFiltOp = 'Todos';
+var _vitFiltTipo = 'Todos';
+var _vitFiltQ = 'Todos';
+var _vitFiltBairro = 'Todos';
+
+function isAdmin(){ var u=USR[_loggedUser]; return u&&(u.role==='admin'||u.role_key==='admin'); }
+
+function pVitrine(){
+  var isAdm = isAdmin();
+  var paHtml = isAdm
+    ? '<button class="btn btn-red" onclick="nVitrine()">+ Novo Imóvel</button>'
+    : '<span style="font-size:12px;color:#6b7280">Vitrine interna — somente visualização</span>';
+  document.getElementById('pa').innerHTML = paHtml;
+
+  // Filtros
+  var ops = ['Todos','Venda','Locação'];
+  var tipos = ['Todos','Casa','Apartamento','Flat/Apart-Hotel','Chalé','Terreno/Lote','Chácara','Fazenda','Kitnet','Sala Comercial','Outro'];
+  var quartos = ['Todos','1','2','3','4+'];
+  var bairros = ['Todos'].concat(vitD.map(function(v){ return v.bairro||''; }).filter(function(b,i,a){ return b && a.indexOf(b)===i; }).sort());
+
+  function fBtn(arr, cur, fn){
+    return arr.map(function(v){
+      var a = cur===v;
+      return '<button onclick="'+fn+'(\''+v+'\')" style="padding:4px 12px;border-radius:20px;border:1.5px solid '+(a?'#003DA5':'#d1d5db')+';background:'+(a?'#003DA5':'#fff')+';color:'+(a?'#fff':'#374151')+';font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">'+v+'</button>';
+    }).join('');
+  }
+
+  var filtros = '<div style="background:#fff;border-radius:12px;padding:14px 16px;border:1px solid #e5e7eb;margin-bottom:16px">'+
+    '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">'+
+      '<span style="font-size:11px;font-weight:700;color:#6b7280;padding:4px 0;min-width:60px">Operação:</span>'+
+      fBtn(ops, _vitFiltOp, 'vitSetOp')+
+    '</div>'+
+    '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">'+
+      '<span style="font-size:11px;font-weight:700;color:#6b7280;padding:4px 0;min-width:60px">Tipo:</span>'+
+      fBtn(tipos, _vitFiltTipo, 'vitSetTipo')+
+    '</div>'+
+    '<div style="display:flex;flex-wrap:wrap;gap:6px">'+
+      '<span style="font-size:11px;font-weight:700;color:#6b7280;padding:4px 0;min-width:60px">Quartos:</span>'+
+      fBtn(quartos, _vitFiltQ, 'vitSetQ')+
+    '</div>'+
+  '</div>';
+
+  // Filtrar imóveis
+  var lista = vitD.filter(function(v){
+    if(_vitFiltOp!=='Todos' && v.op!==_vitFiltOp) return false;
+    if(_vitFiltTipo!=='Todos' && v.tipo!==_vitFiltTipo) return false;
+    if(_vitFiltQ!=='Todos'){
+      var q = parseInt(v.quartos)||0;
+      if(_vitFiltQ==='4+' && q<4) return false;
+      if(_vitFiltQ!=='4+' && q!==parseInt(_vitFiltQ)) return false;
+    }
+    return true;
+  });
+
+  // Cards de imóveis
+  var cards = '';
+  if(!lista.length){
+    cards = '<div style="text-align:center;padding:60px 20px;color:#9ca3af">'+
+      '<div style="font-size:48px;margin-bottom:12px">🏠</div>'+
+      '<div style="font-size:16px;font-weight:600">Nenhum imóvel encontrado</div>'+
+      '<div style="font-size:13px;margin-top:6px">'+(isAdm?'Clique em "+ Novo Imóvel" para cadastrar':'Nenhum imóvel disponível com esses filtros')+'</div>'+
+    '</div>';
+  } else {
+    cards = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">';
+    lista.forEach(function(v,i){
+      var idx = vitD.indexOf(v);
+      var fotos = (v.fotos||[]).filter(Boolean);
+      var foto1 = fotos[0]||'';
+      var opCor = v.op==='Venda'?'#003DA5':'#059669';
+      var val = v.valor?'R$ '+Number(v.valor).toLocaleString('pt-BR'):'Consulte';
+      var qStr = v.quartos?v.quartos+' qto'+(v.quartos>1?'s':''):'';
+      var aStr = v.area?v.area+'m²':'';
+      var vStr = v.vagas?v.vagas+' vaga'+(v.vagas>1?'s':''):'';
+      var tags = [qStr,aStr,vStr].filter(Boolean).join(' · ');
+
+      // Carrossel de fotos
+      var fotoHtml = '';
+      if(fotos.length){
+        fotoHtml = '<div id="vit-img-'+idx+'" style="position:relative;height:200px;overflow:hidden;border-radius:10px 10px 0 0;background:#f3f4f6">'+
+          '<img src="'+foto1+'" style="width:100%;height:100%;object-fit:cover" onerror="this.src=\'\';this.parentNode.style.background=\'#e5e7eb\'">'+
+          (fotos.length>1?
+            '<button onclick="vitFotoAnterior('+idx+')" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:16px">‹</button>'+
+            '<button onclick="vitFotoProxima('+idx+')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:16px">›</button>'+
+            '<span style="position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;padding:2px 7px;border-radius:10px">📷 '+fotos.length+'</span>'
+          :'')+'</div>';
+      } else {
+        fotoHtml = '<div style="height:160px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px">'+
+          '<span style="font-size:40px">🏠</span>'+
+          '<span style="font-size:11px;color:#93c5fd">Sem foto cadastrada</span>'+
+        '</div>';
+      }
+
+      cards += '<div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);transition:box-shadow .2s" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(0,0,0,.12)\'" onmouseout="this.style.boxShadow=\'0 1px 4px rgba(0,0,0,.06)\'">'+
+        fotoHtml+
+        '<div style="padding:14px">'+
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'+
+            '<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:'+opCor+'22;color:'+opCor+'">'+v.op+'</span>'+
+            '<span style="font-size:11px;color:#6b7280;background:#f3f4f6;padding:3px 8px;border-radius:10px">'+v.tipo+'</span>'+
+          '</div>'+
+          '<div style="font-weight:700;font-size:15px;color:#111827;margin-bottom:4px">'+v.titulo+'</div>'+
+          '<div style="font-size:12px;color:#6b7280;margin-bottom:8px">📍 '+(v.bairro||v.end||'')+'</div>'+
+          (tags?'<div style="font-size:11px;color:#374151;background:#f9fafb;padding:5px 10px;border-radius:8px;margin-bottom:10px">'+tags+'</div>':'')+
+          (v.descricao?'<div style="font-size:12px;color:#4b5563;margin-bottom:10px;line-height:1.5;max-height:48px;overflow:hidden">'+v.descricao+'</div>':'')+
+          '<div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid #f3f4f6">'+
+            '<div style="font-size:18px;font-weight:800;color:'+opCor+'">'+val+'</div>'+
+            '<div style="display:flex;gap:6px">'+
+              '<button onclick="vitWhatsapp('+idx+')" style="padding:6px 10px;border-radius:8px;border:1px solid #25D366;background:#25D366;color:#fff;font-size:11px;font-weight:700;cursor:pointer">📤 Enviar</button>'+
+              (isAdm?'<button onclick="eVitrine('+idx+')" style="padding:6px 10px;border-radius:8px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:11px;cursor:pointer">✏️</button>':'')+
+              (isAdm?'<button onclick="delVitrine('+idx+')" style="padding:6px 10px;border-radius:8px;border:1px solid #fca5a5;background:#fee2e2;color:#991b1b;font-size:11px;cursor:pointer">🗑</button>':'')+
+            '</div>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    });
+    cards += '</div>';
+
+    // Botão gerar lista
+    cards += '<div style="margin-top:20px;text-align:center">'+
+      '<button onclick="vitGerarLista()" style="padding:12px 28px;background:#003DA5;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">📋 Gerar lista para cliente</button>'+
+    '</div>';
+  }
+
+  document.getElementById('pc').innerHTML =
+    '<div class="card"><div class="chd"><h3>🏠 Vitrine de Imóveis <span style="font-size:13px;font-weight:400;color:#6b7280">('+lista.length+' disponíveis)</span></h3></div>'+
+    '<div style="padding:16px">'+filtros+cards+'</div></div>';
+}
+
+// controles de filtro
+window.vitSetOp   = function(v){ _vitFiltOp=v;   pVitrine(); };
+window.vitSetTipo = function(v){ _vitFiltTipo=v;  pVitrine(); };
+window.vitSetQ    = function(v){ _vitFiltQ=v;     pVitrine(); };
+
+// carrossel de fotos
+var _vitFotoIdx = {};
+window.vitFotoProxima = function(idx){
+  var fotos = (vitD[idx].fotos||[]).filter(Boolean);
+  _vitFotoIdx[idx] = ((_vitFotoIdx[idx]||0)+1) % fotos.length;
+  var img = document.querySelector('#vit-img-'+idx+' img');
+  if(img) img.src = fotos[_vitFotoIdx[idx]];
+};
+window.vitFotoAnterior = function(idx){
+  var fotos = (vitD[idx].fotos||[]).filter(Boolean);
+  _vitFotoIdx[idx] = ((_vitFotoIdx[idx]||0)-1+fotos.length) % fotos.length;
+  var img = document.querySelector('#vit-img-'+idx+' img');
+  if(img) img.src = fotos[_vitFotoIdx[idx]];
+};
+
+// Enviar pelo WhatsApp
+window.vitWhatsapp = function(idx){
+  var v = vitD[idx];
+  var val = v.valor?'R$ '+Number(v.valor).toLocaleString('pt-BR'):'Consulte';
+  var txt = '🏠 *'+v.titulo+'*\n'+
+    '📍 '+( v.bairro||v.end||'')+'\n'+
+    '🏷️ '+v.op+' · '+v.tipo+'\n'+
+    (v.quartos?'🛏️ '+v.quartos+' quarto'+(v.quartos>1?'s':'')+'\n':'')+
+    (v.area?'📐 '+v.area+'m²\n':'')+
+    (v.vagas?'🚗 '+v.vagas+' vaga'+(v.vagas>1?'s':'')+'\n':'')+
+    '💰 '+val+'\n'+
+    (v.descricao?'\n'+v.descricao+'\n':'')+
+    '\n📞 RE/MAX Space — (64) 9xxxx-xxxx';
+  window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+};
+
+// Gerar lista completa para cliente
+window.vitGerarLista = function(){
+  var lista = vitD.filter(function(v){
+    if(_vitFiltOp!=='Todos' && v.op!==_vitFiltOp) return false;
+    if(_vitFiltTipo!=='Todos' && v.tipo!==_vitFiltTipo) return false;
+    if(_vitFiltQ!=='Todos'){
+      var q = parseInt(v.quartos)||0;
+      if(_vitFiltQ==='4+' && q<4) return false;
+      if(_vitFiltQ!=='4+' && q!==parseInt(_vitFiltQ)) return false;
+    }
+    return true;
+  });
+  if(!lista.length){ alert('Nenhum imóvel com esses filtros.'); return; }
+  var op = _vitFiltOp!=='Todos'?' para '+_vitFiltOp:'';
+  var txt = '🏠 *Imóveis Disponíveis RE/MAX Space*'+op+'\n\n';
+  lista.forEach(function(v,i){
+    var val = v.valor?'R$ '+Number(v.valor).toLocaleString('pt-BR'):'Consulte';
+    txt += (i+1)+'. *'+v.titulo+'*\n';
+    txt += '   📍 '+(v.bairro||v.end||'')+'\n';
+    txt += '   🏷️ '+v.tipo;
+    if(v.quartos) txt += ' · '+v.quartos+' qto'+(v.quartos>1?'s':'');
+    if(v.area) txt += ' · '+v.area+'m²';
+    txt += '\n   💰 '+val+'\n\n';
+  });
+  txt += '📞 *RE/MAX Space — Caldas Novas*\nMais informações pelo WhatsApp!';
+  oM('Lista para Cliente',
+    '<textarea id="vit-lista-txt" style="width:100%;height:320px;font-family:monospace;font-size:12px;border:1px solid #e5e7eb;border-radius:8px;padding:12px;resize:none">'+txt+'</textarea>'+
+    '<div style="margin-top:10px;display:flex;gap:8px">'+
+      '<button onclick="navigator.clipboard.writeText(document.getElementById(\'vit-lista-txt\').value).then(function(){alert(\'Copiado! ✓\');})" style="flex:1;padding:10px;background:#003DA5;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer">📋 Copiar texto</button>'+
+      '<button onclick="var t=document.getElementById(\'vit-lista-txt\').value;window.open(\'https://wa.me/?text=\'+encodeURIComponent(t),\'_blank\')" style="flex:1;padding:10px;background:#25D366;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer">📤 Abrir no WhatsApp</button>'+
+    '</div>',
+    null, 'Fechar', true);
+};
+
+function vitFormHtml(v){
+  v = v||{};
+  var fotos = v.fotos||['','','','',''];
+  while(fotos.length<5) fotos.push('');
+  return '<div class="fg2">'+
+    '<div class="fg"><label>Operação *</label>'+
+      '<select id="vf-op">'+
+        ['Venda','Locação'].map(function(o){ return '<option'+(o===(v.op||'Venda')?' selected':'')+'>'+o+'</option>'; }).join('')+
+      '</select></div>'+
+    '<div class="fg"><label>Tipo *</label>'+
+      '<select id="vf-tipo">'+
+        ['Casa','Apartamento','Flat/Apart-Hotel','Chalé','Terreno/Lote','Chácara','Fazenda','Kitnet','Sala Comercial','Outro'].map(function(t){ return '<option'+(t===(v.tipo||'Casa')?' selected':'')+'>'+t+'</option>'; }).join('')+
+      '</select></div>'+
+  '</div>'+
+  '<div class="fg"><label>Título do anúncio *</label><input id="vf-titulo" value="'+(v.titulo||'')+'" placeholder="Ex: Casa 3 quartos com piscina — Lago Sul"></div>'+
+  '<div class="fg2">'+
+    '<div class="fg"><label>Bairro / Região</label><input id="vf-bairro" value="'+(v.bairro||'')+'" placeholder="Ex: Lago Sul, Mansões, Centro..."></div>'+
+    '<div class="fg"><label>Endereço (interno)</label><input id="vf-end" value="'+(v.end||'')+'" placeholder="Endereço completo (não aparece para corretores)"></div>'+
+  '</div>'+
+  '<div class="fg2">'+
+    '<div class="fg"><label>Valor (R$)</label><input id="vf-valor" type="number" value="'+(v.valor||'')+'" placeholder="0"></div>'+
+    '<div class="fg"><label>Área (m²)</label><input id="vf-area" type="number" value="'+(v.area||'')+'" placeholder="0"></div>'+
+  '</div>'+
+  '<div class="fg2" style="grid-template-columns:1fr 1fr 1fr">'+
+    '<div class="fg"><label>Quartos</label><input id="vf-quartos" type="number" value="'+(v.quartos||'')+'" placeholder="0" min="0" max="20"></div>'+
+    '<div class="fg"><label>Banheiros</label><input id="vf-banheiros" type="number" value="'+(v.banheiros||'')+'" placeholder="0" min="0" max="20"></div>'+
+    '<div class="fg"><label>Vagas</label><input id="vf-vagas" type="number" value="'+(v.vagas||'')+'" placeholder="0" min="0" max="20"></div>'+
+  '</div>'+
+  '<div class="fg"><label>Descrição (aparece no card)</label><textarea id="vf-desc" style="width:100%;height:80px;border:1px solid #e5e7eb;border-radius:8px;padding:8px;font-size:13px;resize:none" placeholder="Descreva os diferenciais do imóvel...">'+(v.descricao||'')+'</textarea></div>'+
+  '<div class="fg">'+
+    '<label>Links de fotos (até 5 — cole links do iList, Drive, ZAP etc.)</label>'+
+    fotos.slice(0,5).map(function(f,i){
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'+
+        '<span style="font-size:11px;color:#6b7280;min-width:16px">'+(i+1)+'.</span>'+
+        '<input id="vf-foto'+i+'" value="'+(f||'')+'" placeholder="https://..." style="flex:1;border:1px solid #e5e7eb;border-radius:6px;padding:7px 10px;font-size:12px">'+
+        (f?'<a href="'+f+'" target="_blank" style="font-size:18px;text-decoration:none">👁️</a>':'<span style="font-size:18px">📷</span>')+
+      '</div>';
+    }).join('')+
+  '</div>'+
+  '<div class="fg"><label>Corretor responsável</label><select id="vf-cor">'+corrSel(v.corretor)+'</select></div>';
+}
+
+function vitSalvarForm(idx){
+  var titulo = (document.getElementById('vf-titulo')||{}).value||'';
+  if(!titulo.trim()){ alert('Informe o título do imóvel.'); return; }
+  var fotos = [];
+  for(var i=0;i<5;i++){
+    var f = (document.getElementById('vf-foto'+i)||{}).value||'';
+    if(f.trim()) fotos.push(f.trim());
+  }
+  var obj = {
+    id: idx>=0 ? vitD[idx].id : Date.now(),
+    op: document.getElementById('vf-op').value,
+    tipo: document.getElementById('vf-tipo').value,
+    titulo: titulo,
+    bairro: (document.getElementById('vf-bairro')||{}).value||'',
+    end: (document.getElementById('vf-end')||{}).value||'',
+    valor: parseFloat(document.getElementById('vf-valor').value)||0,
+    area: parseInt(document.getElementById('vf-area').value)||0,
+    quartos: parseInt(document.getElementById('vf-quartos').value)||0,
+    banheiros: parseInt(document.getElementById('vf-banheiros').value)||0,
+    vagas: parseInt(document.getElementById('vf-vagas').value)||0,
+    descricao: (document.getElementById('vf-desc')||{}).value||'',
+    fotos: fotos,
+    corretor: (document.getElementById('vf-cor')||{}).value||''
+  };
+  if(idx>=0) vitD[idx]=obj; else vitD.unshift(obj);
+  cM(); salvarTudo(); pVitrine();
+}
+
+function nVitrine(){
+  oM('+ Novo Imóvel na Vitrine', vitFormHtml(), function(){ vitSalvarForm(-1); }, 'Publicar', true);
+}
+
+function eVitrine(idx){
+  oM('Editar Imóvel — '+(vitD[idx].titulo||''), vitFormHtml(vitD[idx]), function(){ vitSalvarForm(idx); }, 'Salvar', true);
+}
+
+function delVitrine(idx){
+  excluirComSenha(
+    'Vitrine — '+(vitD[idx].titulo||''),
+    'Remover <b>'+(vitD[idx].titulo||'')+'</b> da vitrine?',
+    function(){ vitD.splice(idx,1); salvarTudo(); pVitrine(); }
+  );
 }
 
 function pIV(){

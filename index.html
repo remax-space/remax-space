@@ -5532,63 +5532,80 @@ window.vitImportarLink = async function(){
   var url = (document.getElementById('vf-import-url')||{}).value||'';
   if(!url.trim()){ alert('Cole o link do imóvel primeiro.'); return; }
   var st = document.getElementById('vf-import-status');
-  if(st){ st.style.color='#2563eb'; st.textContent='⏳ Buscando dados do imóvel com IA...'; }
-
-  // Desabilita botão durante busca
+  if(st){ st.style.color='#2563eb'; st.textContent='⏳ Buscando conteúdo do link...'; }
   var btn = document.querySelector('[onclick="vitImportarLink()"]');
   if(btn){ btn.disabled=true; btn.textContent='Carregando...'; }
 
   try{
-    var PROXY = 'https://pokgfnlywtgubpuswmni.supabase.co/functions/v1/claude-proxy';
-    var resp = await fetch(PROXY, {
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBva2dmbmx5d3RndWJwdXN3bW5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1OTYwNzgsImV4cCI6MjA5NTE3MjA3OH0.wK2qG14wMA7FVnVT0NKEbbLZyAIZkSahsChRivgd-Ko'},
-      body: JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        tools:[{type:'web_search_20250305',name:'web_search'}],
-        system:'Você é um assistente que extrai informações de anúncios imobiliários. Acesse o link fornecido e extraia os dados. Responda APENAS com JSON válido, sem markdown, sem texto extra. Formato exato:\n{"titulo":"","op":"Venda","tipo":"Casa","bairro":"","valor":0,"area":0,"quartos":0,"banheiros":0,"vagas":0,"descricao":"","fotos":[]}',
-        messages:[{role:'user',content:'Acesse este anúncio imobiliário e extraia todas as informações: '+url+'\n\nRetorne JSON com: titulo, op (Venda ou Locação), tipo (Casa/Apartamento/Flat/Chalé/Terreno/Chácara/Fazenda/Kitnet/Sala Comercial/Outro), bairro, valor (número), area (m², número), quartos (número), banheiros (número), vagas (número), descricao (resumo atrativo), fotos (array de URLs das fotos encontradas, máximo 5).'}]
-      })
-    });
+    // Buscar HTML da página via allorigins (evita CORS)
+    var proxyUrl = 'https://api.allorigins.win/get?url='+encodeURIComponent(url);
+    var r = await fetch(proxyUrl);
+    var j = await r.json();
+    var html = j.contents||'';
 
-    var data = await resp.json();
-    var txt = (data.content||[]).filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('');
-    // limpar markdown se vier
+    // Extrair texto limpo do HTML (remover tags)
+    var tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    // remover scripts e styles
+    tmp.querySelectorAll('script,style,nav,footer,header').forEach(function(el){el.remove();});
+    var texto = tmp.innerText||tmp.textContent||'';
+    // Limitar tamanho para não estourar tokens
+    texto = texto.replace(/\s+/g,' ').trim().slice(0,4000);
+
+    // Extrair URLs de imagens do HTML original
+    var imgUrls = [];
+    var imgMatches = html.match(/https?:\/\/[^"'\s]+\.(jpg|jpeg|png|webp)[^"'\s]*/gi)||[];
+    imgUrls = imgMatches.filter(function(u,i,a){ return a.indexOf(u)===i; }).slice(0,5);
+
+    if(st){ st.style.color='#2563eb'; st.textContent='🤖 IA analisando o anúncio...'; }
+
+    // Chamar IA para extrair dados estruturados
+    var prompt = 'Analise este conteúdo de um anúncio imobiliário e extraia as informações.\n\nURL: '+url+'\n\nCONTEÚDO:\n'+texto+'\n\nFOTOS ENCONTRADAS: '+JSON.stringify(imgUrls)+'\n\nRetorne APENAS um JSON válido (sem markdown, sem texto extra) com exatamente estas chaves:\n{"titulo":"título atrativo do imóvel","op":"Venda","tipo":"Casa","bairro":"bairro ou cidade","valor":0,"area":0,"quartos":0,"banheiros":0,"vagas":0,"descricao":"descrição atrativa em 2-3 frases","fotos":["url1","url2"]}';
+
+    var system = 'Você extrai dados de anúncios imobiliários e retorna APENAS JSON válido. op deve ser "Venda" ou "Locação". tipo deve ser um de: Casa, Apartamento, Flat/Apart-Hotel, Chalé, Terreno/Lote, Chácara, Fazenda, Kitnet, Sala Comercial, Outro. Valores numéricos sem formatação. Nunca retorne markdown ou texto fora do JSON.';
+
+    var txt = await callClaude(prompt, system, 800);
     txt = txt.replace(/```json|```/g,'').trim();
+    // pegar só o JSON
+    var inicio = txt.indexOf('{');
+    var fim = txt.lastIndexOf('}');
+    if(inicio>=0 && fim>inicio) txt = txt.slice(inicio, fim+1);
+
     var info = JSON.parse(txt);
 
     // Preencher campos
-    function set(id,val){ var el=document.getElementById(id); if(el&&val!==undefined&&val!==null) el.value=val; }
+    function set(id,val){ var el=document.getElementById(id); if(el&&val!==undefined&&val!==null&&val!=='') el.value=val; }
     set('vf-titulo', info.titulo);
-    set('vf-op',     info.op==='Locação'||info.op==='locacao'||info.op==='aluguel'?'Locação':'Venda');
-    set('vf-tipo',   info.tipo||'Casa');
     set('vf-bairro', info.bairro);
     set('vf-valor',  info.valor||0);
     set('vf-area',   info.area||0);
-    set('vf-quartos',   info.quartos||0);
-    set('vf-banheiros', info.banheiros||0);
-    set('vf-vagas',     info.vagas||0);
-    var desc = document.getElementById('vf-desc'); if(desc) desc.value = info.descricao||'';
+    set('vf-quartos',    info.quartos||0);
+    set('vf-banheiros',  info.banheiros||0);
+    set('vf-vagas',      info.vagas||0);
+    var desc = document.getElementById('vf-desc'); if(desc&&info.descricao) desc.value = info.descricao;
 
-    // Preencher fotos
-    var fotos = (info.fotos||[]).filter(Boolean).slice(0,5);
-    fotos.forEach(function(f,i){ set('vf-foto'+i, f); });
+    // Operação
+    var selOp = document.getElementById('vf-op');
+    if(selOp){ selOp.value = (info.op==='Locação'||info.op==='Aluguel'||info.op==='locacao')?'Locação':'Venda'; }
 
-    // Selecionar tipo no select
+    // Tipo
     var selTipo = document.getElementById('vf-tipo');
     if(selTipo && info.tipo){
       for(var i=0;i<selTipo.options.length;i++){
-        if(selTipo.options[i].value===info.tipo||selTipo.options[i].text===info.tipo){
-          selTipo.selectedIndex=i; break;
-        }
+        if(selTipo.options[i].value===info.tipo||selTipo.options[i].text===info.tipo){ selTipo.selectedIndex=i; break; }
       }
     }
 
-    if(st){ st.style.color='#059669'; st.textContent='✅ Dados preenchidos! Confira e ajuste se necessário.'; }
+    // Fotos — combinar as da IA com as extraídas do HTML
+    var todasFotos = (info.fotos||[]).concat(imgUrls).filter(Boolean).filter(function(u,i,a){return a.indexOf(u)===i;}).slice(0,5);
+    todasFotos.forEach(function(f,i){ set('vf-foto'+i, f); });
+
+    var qtdFotos = todasFotos.length;
+    if(st){ st.style.color='#059669'; st.textContent='✅ Preenchido! '+(qtdFotos?qtdFotos+' foto(s) encontrada(s). ':'')+' Confira e ajuste se necessário.'; }
+
   } catch(e){
-    console.error(e);
-    if(st){ st.style.color='#D42028'; st.textContent='❌ Não consegui extrair os dados. Preencha manualmente.'; }
+    console.error('vitImportarLink erro:',e);
+    if(st){ st.style.color='#D42028'; st.textContent='❌ Não consegui extrair os dados automaticamente. Tente outro link ou preencha manualmente.'; }
   } finally {
     if(btn){ btn.disabled=false; btn.textContent='✨ Preencher com IA'; }
   }

@@ -958,6 +958,7 @@ var NAV = [
   {s:'Venda'},{id:'prosp',l:'Prospeccao'},{id:'agenda',l:'📅 Agenda'},{id:'visitas',l:'Visitas'},{id:'acm',l:'ACM'},{id:'docs',l:'Documentacao'},{id:'contratos',l:'Contratos'},{id:'acoes',l:'Acoes no Imovel'},{id:'mcmv',l:'MCMV'},
   {s:'Locacao'},{id:'loc-c',l:'Contratos Ativos'},{id:'repasses',l:'💰 Repasses',a:true},{id:'loc-l',l:'Leads Locacao'},{id:'loc-v',l:'Vistorias'},{id:'boletos',l:'📨 Boletos',a:true},{id:'extrato',l:'📄 Extrato Prop.',a:true},{id:'os',l:'🔧 Ordens Serviço'},
   {s:'Portfolio'},{id:'vitrine',l:'🏠 Vitrine Imóveis'},{id:'iv',l:'Imoveis Venda'},{id:'prop',l:'Proprietarios'},
+  {s:'Marketing'},{id:'mkt',l:'🎨 Marketing'},
   {s:'Financeiro',a:true},{id:'fd',l:'Dashboard Financeiro',a:true},{id:'dre',l:'📊 DRE + Comissões',a:true},{id:'fr',l:'A Receber',a:true},{id:'fp',l:'Contas a Pagar',a:true},
   {s:'Cadastros',a:true},{id:'cad-cor',l:'Corretores',a:true},{id:'cad-prop',l:'Proprietarios Cad.',a:true},{id:'cad-inq',l:'Inquilinos',a:true},
   {s:'Equipe',a:true},{id:'rank',l:'Ranking',a:true},{id:'metas',l:'Metas',a:true},{id:'historico',l:'Historico Mensal',a:true},{id:'recrut',l:'🎯 Recrutamento',a:true},
@@ -994,7 +995,7 @@ var TITLES = {
   dashboard:'Dashboard Geral',leads:'Leads',prosp:'Prospeccao',visitas:'Agenda de Visitas',
   acm:'ACM',docs:'Documentacao',contratos:'Contratos',acoes:'Acoes no Imovel',mcmv:'MCMV',
   'loc-c':'Contratos de Locacao','repasses':'Repasses — Visão Unificada','loc-l':'Leads de Locacao','extrato':'Extrato do Proprietário','os':'Ordens de Serviço','loc-v':'Vistorias','boletos':'Envio de Boletos',
-  iv:'Imoveis para Venda',prop:'Proprietarios',vitrine:'🏠 Vitrine de Imóveis',
+  iv:'Imoveis para Venda',prop:'Proprietarios',vitrine:'🏠 Vitrine de Imóveis',mkt:'🎨 Marketing',
   fd:'Dashboard Financeiro',fr:'Contas a Receber',fp:'Contas a Pagar',frp:'Repasses a Proprietarios',
   'cad-cor':'Cadastro de Corretores','cad-prop':'Cadastro de Proprietarios','cad-inq':'Cadastro de Inquilinos',
   rank:'Ranking',
@@ -2325,7 +2326,7 @@ function gP(id){
     dashboard:pDash, whatsapp:pWhatsApp, leads:pLeads, prosp:pProsp, agenda:pAgenda, visitas:pVis,
     acm:pAcm, docs:pDocs, contratos:pContratos, acoes:pAcoes, mcmv:pMCMV,
     'loc-c':pLC, 'loc-r':pLR, 'repasses':pRepasses, 'loc-l':pLL, 'loc-v':pLV, 'boletos':pBoletos, 'extrato':pExtrato, 'os':pOS,
-    iv:pIV, prop:pProp, vitrine:pVitrine,
+    iv:pIV, prop:pProp, vitrine:pVitrine, mkt:pMkt,
     fd:pFD, dre:pDRE, fr:pFR, fp:pFP,
     'cad-cor':pCadCor, 'cad-prop':pCadProp, 'cad-inq':pCadInq,
     rank:pRank, metas:pMetas, historico:pHistorico, recrut:pRecrutar, perms:pPermissoes,
@@ -5819,6 +5820,309 @@ function delVitrine(idx){
     function(){ vitD.splice(idx,1); salvarTudo(); pVitrine(); }
   );
 }
+
+// ===== MARKETING =====
+var _mktCat = 'Todos';
+var _mktTemplates = [
+  {id:'post-imovel', cat:'Imóveis', nome:'Post Imóvel — Oportunidade', tam:'Feed 1:1', desc:'Banner vermelho com foto, título e dados do corretor'},
+  {id:'post-venda',  cat:'Imóveis', nome:'Post Venda/Locação', tam:'Feed 4:5', desc:'Foto grande + rodapé azul com ícone e preço'},
+  {id:'post-novidade', cat:'Imóveis', nome:'Post Novidade', tam:'Feed 4:5', desc:'Fundo azul hexagonal com foto e corretor'},
+  {id:'post-4fotos', cat:'Imóveis', nome:'Post Grade 4 Fotos', tam:'Feed 4:5', desc:'Grade 2x2 com detalhes do imóvel'},
+  {id:'story-3fotos', cat:'Imóveis', nome:'Story 3 Fotos', tam:'Story 9:16', desc:'Fundo azul + grade de fotos + frase de impacto'},
+  {id:'post-luxo',   cat:'Institucional', nome:'Post Elegância & Luxo', tam:'Feed 1:1', desc:'Foto imóvel com banner translúcido e logo'},
+  {id:'post-remax',  cat:'Institucional', nome:'A RE/MAX está pronta', tam:'Story 9:16', desc:'Foto família + texto institucional'},
+  {id:'crecha',      cat:'Institucional', nome:'Crachá / Credencial', tam:'Vertical', desc:'Crachá editável com foto, nome e CRECI'},
+];
+
+function pMkt(){
+  var isAdm = isAdmin();
+  document.getElementById('pa').innerHTML = '';
+
+  var cats = ['Todos','Imóveis','Institucional'];
+  var filtros = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px">'+
+    cats.map(function(c){
+      var a=_mktCat===c;
+      return '<button onclick="mktSetCat(\''+c+'\')" style="padding:6px 16px;border-radius:20px;border:1.5px solid '+(a?'#D42028':'#d1d5db')+';background:'+(a?'#D42028':'#fff')+';color:'+(a?'#fff':'#374151')+';font-size:12px;font-weight:700;cursor:pointer">'+c+'</button>';
+    }).join('')+
+  '</div>';
+
+  var lista = _mktTemplates.filter(function(t){ return _mktCat==='Todos'||t.cat===_mktCat; });
+
+  var grid = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px">';
+  lista.forEach(function(t){
+    var tamCor = t.tam.includes('Story')?'#7c3aed':t.tam.includes('Vertical')?'#059669':'#003DA5';
+    grid += '<div style="background:#fff;border-radius:16px;border:1px solid #e5e7eb;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);cursor:pointer;transition:all .2s" onmouseover="this.style.transform=\'translateY(-4px)\';this.style.boxShadow=\'0 8px 24px rgba(0,0,0,.12)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 8px rgba(0,0,0,.06)\'" onclick="mktAbrirEditor(\''+t.id+'\')">'+
+      // Preview miniatura
+      '<div style="height:160px;background:linear-gradient(135deg,#0f1a35 0%,#003DA5 100%);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">'+
+        mktMiniatura(t.id)+
+      '</div>'+
+      '<div style="padding:14px">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'+
+          '<div style="font-weight:700;font-size:14px;color:#111827">'+t.nome+'</div>'+
+        '</div>'+
+        '<div style="font-size:11px;color:#6b7280;margin-bottom:10px">'+t.desc+'</div>'+
+        '<div style="display:flex;justify-content:space-between;align-items:center">'+
+          '<span style="background:'+tamCor+'22;color:'+tamCor+';padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700">'+t.tam+'</span>'+
+          '<button onclick="event.stopPropagation();mktAbrirEditor(\''+t.id+'\')" style="padding:6px 14px;background:#D42028;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">✏️ Criar arte</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  });
+  grid += '</div>';
+
+  document.getElementById('pc').innerHTML =
+    '<div class="card"><div class="chd"><h3>🎨 Templates de Marketing</h3></div>'+
+    '<div style="padding:16px">'+filtros+grid+'</div></div>';
+}
+
+function mktMiniatura(id){
+  var m = {
+    'post-imovel': '<div style="width:120px;height:120px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.3)"><div style="height:70px;background:#4a7c9f"></div><div style="background:#D42028;padding:4px 6px;font-size:7px;font-weight:700;color:#fff">OPORTUNIDADE!</div><div style="padding:4px;display:flex;justify-content:space-between;align-items:center"><div style="font-size:6px;color:#333;font-weight:700">Nome Corretor</div><div style="font-size:5px;font-weight:900;color:#003DA5">REMAX Space</div></div></div>',
+    'post-venda':  '<div style="width:100px;height:130px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.3)"><div style="height:80px;background:#4a7c9f"></div><div style="background:#0f1a35;padding:6px;display:flex;align-items:center;gap:4px"><div style="width:14px;height:14px;background:#D42028;border-radius:50%"></div><div><div style="font-size:8px;font-weight:900;color:#fff">VENDE</div><div style="font-size:6px;color:#aaa">Condomínio</div></div></div></div>',
+    'post-novidade':'<div style="width:100px;height:130px;background:#003DA5;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.3);position:relative"><div style="position:absolute;top:8px;right:8px;font-size:9px;font-weight:900;color:#fff">NOVIDADE!</div><div style="position:absolute;top:20px;left:8px;right:8px;height:70px;background:#4a7c9f;border-radius:4px"></div><div style="position:absolute;bottom:8px;left:8px;font-size:6px;color:#fff;font-weight:700">REMAX Space</div></div>',
+    'post-4fotos': '<div style="width:110px;height:140px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.3)"><div style="padding:4px;background:#0f1a35;font-size:6px;color:#fff;font-weight:700">REMAX Space · R$ 000.000</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:2px;height:80px"><div style="background:#4a7c9f;border-radius:2px"></div><div style="background:#6a9cbf;border-radius:2px"></div><div style="background:#7ab3d0;border-radius:2px"></div><div style="background:#5a8caf;border-radius:2px"></div></div><div style="padding:4px;font-size:5px;color:#333">3 Quartos · 2 Banheiros · 1 Vaga</div></div>',
+    'story-3fotos':'<div style="width:80px;height:130px;background:#0f1a35;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.3)"><div style="padding:6px;display:flex;justify-content:flex-end"><div style="font-size:5px;font-weight:900;color:#fff">REMAX Space</div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;padding:4px"><div style="height:24px;background:#4a7c9f;border-radius:2px"></div><div style="height:24px;background:#6a9cbf;border-radius:2px"></div><div style="height:24px;background:#5a8caf;border-radius:2px"></div></div><div style="padding:6px;font-size:7px;font-weight:900;color:#fff;line-height:1.3">O imóvel certo no endereço certo</div></div>',
+    'post-luxo':   '<div style="width:120px;height:120px;background:#4a7c9f;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.3);position:relative"><div style="position:absolute;top:8px;left:0;right:0;background:rgba(200,220,240,.85);padding:4px 8px"><div style="font-size:9px;font-weight:900;color:#0f1a35">ELEGÂNCIA</div><div style="font-size:7px;color:#333">LUXO</div></div><div style="position:absolute;bottom:0;left:0;right:0;background:#fff;padding:4px;text-align:center"><div style="font-size:6px;font-weight:900;color:#003DA5">REMAX Space</div></div></div>',
+    'post-remax':  '<div style="width:80px;height:130px;background:#555;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.3);position:relative"><div style="position:absolute;right:0;bottom:30px;left:0;padding:6px;background:rgba(0,0,0,.5)"><div style="font-size:6px;color:#fff;font-weight:700;line-height:1.4">A REMAX ESTÁ PRONTA PARA VOCÊ.</div></div><div style="position:absolute;bottom:0;left:0;right:0;background:#003DA5;padding:4px;font-size:6px;font-weight:900;color:#fff;text-align:center">RE/MAX</div></div>',
+    'crecha':      '<div style="width:90px;height:130px;background:#0f1a35;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.3);position:relative"><div style="height:70px;background:#D42028;margin:8px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:18px">👤</div><div style="background:#fff;margin:0 8px;border-radius:4px;padding:3px;text-align:center;font-size:7px;font-weight:700;color:#0f1a35">RE/MAX Space</div><div style="padding:4px;text-align:center;font-size:5px;font-weight:700;color:#fff;margin-top:4px">IMÓVEIS RE/MAX Space</div></div>',
+  };
+  return m[id]||'<div style="font-size:32px">🎨</div>';
+}
+
+window.mktSetCat = function(c){ _mktCat=c; pMkt(); };
+
+window.mktAbrirEditor = function(id){
+  var tpl = _mktTemplates.find(function(t){return t.id===id;});
+  if(!tpl) return;
+
+  // Campos editáveis por template
+  var campos = mktGetCampos(id);
+  var formHtml = '<div style="display:grid;gap:10px;margin-bottom:16px">'+
+    campos.map(function(c){
+      if(c.type==='textarea') return '<div><label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px">'+c.label+'</label><textarea id="mf-'+c.id+'" style="width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:8px;font-size:13px;resize:none;height:60px">'+c.val+'</textarea></div>';
+      return '<div><label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px">'+c.label+'</label><input id="mf-'+c.id+'" type="'+(c.type||'text')+'" value="'+c.val+'" style="width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:8px;font-size:13px"></div>';
+    }).join('')+
+  '</div>';
+
+  var previewHtml = '<div id="mkt-preview" style="display:flex;justify-content:center;margin-bottom:16px">'+
+    mktRenderPreview(id, mktGetVals(campos))+
+  '</div>';
+
+  oM('✏️ '+tpl.nome,
+    previewHtml+formHtml+
+    '<div style="display:flex;gap:8px;margin-top:4px">'+
+      '<button onclick="mktAtualizar(\''+id+'\')" style="flex:1;padding:12px;background:#003DA5;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">👁️ Atualizar preview</button>'+
+      '<button onclick="mktDownload(\''+id+'\')" style="flex:1;padding:12px;background:#D42028;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">⬇️ Baixar imagem</button>'+
+    '</div>',
+    null,'Fechar',true);
+};
+
+function mktGetCampos(id){
+  var u = U||{};
+  var nomeCorretor = u.nome||'Nome Corretor';
+  var tel = '(64) 93500-4028';
+  var ano = new Date().getFullYear();
+
+  var base = [
+    {id:'nome', label:'Nome do Corretor', val:nomeCorretor},
+    {id:'tel',  label:'Telefone', val:tel},
+  ];
+  var imovel = [
+    {id:'titulo', label:'Título / Chamada', val:'Oportunidade imperdível!'},
+    {id:'subtit', label:'Descrição do imóvel', val:'Casa em terreno de 860m² por somente R$ 990mil'},
+    {id:'foto1',  label:'Link da Foto 1 (imóvel)', val:''},
+  ];
+  var mapas = {
+    'post-imovel': imovel.concat(base),
+    'post-venda':  [{id:'op',label:'Operação (VENDE / ALUGA)',val:'VENDE'},{id:'cond',label:'Nome do Imóvel/Condomínio',val:'Condomínio Alphàbeta'},{id:'preco',label:'Preço',val:'R$ 1.999.000'},{id:'foto1',label:'Link da Foto',val:''}].concat(base),
+    'post-novidade':[{id:'foto1',label:'Link da Foto',val:''},{id:'texto',label:'Texto editável',val:'Novo na carteira!',type:'textarea'}].concat(base),
+    'post-4fotos': [{id:'local',label:'Cidade/Bairro',val:'Caldas Novas - GO'},{id:'preco',label:'Preço',val:'R$ 450.000,00'},{id:'foto1',label:'Link Foto 1',val:''},{id:'foto2',label:'Link Foto 2',val:''},{id:'foto3',label:'Link Foto 3',val:''},{id:'foto4',label:'Link Foto 4',val:''},{id:'q',label:'Quartos',val:'3'},{id:'ban',label:'Banheiros',val:'2'},{id:'vag',label:'Vagas',val:'1'}].concat(base),
+    'story-3fotos': [{id:'frase',label:'Frase de impacto',val:'O imóvel certo no endereço certo'},{id:'foto1',label:'Link Foto 1',val:''},{id:'foto2',label:'Link Foto 2',val:''},{id:'foto3',label:'Link Foto 3',val:''}].concat(base),
+    'post-luxo':   [{id:'tag1',label:'Palavra destaque 1',val:'ELEGÂNCIA'},{id:'tag2',label:'Palavra destaque 2',val:'LUXO'},{id:'foto1',label:'Link da Foto',val:''}],
+    'post-remax':  base,
+    'crecha':      [{id:'nome',label:'Nome do Corretor',val:nomeCorretor},{id:'cargo',label:'Cargo',val:'Corretor de Imóveis'},{id:'creci',label:'CRECI',val:'12345-F'},{id:'ano',label:'Ano',val:String(ano)},{id:'foto1',label:'Link da Foto do Corretor',val:''}],
+  };
+  return mapas[id]||base;
+}
+
+function mktGetVals(campos){
+  var v={};
+  campos.forEach(function(c){
+    var el=document.getElementById('mf-'+c.id);
+    v[c.id]=el?el.value:c.val;
+  });
+  return v;
+}
+
+window.mktAtualizar = function(id){
+  var campos = mktGetCampos(id);
+  var vals = mktGetVals(campos);
+  var prev = document.getElementById('mkt-preview');
+  if(prev) prev.innerHTML = mktRenderPreview(id, vals);
+};
+
+function mktRenderPreview(id, v){
+  var html = mktGetArtHtml(id, v);
+  return '<div id="mkt-art-'+id+'" style="transform-origin:top center;transform:scale(0.5);margin-bottom:-200px">'+html+'</div>';
+}
+
+function mktGetArtHtml(id, v){
+  // Logo SVG inline RE/MAX Space
+  var logo = '<div style="display:flex;align-items:center;gap:6px">'+
+    '<svg width="28" height="28" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><ellipse cx="256" cy="200" rx="110" ry="110" fill="#fff"/><polygon points="256,340 206,250 306,250" fill="#fff"/><rect x="170" y="155" width="172" height="90" rx="8" fill="#0f1a35"/><text x="182" y="215" font-family="Arial Black" font-size="48" font-weight="900" fill="#fff">RE/</text><text x="182" y="258" font-family="Arial Black" font-size="32" font-weight="900" fill="#D42028">MAX</text></svg>'+
+    '<div><div style="font-size:9px;color:#aaa;letter-spacing:2px">IMÓVEIS</div><div style="font-size:22px;font-weight:900;color:#fff;line-height:1;letter-spacing:-1px">RE/MAX</div><div style="font-size:14px;font-weight:700;color:#fff">Space</div><div style="font-size:8px;color:#aaa">CRECI: 41.377-J</div></div>'+
+  '</div>';
+
+  var fotoStyle = function(url){ return url?'background:url(\''+url+'\') center/cover no-repeat':'background:linear-gradient(135deg,#2a4a6a,#4a7ca0)'; };
+
+  var arts = {
+    'post-imovel': '<div style="width:600px;height:600px;position:relative;overflow:hidden;font-family:Arial,sans-serif;'+fotoStyle(v.foto1)+'">'+
+      '<div style="position:absolute;top:30px;left:30px;right:30px;background:#D42028;border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px">'+
+        '<svg width="44" height="44" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><ellipse cx="256" cy="200" rx="110" ry="110" fill="#fff"/><polygon points="256,340 206,250 306,250" fill="#fff"/><rect x="170" y="155" width="172" height="90" rx="8" fill="#D42028"/><text x="182" y="215" font-family="Arial Black" font-size="48" font-weight="900" fill="#fff">RE/</text><text x="182" y="258" font-family="Arial Black" font-size="32" font-weight="900" fill="#8B0000">MAX</text></svg>'+
+        '<div><div style="font-size:22px;font-weight:900;color:#fff">'+(v.titulo||'Oportunidade imperdível!')+'</div><div style="font-size:14px;color:rgba(255,255,255,.9)">'+(v.subtit||'')+'</div></div>'+
+      '</div>'+
+      '<div style="position:absolute;bottom:0;left:0;right:0;background:#0f1a35;padding:16px 24px;display:flex;align-items:center;justify-content:space-between">'+
+        '<div style="display:flex;align-items:center;gap:12px">'+
+          '<div style="width:52px;height:52px;border-radius:50%;background:#D42028;display:flex;align-items:center;justify-content:center;font-size:20px">👤</div>'+
+          '<div><div style="font-weight:800;font-size:16px;color:#fff">'+(v.nome||'Nome Corretor')+'</div><div style="font-size:13px;color:#aaa">'+(v.tel||'(64) 93500-4028')+'</div></div>'+
+        '</div>'+
+        logo+
+      '</div>'+
+    '</div>',
+
+    'post-venda': '<div style="width:480px;height:600px;position:relative;overflow:hidden;font-family:Arial,sans-serif;background:#fff">'+
+      '<div style="height:420px;'+fotoStyle(v.foto1)+'"></div>'+
+      '<div style="background:#0f1a35;padding:20px 24px;display:flex;align-items:center;justify-content:space-between">'+
+        '<div style="display:flex;align-items:center;gap:12px">'+
+          '<svg width="40" height="40" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><ellipse cx="256" cy="200" rx="110" ry="110" fill="#D42028"/><polygon points="256,340 206,250 306,250" fill="#D42028"/><rect x="140" y="130" width="232" height="150" rx="20" fill="#fff"/><text x="148" y="220" font-family="Arial Black" font-size="70" font-weight="900" fill="#D42028">R</text><text x="210" y="220" font-family="Arial Black" font-size="50" font-weight="900" fill="#003DA5">/M</text></svg>'+
+          '<div><div style="font-size:24px;font-weight:900;color:#fff">'+(v.op||'VENDE')+'</div><div style="font-size:13px;color:#aaa">'+(v.cond||'Nome do Imóvel')+'</div><div style="font-size:13px;color:#aaa">'+(v.preco||'')+'</div></div>'+
+        '</div>'+
+        logo+
+      '</div>'+
+    '</div>',
+
+    'post-novidade': '<div style="width:480px;height:600px;position:relative;overflow:hidden;font-family:Arial,sans-serif;background:#003DA5">'+
+      '<div style="position:absolute;inset:0;opacity:.15;background-image:repeating-linear-gradient(60deg,#fff 0,#fff 1px,transparent 0,transparent 50%);background-size:20px 35px"></div>'+
+      '<div style="position:relative;padding:20px;display:flex;justify-content:space-between;align-items:flex-start">'+
+        '<svg width="36" height="36" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><ellipse cx="256" cy="200" rx="110" ry="110" fill="#fff"/><polygon points="256,340 206,250 306,250" fill="#fff"/><rect x="170" y="155" width="172" height="90" rx="8" fill="#003DA5"/><text x="182" y="215" font-family="Arial Black" font-size="48" font-weight="900" fill="#fff">RE/</text><text x="182" y="258" font-family="Arial Black" font-size="32" font-weight="900" fill="#D42028">MAX</text></svg>'+
+        '<div style="font-size:28px;font-weight:900;color:#fff">NOVIDADE!</div>'+
+      '</div>'+
+      '<div style="position:relative;margin:0 20px;height:300px;border-radius:12px;overflow:hidden;'+fotoStyle(v.foto1)+'"></div>'+
+      '<div style="position:relative;padding:16px 20px">'+
+        '<div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:16px">'+(v.texto||'Novo na carteira!')+'</div>'+
+        '<div style="display:flex;align-items:center;gap:10px">'+
+          '<div style="width:44px;height:44px;border-radius:50%;background:#D42028;display:flex;align-items:center;justify-content:center;font-size:18px">👤</div>'+
+          '<div><div style="font-weight:800;font-size:15px;color:#fff">'+(v.nome||'Nome Corretor')+'</div><div style="font-size:12px;color:rgba(255,255,255,.8)">'+(v.tel||'')+'</div></div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="position:relative;padding:0 20px 16px">'+logo+'</div>'+
+    '</div>',
+
+    'post-4fotos': '<div style="width:480px;height:600px;background:#fff;font-family:Arial,sans-serif;display:flex;flex-direction:column;overflow:hidden">'+
+      '<div style="background:#0f1a35;padding:12px 16px;display:flex;align-items:center;justify-content:space-between">'+
+        logo+
+        '<div style="text-align:right"><div style="font-size:12px;color:#aaa">'+(v.local||'Caldas Novas - GO')+'</div><div style="font-size:20px;font-weight:900;color:#fff">'+(v.preco||'R$ 000.000')+'</div></div>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;flex:1">'+
+        '<div style="'+fotoStyle(v.foto1)+'"></div>'+
+        '<div style="'+fotoStyle(v.foto2)+'"></div>'+
+        '<div style="'+fotoStyle(v.foto3)+'"></div>'+
+        '<div style="'+fotoStyle(v.foto4)+'"></div>'+
+      '</div>'+
+      '<div style="padding:14px 16px;display:flex;align-items:center;gap:16px;border-top:1px solid #f0f0f0">'+
+        '<div style="display:flex;flex-direction:column;align-items:center">'+
+          '<div style="width:52px;height:52px;border-radius:50%;background:#e5e7eb;overflow:hidden">'+
+            (v.foto1?'':'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px">👤</div>')+
+          '</div>'+
+          '<div style="font-size:11px;font-weight:700;color:#0f1a35;margin-top:4px;text-align:center">'+(v.nome||'Nome Corretor')+'</div>'+
+          '<div style="font-size:10px;color:#6b7280">'+(v.tel||'')+'</div>'+
+        '</div>'+
+        '<div style="flex:1;border-left:2px solid #e5e7eb;padding-left:16px">'+
+          '<div style="font-size:12px;font-weight:800;color:#003DA5;margin-bottom:6px">Detalhes do imóvel</div>'+
+          '<div style="font-size:13px;color:#374151">🛏 '+(v.q||'0')+' Quartos</div>'+
+          '<div style="font-size:13px;color:#374151">🚿 '+(v.ban||'0')+' Banheiros</div>'+
+          '<div style="font-size:13px;color:#374151">🚗 '+(v.vag||'0')+' Vaga(s) de Garagem</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>',
+
+    'story-3fotos': '<div style="width:360px;height:640px;background:#0f1a35;font-family:Arial,sans-serif;position:relative;overflow:hidden;display:flex;flex-direction:column">'+
+      '<div style="position:absolute;inset:0;opacity:.1;background:repeating-linear-gradient(-45deg,transparent,transparent 40px,rgba(255,255,255,.1) 40px,rgba(255,255,255,.1) 41px)"></div>'+
+      '<div style="position:relative;padding:20px;display:flex;align-items:center;gap:12px">'+
+        '<svg width="32" height="32" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><ellipse cx="256" cy="200" rx="110" ry="110" fill="#D42028"/><polygon points="256,340 206,250 306,250" fill="#D42028"/></svg>'+
+        logo+
+      '</div>'+
+      '<div style="position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;margin:0 12px;height:180px;border-radius:10px;overflow:hidden">'+
+        '<div style="'+fotoStyle(v.foto1)+'"></div>'+
+        '<div style="'+fotoStyle(v.foto2)+'"></div>'+
+        '<div style="'+fotoStyle(v.foto3)+'"></div>'+
+      '</div>'+
+      '<div style="position:relative;flex:1;padding:20px;display:flex;flex-direction:column;justify-content:space-between">'+
+        '<div style="font-size:32px;font-weight:900;color:#fff;line-height:1.2">'+(v.frase||'O imóvel certo no endereço certo')+'</div>'+
+        '<div style="display:flex;align-items:center;gap:12px">'+
+          '<div style="width:56px;height:56px;border-radius:50%;background:#D42028;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px">👤</div>'+
+          '<div><div style="font-size:16px;font-weight:800;color:#fff">'+(v.nome||'Nome Corretor')+'</div><div style="font-size:13px;color:rgba(255,255,255,.7)">'+(v.tel||'')+'</div></div>'+
+        '</div>'+
+      '</div>'+
+    '</div>',
+
+    'post-luxo': '<div style="width:600px;height:600px;position:relative;overflow:hidden;font-family:Arial,sans-serif;'+fotoStyle(v.foto1)+'">'+
+      '<div style="position:absolute;top:0;left:0;right:0;background:rgba(200,220,240,.88);padding:20px 24px">'+
+        '<div style="font-size:36px;font-weight:900;color:#0f1a35;letter-spacing:-1px">'+(v.tag1||'ELEGÂNCIA')+'</div>'+
+        '<div style="font-size:22px;color:#003DA5;font-weight:500">'+(v.tag2||'LUXO')+'</div>'+
+      '</div>'+
+      '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.95);padding:16px 24px;display:flex;align-items:center;justify-content:space-between">'+
+        logo+
+        '<div style="display:grid;grid-template-columns:repeat(3,20px);gap:4px;opacity:.3">'+Array(9).fill('<div style="width:20px;height:20px;border:2px solid #003DA5;border-radius:2px"></div>').join('')+'</div>'+
+      '</div>'+
+    '</div>',
+
+    'post-remax': '<div style="width:360px;height:640px;background:#555;font-family:Arial,sans-serif;position:relative;overflow:hidden">'+
+      '<div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(180,0,0,.3) 0%,transparent 40%,rgba(0,0,0,.5) 70%)"></div>'+
+      '<div style="position:absolute;top:0;left:0;right:0;background:#D42028;height:8px"></div>'+
+      '<div style="position:absolute;bottom:0;left:0;right:0;background:#003DA5;height:8px"></div>'+
+      '<div style="position:absolute;bottom:60px;left:0;right:0;padding:20px">'+
+        '<div style="font-size:18px;color:#fff;font-weight:300;margin-bottom:8px">O imóvel pode estar em qualquer fase.</div>'+
+        '<div style="font-size:24px;font-weight:900;color:#fff;margin-bottom:16px">A REMAX ESTÁ PRONTA PARA VOCÊ.</div>'+
+        '<svg width="32" height="32" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><ellipse cx="256" cy="200" rx="110" ry="110" fill="#fff"/><polygon points="256,340 206,250 306,250" fill="#fff"/></svg>'+
+        '<div style="font-size:28px;font-weight:900;color:#fff;margin-top:4px">RE/MAX</div>'+
+        '<div style="font-size:14px;color:rgba(255,255,255,.8);margin-top:4px">IMÓVEIS PRONTOS PARA VOCÊ</div>'+
+        '<div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:8px">remaxspace.com.br</div>'+
+      '</div>'+
+    '</div>',
+
+    'crecha': '<div style="width:380px;height:520px;background:linear-gradient(160deg,#0f1a35 0%,#003DA5 100%);font-family:Arial,sans-serif;position:relative;overflow:hidden;border-radius:16px">'+
+      // Linhas decorativas
+      '<div style="position:absolute;inset:0;opacity:.1;background-image:repeating-linear-gradient(135deg,#fff 0,#fff 1px,transparent 0,transparent 30px);background-size:42px 42px"></div>'+
+      // Foto
+      '<div style="position:relative;margin:24px auto 0;width:200px;height:200px;background:#D42028;border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center">'+
+        ('{foto1}'?'<img src="{foto1}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">':'')+'<div style="font-size:60px;position:absolute">👤</div>'+
+      '</div>'+
+      // Nome em pill branco
+      '<div style="position:relative;background:#fff;margin:20px 24px 0;border-radius:40px;padding:14px 20px;text-align:center">'+
+        '<div style="font-size:20px;font-weight:900;color:#0f1a35">'+(v.nome||'Nome do Corretor')+'</div>'+
+        '<div style="font-size:12px;color:#6b7280;margin-top:2px">'+(v.cargo||'Corretor de Imóveis')+'</div>'+
+        '<div style="font-size:11px;color:#9ca3af">CRECI: '+(v.creci||'00000-F')+'</div>'+
+      '</div>'+
+      // Logo + ano
+      '<div style="position:relative;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;margin-top:8px">'+
+        logo+
+        '<div style="text-align:right"><div style="font-size:11px;color:rgba(255,255,255,.5)">Credencial</div><div style="font-size:18px;font-weight:900;color:#D42028">'+(v.ano||new Date().getFullYear())+'</div></div>'+
+      '</div>'+
+    '</div>',
+  };
+  return arts[id]||'<div style="padding:40px;color:#fff;text-align:center">Template em construção</div>';
+}
+
+window.mktDownload = function(id){
+  var art = document.getElementById('mkt-art-'+id);
+  if(!art) return;
+  // Abrir em nova aba para salvar
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Arte RE/MAX Space</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f3f4f6;padding:20px;}</style></head><body>'+art.innerHTML+'<br><button onclick="window.print()" style="margin-top:20px;padding:12px 24px;background:#003DA5;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer">🖨️ Imprimir / Salvar PDF</button></body></html>';
+  var w = window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+};
 
 function pIV(){
   document.getElementById('pa').innerHTML='<button class="btn btn-red" onclick="nIV()">+ Novo Imovel</button>';

@@ -2451,10 +2451,7 @@ function pDashCorretor(){
   var rank=1;
   COR.forEach(function(c){
     if(c.nome===nome) return;
-    var cp=ivD.filter(function(iv){return (iv.corretor||'').indexOf(c.nome)>=0;}).length*5+
-            ldD.filter(function(l){return l.cor===c.nome;}).length*2+
-            vD.filter(function(v){return v.cor===c.nome;}).length*3+
-            ldD.filter(function(l){return l.cor===c.nome&&l.st==='Fechado';}).length*15;
+    var cp=ivD.filter(function(iv){return (iv.corretor||'').indexOf(c.nome)>=0;}).length*5+ldD.filter(function(l){return l.cor===c.nome;}).length*2+vD.filter(function(v){return v.cor===c.nome;}).length*3+ldD.filter(function(l){return l.cor===c.nome&&l.st==='Fechado';}).length*15;
     if(cp>pts) rank++;
   });
 
@@ -2467,19 +2464,13 @@ function pDashCorretor(){
     {label:'Fechados',n:fechados,cor:'#b91c1c'}
   ];
   var maxF=Math.max(funil[0].n,1);
-  var funilHtml=funil.map(function(f){
+  var funilHtml='';
+  funil.forEach(function(f){
     var pct=Math.max(Math.round(f.n/maxF*100),f.n>0?8:0);
-    return '<div style="margin-bottom:12px">'+
-      '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'+
-        '<span style="font-size:11px;font-weight:600;color:#2d3748">'+f.label+'</span>'+
-        '<span style="font-size:13px;font-weight:800;color:'+f.cor+'">'+f.n+'</span>'+
-      '</div>'+
-      '<div style="background:#edf2f7;border-radius:4px;height:10px">'+
-        '<div style="background:'+f.cor+';height:10px;border-radius:4px;width:'+pct+'%"></div>'+
-      '</div></div>';
-  }).join('');
+    funilHtml+='<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;font-weight:600;color:#2d3748">'+f.label+'</span><span style="font-size:13px;font-weight:800;color:'+f.cor+'">'+f.n+'</span></div><div style="background:#edf2f7;border-radius:4px;height:10px"><div style="background:'+f.cor+';height:10px;border-radius:4px;width:'+pct+'%"></div></div></div>';
+  });
 
-  // Leads por status para gráfico
+  // Status leads para pizza
   var stCounts={};
   meusLeads.forEach(function(l){stCounts[l.st]=(stCounts[l.st]||0)+1;});
   var stLabels=Object.keys(stCounts);
@@ -2487,118 +2478,74 @@ function pDashCorretor(){
   var stCores=['#0d1f4e','#b91c1c','#1a6e3a','#b45309','#5b21b6','#0e7490'];
 
   // Agenda
-  var agendaHtml=meusEv.length?meusEv.map(function(ev){
-    var t=AG_TIPOS[ev.tipo]||AG_TIPOS['Outro'];
-    return '<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f4f6f8">'+
-      '<div style="font-size:12px;font-weight:800;color:'+t.cor+';width:40px;flex-shrink:0">'+ev.hr+'</div>'+
-      '<div style="width:3px;height:30px;background:'+t.cor+';border-radius:2px;flex-shrink:0"></div>'+
-      '<div><div style="font-size:12px;font-weight:600;color:#0d1829">'+t.icon+' '+ev.titulo+'</div>'+
-      '<div style="font-size:11px;color:#4a5568;margin-top:1px">'+ev.end+'</div></div></div>';
-  }).join(''):'<div style="padding:20px;text-align:center;color:#4a5568;font-size:12px">Nenhum evento hoje</div>';
+  var agendaHtml='';
+  if(meusEv.length){
+    meusEv.forEach(function(ev){
+      var t=AG_TIPOS[ev.tipo]||AG_TIPOS['Outro'];
+      agendaHtml+='<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f4f6f8"><div style="font-size:12px;font-weight:800;color:'+t.cor+';width:40px;flex-shrink:0">'+ev.hr+'</div><div style="width:3px;height:30px;background:'+t.cor+';border-radius:2px;flex-shrink:0"></div><div><div style="font-size:12px;font-weight:600;color:#0d1829">'+t.icon+' '+ev.titulo+'</div><div style="font-size:11px;color:#4a5568;margin-top:1px">'+ev.end+'</div></div></div>';
+    });
+  } else {
+    agendaHtml='<div style="padding:20px;text-align:center;color:#4a5568;font-size:12px">Nenhum evento hoje</div>';
+  }
 
   // Leads quentes
-  var leadsHtml=leadsQuentes.length?leadsQuentes.slice(0,5).map(function(l){
-    return '<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f4f6f8;cursor:pointer" onclick="gP(&quot;leads&quot;)">'+
-      '<div style="flex:1"><div style="font-size:12px;font-weight:600;color:#0d1829">'+l.nome+'</div>'+
-      '<div style="font-size:11px;color:#4a5568;margin-top:1px">'+l.tipo+' · '+l.faixa+'</div></div>'+
-      sBadge(l.st)+'</div>';
-  }).join(''):'<div style="padding:20px;text-align:center;color:#4a5568;font-size:12px">Sem leads quentes</div>';
+  var leadsHtml='';
+  if(leadsQuentes.length){
+    leadsQuentes.slice(0,5).forEach(function(l){
+      leadsHtml+='<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f4f6f8"><div style="flex:1"><div style="font-size:12px;font-weight:600;color:#0d1829">'+l.nome+'</div><div style="font-size:11px;color:#4a5568;margin-top:1px">'+l.tipo+' · '+l.faixa+'</div></div>'+sBadge(l.st)+'</div>';
+    });
+  } else {
+    leadsHtml='<div style="padding:20px;text-align:center;color:#4a5568;font-size:12px">Sem leads quentes</div>';
+  }
 
-  var html =
-    // HEADER
-    '<div style="background:#0d1f4e;border-radius:12px;padding:24px 28px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between">'+
-      '<div style="display:flex;align-items:center;gap:16px">'+
-        '<div style="width:52px;height:52px;border-radius:12px;background:'+U.cor+';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0">'+U.ini+'</div>'+
-        '<div>'+
-          '<div style="font-size:9px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">'+dataStr+'</div>'+
-          '<div style="font-size:18px;font-weight:700;color:#fff">Olá, '+U.nome.split(' ')[0]+'</div>'+
-          '<div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">RE/MAX Space · Corretor</div>'+
-        '</div>'+
-      '</div>'+
-      '<div style="text-align:right;border-left:1px solid rgba(255,255,255,.1);padding-left:28px">'+
-        '<div style="font-size:9px;color:rgba(255,255,255,.35);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px">Ranking</div>'+
-        '<div style="font-size:32px;font-weight:900;color:#fff;letter-spacing:-1px">#'+rank+'</div>'+
-        '<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px">'+pts+' pontos</div>'+
-      '</div>'+
-    '</div>'+
+  var pc=document.getElementById('pc');
+  pc.innerHTML='';
 
-    // KPIs
-    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">'+
-      '<div style="background:#fff;border-radius:12px;padding:20px 22px;border:1px solid #e8edf2;border-top:3px solid #0d1f4e;cursor:pointer" onclick="gP(&quot;iv&quot;)">'+
-        '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Captações</div>'+
-        '<div style="font-size:34px;font-weight:900;color:#0d1829;letter-spacing:-1.5px;line-height:1;margin-bottom:4px">'+minhasCapt.length+'</div>'+
-        '<div style="font-size:11px;color:#4a5568">imóveis captados</div>'+
-      '</div>'+
-      '<div style="background:#fff;border-radius:12px;padding:20px 22px;border:1px solid #e8edf2;border-top:3px solid #b91c1c;cursor:pointer" onclick="gP(&quot;leads&quot;)">'+
-        '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Leads</div>'+
-        '<div style="font-size:34px;font-weight:900;color:#0d1829;letter-spacing:-1.5px;line-height:1;margin-bottom:4px">'+meusLeads.length+'</div>'+
-        '<div style="font-size:11px;color:#4a5568">'+leadsQuentes.length+' quentes</div>'+
-      '</div>'+
-      '<div style="background:#fff;border-radius:12px;padding:20px 22px;border:1px solid #e8edf2;border-top:3px solid #1a6e3a;cursor:pointer" onclick="gP(&quot;visitas&quot;)">'+
-        '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Visitas</div>'+
-        '<div style="font-size:34px;font-weight:900;color:#0d1829;letter-spacing:-1.5px;line-height:1;margin-bottom:4px">'+minhasVis.length+'</div>'+
-        '<div style="font-size:11px;color:#4a5568">realizadas</div>'+
-      '</div>'+
-      '<div style="background:#fff;border-radius:12px;padding:20px 22px;border:1px solid #e8edf2;border-top:3px solid #b45309">'+
-        '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Fechamentos</div>'+
-        '<div style="font-size:34px;font-weight:900;color:#0d1829;letter-spacing:-1.5px;line-height:1;margin-bottom:4px">'+fechados+'</div>'+
-        '<div style="font-size:11px;color:#4a5568">negócios fechados</div>'+
-      '</div>'+
-    '</div>'+
+  // HEADER
+  var h=document.createElement('div');
+  h.style.cssText='background:#0d1f4e;border-radius:12px;padding:24px 28px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between';
+  h.innerHTML='<div style="display:flex;align-items:center;gap:16px"><div style="width:52px;height:52px;border-radius:12px;background:'+U.cor+';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0">'+U.ini+'</div><div><div style="font-size:9px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">'+dataStr+'</div><div style="font-size:18px;font-weight:700;color:#fff">Olá, '+U.nome.split(' ')[0]+'</div><div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">RE/MAX Space · Corretor</div></div></div><div style="text-align:right;border-left:1px solid rgba(255,255,255,.1);padding-left:28px"><div style="font-size:9px;color:rgba(255,255,255,.35);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px">Ranking</div><div style="font-size:32px;font-weight:900;color:#fff;letter-spacing:-1px">#'+rank+'</div><div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px">'+pts+' pontos</div></div>';
+  pc.appendChild(h);
 
-    // FUNIL + GRÁFICO
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">'+
-      '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
-        '<div style="padding:14px 20px;border-bottom:1px solid #edf2f7;background:#fafbfd;display:flex;align-items:center;justify-content:space-between">'+
-          '<div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Funil de Vendas</div>'+
-          '<span style="font-size:10px;font-weight:700;color:#0d1f4e">'+meusLeads.length+' leads</span>'+
-        '</div>'+
-        '<div style="padding:16px 20px">'+(meusLeads.length>0?funilHtml:'<div style="padding:20px;text-align:center;color:#4a5568;font-size:12px">Nenhum lead ainda</div>')+'</div>'+
-      '</div>'+
-      '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
-        '<div style="padding:14px 20px;border-bottom:1px solid #edf2f7;background:#fafbfd">'+
-          '<div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Leads por Status</div>'+
-        '</div>'+
-        '<div style="padding:16px 20px;display:flex;align-items:center;justify-content:center;min-height:160px">'+
-          (stLabels.length>0?'<canvas id="chart-status" width="200" height="200"></canvas>':'<div style="color:#4a5568;font-size:12px">Sem dados</div>')+
-        '</div>'+
-      '</div>'+
-    '</div>'+
+  // KPIs
+  var kpis=[
+    {l:'Captações',v:minhasCapt.length,s:'imóveis captados',c:'#0d1f4e',fn:'iv'},
+    {l:'Leads',v:meusLeads.length,s:leadsQuentes.length+' quentes',c:'#b91c1c',fn:'leads'},
+    {l:'Visitas',v:minhasVis.length,s:'realizadas',c:'#1a6e3a',fn:'visitas'},
+    {l:'Fechamentos',v:fechados,s:'negócios fechados',c:'#b45309',fn:''}
+  ];
+  var kpiRow=document.createElement('div');
+  kpiRow.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px';
+  kpis.forEach(function(k){
+    var d=document.createElement('div');
+    d.style.cssText='background:#fff;border-radius:12px;padding:20px 22px;border:1px solid #e8edf2;border-top:3px solid '+k.c+(k.fn?';cursor:pointer':'');
+    if(k.fn) d.onclick=function(){gP(k.fn);};
+    d.innerHTML='<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">'+k.l+'</div><div style="font-size:34px;font-weight:900;color:#0d1829;letter-spacing:-1.5px;line-height:1;margin-bottom:4px">'+k.v+'</div><div style="font-size:11px;color:#4a5568">'+k.s+'</div>';
+    kpiRow.appendChild(d);
+  });
+  pc.appendChild(kpiRow);
 
-    // AGENDA + LEADS QUENTES
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">'+
-      '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
-        '<div style="padding:14px 20px;border-bottom:1px solid #edf2f7;display:flex;align-items:center;justify-content:space-between;background:#fafbfd">'+
-          '<div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Agenda de Hoje</div>'+
-          '<button onclick="gP(&quot;agenda&quot;)" style="font-size:10px;font-weight:700;color:#0d1f4e;background:none;border:1px solid #0d1f4e;border-radius:6px;padding:3px 10px;cursor:pointer">VER TUDO</button>'+
-        '</div>'+
-        '<div style="padding:4px 20px 8px">'+agendaHtml+'</div>'+
-      '</div>'+
-      '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
-        '<div style="padding:14px 20px;border-bottom:1px solid #edf2f7;display:flex;align-items:center;justify-content:space-between;background:#fafbfd">'+
-          '<div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Leads Quentes</div>'+
-          '<button onclick="gP(&quot;leads&quot;)" style="font-size:10px;font-weight:700;color:#b91c1c;background:none;border:1px solid #b91c1c;border-radius:6px;padding:3px 10px;cursor:pointer">VER TODOS</button>'+
-        '</div>'+
-        '<div style="padding:4px 20px 8px">'+leadsHtml+'</div>'+
-      '</div>'+
-    '</div>';
+  // FUNIL + GRÁFICO
+  var row2=document.createElement('div');
+  row2.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px';
+  row2.innerHTML='<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden"><div style="padding:14px 20px;border-bottom:1px solid #edf2f7;background:#fafbfd;display:flex;align-items:center;justify-content:space-between"><div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Funil de Vendas</div><span style="font-size:10px;font-weight:700;color:#0d1f4e">'+meusLeads.length+' leads</span></div><div style="padding:16px 20px">'+(meusLeads.length>0?funilHtml:'<div style="padding:20px;text-align:center;color:#4a5568;font-size:12px">Nenhum lead ainda</div>')+'</div></div><div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden"><div style="padding:14px 20px;border-bottom:1px solid #edf2f7;background:#fafbfd"><div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Leads por Status</div></div><div style="padding:16px 20px;display:flex;align-items:center;justify-content:center;min-height:160px">'+(stLabels.length>0?'<canvas id="chart-status" width="200" height="200"></canvas>':'<div style="color:#4a5568;font-size:12px;text-align:center">Sem dados de leads</div>')+'</div></div>';
+  pc.appendChild(row2);
 
-  document.getElementById('pc').innerHTML = html;
+  // AGENDA + LEADS QUENTES
+  var row3=document.createElement('div');
+  row3.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:14px';
+  row3.innerHTML='<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden"><div style="padding:14px 20px;border-bottom:1px solid #edf2f7;display:flex;align-items:center;justify-content:space-between;background:#fafbfd"><div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Agenda de Hoje</div><button onclick="gP('agenda')" style="font-size:10px;font-weight:700;color:#0d1f4e;background:none;border:1px solid #0d1f4e;border-radius:6px;padding:3px 10px;cursor:pointer">VER TUDO</button></div><div style="padding:4px 20px 8px">'+agendaHtml+'</div></div><div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden"><div style="padding:14px 20px;border-bottom:1px solid #edf2f7;display:flex;align-items:center;justify-content:space-between;background:#fafbfd"><div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Leads Quentes</div><button onclick="gP('leads')" style="font-size:10px;font-weight:700;color:#b91c1c;background:none;border:1px solid #b91c1c;border-radius:6px;padding:3px 10px;cursor:pointer">VER TODOS</button></div><div style="padding:4px 20px 8px">'+leadsHtml+'</div></div>';
+  pc.appendChild(row3);
 
   // Gráfico pizza
   if(stLabels.length>0){
     setTimeout(function(){
       var cv=document.getElementById('chart-status');
       if(!cv||!window.Chart) return;
-      new Chart(cv,{
-        type:'doughnut',
-        data:{labels:stLabels,datasets:[{data:stVals,backgroundColor:stCores.slice(0,stLabels.length),borderWidth:2,borderColor:'#fff'}]},
-        options:{responsive:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:6,boxWidth:10}},tooltip:{callbacks:{label:function(c){return ' '+c.label+': '+c.raw;}}}},cutout:'60%'}
-      });
+      new Chart(cv,{type:'doughnut',data:{labels:stLabels,datasets:[{data:stVals,backgroundColor:stCores.slice(0,stLabels.length),borderWidth:2,borderColor:'#fff'}]},options:{responsive:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:6,boxWidth:10}},tooltip:{callbacks:{label:function(c){return ' '+c.label+': '+c.raw;}}}},cutout:'60%'}});
     },300);
   }
 }
-
 
 function dKpi(label,val,sub,accent){
   return '<div style="background:#fff;border-radius:12px;padding:22px 24px;border:1px solid #e8edf2;border-top:3px solid '+accent+'">'+

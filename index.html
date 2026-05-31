@@ -2495,10 +2495,10 @@ function pDashCorretor(){
 
 
 function dKpi(label,val,sub,accent){
-  return '<div style="background:#fff;border-radius:12px;padding:20px 24px;border:1px solid #e8edf2;border-top:3px solid '+accent+'">'+
-    '<div style="font-size:10px;font-weight:700;color:#8896a5;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">'+label+'</div>'+
-    '<div style="font-size:28px;font-weight:800;color:#0d1829;letter-spacing:-0.5px;margin-bottom:4px">'+val+'</div>'+
-    '<div style="font-size:11px;color:#8896a5">'+sub+'</div>'+
+  return '<div style="background:#fff;border-radius:12px;padding:22px 24px;border:1px solid #e8edf2;border-top:3px solid '+accent+'">'+
+    '<div style="font-size:9px;font-weight:800;color:#8896a5;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px">'+label+'</div>'+
+    '<div style="font-size:34px;font-weight:900;color:#0d1829;letter-spacing:-1.5px;line-height:1;margin-bottom:6px">'+val+'</div>'+
+    '<div style="font-size:11px;color:#a0aec0">'+sub+'</div>'+
   '</div>';
 }
 
@@ -2517,49 +2517,48 @@ function pDashAdmin(){
     // Visitas
     var vis='';
     vD.filter(function(v){return v.dt===hojeStr;}).forEach(function(v){
-      vis+='<div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #f4f6f8">'+
+      vis+='<div style="display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid #f4f6f8">'+
         '<div style="flex:1"><div style="font-size:13px;font-weight:600;color:#0d1829">'+(v.end||v.imovel||'Imóvel')+'</div>'+
         '<div style="font-size:11px;color:#8896a5;margin-top:2px">'+(v.hr||'')+' · '+(v.cor||'')+' · '+(v.cli||v.cliente||'')+'</div></div>'+
         sBadge(v.st||v.status)+'</div>';
     });
 
-    // Portfolio
-    var tipos=[['CASA','#1a3fa4'],['LOTE','#1a7a4a'],['APARTAMENTO','#6d3db5'],['CHACARA','#b5620d'],['CHALE','#0c7a8a'],['FAZENDA','#b51d1d'],['FLAT','#8a7520']];
+    // Portfolio — barras maiores
+    var tipos=[['CASA','#0d1f4e'],['LOTE','#1a6e3a'],['APARTAMENTO','#5b21b6'],['CHACARA','#b45309'],['CHALE','#0e7490'],['FAZENDA','#b91c1c'],['FLAT','#92400e']];
+    var maxN=Math.max.apply(null,tipos.map(function(tp){return ivD.filter(function(i){return i.tipo===tp[0];}).length;}));
     var bars='';
     tipos.forEach(function(tp){
       var n=ivD.filter(function(i){return i.tipo===tp[0];}).length;
       if(!n) return;
-      var pct=Math.round(n/Math.max(ivD.length,1)*100);
-      bars+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">'+
-        '<div style="font-size:11px;font-weight:600;color:#4a5568;width:90px;flex-shrink:0">'+tp[0]+'</div>'+
-        '<div style="flex:1;background:#f0f4f8;border-radius:3px;height:4px">'+
-          '<div style="background:'+tp[1]+';height:4px;border-radius:3px;width:'+pct+'%"></div>'+
+      var pct=Math.round(n/Math.max(maxN,1)*100);
+      bars+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">'+
+        '<div style="font-size:11px;font-weight:600;color:#4a5568;width:88px;flex-shrink:0">'+tp[0]+'</div>'+
+        '<div style="flex:1;background:#edf2f7;border-radius:4px;height:8px">'+
+          '<div style="background:'+tp[1]+';height:8px;border-radius:4px;width:'+pct+'%"></div>'+
         '</div>'+
-        '<div style="font-size:12px;font-weight:700;color:'+tp[1]+';width:24px;text-align:right">'+n+'</div>'+
+        '<div style="font-size:12px;font-weight:800;color:#0d1829;width:20px;text-align:right">'+n+'</div>'+
       '</div>';
     });
 
-    // Alertas
+    // Alertas com badge sólido
     var alertas=[];
     ativos.filter(function(c){return c.fim;}).forEach(function(c){
       var fim=new Date(c.fim),dias=Math.round((fim-hoje)/86400000);
-      if(dias>=0&&dias<=90) alertas.push({nivel:dias<=30?0:1,cor:dias<=30?'#c41a1a':'#b5620d',tag:dias<=30?'URGENTE':'ATENÇÃO',txt:'CT '+c.id+' · '+c.prop+' — vence em '+dias+' dias'});
+      if(dias>=0&&dias<=90) alertas.push({cor:dias<=30?'#b91c1c':'#b45309',tag:dias<=30?'URGENTE':'ATENÇÃO',txt:'CT '+c.id+' · '+c.prop+' — vence em <b>'+dias+' dias</b>',pri:dias<=30?0:1});
     });
-    if(venc10>0) alertas.push({nivel:0,cor:'#c41a1a',tag:'HOJE',txt:'Vencimento dia 10 — '+venc10+' contratos'});
-    if(inad>0) alertas.push({nivel:0,cor:'#c41a1a',tag:'CRÍTICO',txt:inad+' contratos com pagamento pendente'});
-    if(sf>0) alertas.push({nivel:2,cor:'#b5620d',tag:'PENDENTE',txt:sf+' imóveis sem fotos cadastradas'});
-    if(sc>0) alertas.push({nivel:2,cor:'#b5620d',tag:'PENDENTE',txt:sc+' imóveis sem contrato de captação'});
-    if(leadsNovos>0) alertas.push({nivel:3,cor:'#1a6e3a',tag:'NOVO',txt:leadsNovos+' leads de locação aguardando contato'});
-    if(ldD.length>0) alertas.push({nivel:3,cor:'#1a3fa4',tag:'PIPELINE',txt:ldD.length+' leads de venda ativos'});
-    alertas.sort(function(a,b){return a.nivel-b.nivel;});
+    if(venc10>0) alertas.push({cor:'#b91c1c',tag:'HOJE',txt:'Vencimento dia 10 — <b>'+venc10+' contratos</b>',pri:0});
+    if(inad>0) alertas.push({cor:'#7f1d1d',tag:'CRÍTICO',txt:'<b>'+inad+' contratos</b> com pagamento pendente',pri:0});
+    if(sf>0) alertas.push({cor:'#b45309',tag:'PENDENTE',txt:'<b>'+sf+' imóveis</b> sem fotos cadastradas',pri:2});
+    if(sc>0) alertas.push({cor:'#b45309',tag:'PENDENTE',txt:'<b>'+sc+' imóveis</b> sem contrato de captação',pri:2});
+    if(leadsNovos>0) alertas.push({cor:'#1a6e3a',tag:'NOVO',txt:'<b>'+leadsNovos+' leads</b> de locação aguardando contato',pri:3});
+    if(ldD.length>0) alertas.push({cor:'#0d1f4e',tag:'PIPELINE',txt:'<b>'+ldD.length+' leads</b> de venda ativos',pri:3});
+    alertas.sort(function(a,b){return a.pri-b.pri;});
 
     var alertRows=alertas.map(function(a){
-      return '<tr>'+
-        '<td style="padding:10px 16px;border-bottom:1px solid #f4f6f8">'+
-          '<span style="display:inline-block;font-size:9px;font-weight:700;color:'+a.cor+';border:1px solid '+a.cor+';border-radius:4px;padding:1px 7px;letter-spacing:.5px;margin-right:10px">'+a.tag+'</span>'+
-          '<span style="font-size:12.5px;color:#2d3748">'+a.txt+'</span>'+
-        '</td>'+
-      '</tr>';
+      return '<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f4f6f8">'+
+        '<span style="background:'+a.cor+';color:#fff;font-size:9px;font-weight:800;padding:3px 8px;border-radius:4px;letter-spacing:.5px;white-space:nowrap;flex-shrink:0">'+a.tag+'</span>'+
+        '<span style="font-size:12.5px;color:#2d3748">'+a.txt+'</span>'+
+      '</div>';
     }).join('');
 
     var ms=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
@@ -2568,44 +2567,65 @@ function pDashAdmin(){
 
     document.getElementById('pc').innerHTML =
 
-      // HEADER EXECUTIVO
-      '<div style="background:#0d1f4e;border-radius:12px;padding:24px 32px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between">'+
-        '<div>'+
-          '<div style="font-size:10px;color:rgba(255,255,255,.4);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">'+dataStr+'</div>'+
-          '<div style="font-size:20px;font-weight:700;color:#fff;letter-spacing:-.3px">RE/MAX Space — Painel Gerencial</div>'+
-          '<div style="font-size:12px;color:rgba(255,255,255,.4);margin-top:3px">Caldas Novas · Goiás</div>'+
+      // HEADER
+      '<div style="background:#0d1f4e;border-radius:12px;padding:24px 32px;margin-bottom:18px">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">'+
+          '<div>'+
+            '<div style="font-size:9px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">'+dataStr+'</div>'+
+            '<div style="font-size:20px;font-weight:700;color:#fff;letter-spacing:-.3px">RE/MAX Space — Painel Gerencial</div>'+
+            '<div style="font-size:12px;color:rgba(255,255,255,.35);margin-top:3px">Caldas Novas · Goiás</div>'+
+          '</div>'+
+          '<div style="text-align:right;border-left:1px solid rgba(255,255,255,.1);padding-left:32px">'+
+            '<div style="font-size:9px;color:rgba(255,255,255,.35);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px">Receita Mensal</div>'+
+            '<div style="font-size:32px;font-weight:900;color:#fff;letter-spacing:-1px">'+fmt(tot)+'</div>'+
+            '<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:3px">'+ativos.length+' contratos · ADM '+fmt(tot*.1)+'</div>'+
+          '</div>'+
         '</div>'+
-        '<div style="text-align:right;border-left:1px solid rgba(255,255,255,.1);padding-left:32px">'+
-          '<div style="font-size:10px;color:rgba(255,255,255,.4);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Receita Mensal</div>'+
-          '<div style="font-size:30px;font-weight:800;color:#fff;letter-spacing:-1px">'+fmt(tot)+'</div>'+
-          '<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:3px">'+ativos.length+' contratos ativos · ADM '+fmt(tot*.1)+'</div>'+
+        // MÉTRICAS RÁPIDAS NO HEADER
+        '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,.08);border-radius:8px;overflow:hidden">'+
+          '<div style="background:rgba(255,255,255,.05);padding:12px 16px;text-align:center">'+
+            '<div style="font-size:9px;color:rgba(255,255,255,.35);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px">Imóveis Venda</div>'+
+            '<div style="font-size:20px;font-weight:800;color:#fff">'+ivD.length+'</div>'+
+          '</div>'+
+          '<div style="background:rgba(255,255,255,.05);padding:12px 16px;text-align:center">'+
+            '<div style="font-size:9px;color:rgba(255,255,255,.35);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px">Contratos</div>'+
+            '<div style="font-size:20px;font-weight:800;color:#fff">'+ativos.length+'</div>'+
+          '</div>'+
+          '<div style="background:rgba(255,255,255,.05);padding:12px 16px;text-align:center">'+
+            '<div style="font-size:9px;color:rgba(255,255,255,.35);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px">Leads</div>'+
+            '<div style="font-size:20px;font-weight:800;color:#fff">'+(ldD.length+llD.length)+'</div>'+
+          '</div>'+
+          '<div style="background:rgba(255,255,255,.05);padding:12px 16px;text-align:center">'+
+            '<div style="font-size:9px;color:rgba(255,255,255,.35);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px">Pendências</div>'+
+            '<div style="font-size:20px;font-weight:800;color:'+(sf+sc>0?'#fca5a5':'#fff')+'">'+(sf+sc)+'</div>'+
+          '</div>'+
         '</div>'+
       '</div>'+
 
       // KPIs
-      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">'+
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">'+
         dKpi('Carteira Venda',ivD.length,'imóveis captados','#0d1f4e')+
         dKpi('ADM Mensal',fmt(tot*.1),'repasse '+fmt(tot*.9),'#1a6e3a')+
-        dKpi('Pendências',(sf+sc),sf+' s/foto · '+sc+' s/ct','#b5620d')+
-        dKpi('Leads Ativos',ldD.length+llD.length,(leadsNovos>0?leadsNovos+' novos':'pipeline ativo'),'#c41a1a')+
+        dKpi('Pendências',(sf+sc),sf+' s/foto · '+sc+' s/ct','#b45309')+
+        dKpi('Leads Ativos',ldD.length+llD.length,(leadsNovos>0?leadsNovos+' novos':'pipeline ativo'),'#b91c1c')+
       '</div>'+
 
       // CORPO
       '<div style="display:grid;grid-template-columns:3fr 2fr;gap:14px;margin-bottom:14px">'+
 
         '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
-          '<div style="padding:14px 20px;border-bottom:1px solid #f0f4f8;display:flex;align-items:center;justify-content:space-between;background:#fafbfd">'+
-            '<div style="font-size:12px;font-weight:700;color:#0d1829;letter-spacing:.3px;text-transform:uppercase">Alertas do Dia</div>'+
-            '<span style="background:#c41a1a;color:#fff;font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.5px">'+alertas.length+' ITENS</span>'+
+          '<div style="padding:14px 20px;border-bottom:1px solid #edf2f7;display:flex;align-items:center;justify-content:space-between;background:#fafbfd">'+
+            '<div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Alertas do Dia</div>'+
+            '<span style="background:#b91c1c;color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:4px;letter-spacing:.5px">'+alertas.length+' ITENS</span>'+
           '</div>'+
-          '<table style="width:100%;border-collapse:collapse">'+
-            (alertRows||'<tr><td style="padding:20px;text-align:center;color:#8896a5;font-size:12px">Nenhum alerta</td></tr>')+
-          '</table>'+
+          '<div style="padding:4px 20px 8px">'+
+            (alertRows||'<div style="padding:20px;text-align:center;color:#8896a5;font-size:12px">Nenhum alerta</div>')+
+          '</div>'+
         '</div>'+
 
         '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
-          '<div style="padding:14px 20px;border-bottom:1px solid #f0f4f8;background:#fafbfd">'+
-            '<div style="font-size:12px;font-weight:700;color:#0d1829;letter-spacing:.3px;text-transform:uppercase">Portfolio · '+ivD.length+' Imóveis</div>'+
+          '<div style="padding:14px 20px;border-bottom:1px solid #edf2f7;background:#fafbfd">'+
+            '<div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Portfolio · '+ivD.length+' Imóveis</div>'+
           '</div>'+
           '<div style="padding:18px 20px">'+bars+'</div>'+
         '</div>'+
@@ -2613,9 +2633,9 @@ function pDashAdmin(){
 
       // VISITAS
       '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
-        '<div style="padding:14px 20px;border-bottom:1px solid #f0f4f8;display:flex;align-items:center;justify-content:space-between;background:#fafbfd">'+
-          '<div style="font-size:12px;font-weight:700;color:#0d1829;letter-spacing:.3px;text-transform:uppercase">Visitas Hoje</div>'+
-          '<button onclick="gP(&quot;visitas&quot;)" style="font-size:11px;font-weight:600;color:#0d1f4e;background:none;border:1px solid #0d1f4e;border-radius:6px;padding:4px 12px;cursor:pointer">Ver todas</button>'+
+        '<div style="padding:14px 20px;border-bottom:1px solid #edf2f7;display:flex;align-items:center;justify-content:space-between;background:#fafbfd">'+
+          '<div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Visitas Hoje</div>'+
+          '<button onclick="gP(&quot;visitas&quot;)" style="font-size:10px;font-weight:700;color:#0d1f4e;background:none;border:1px solid #0d1f4e;border-radius:6px;padding:4px 12px;cursor:pointer;letter-spacing:.5px">VER TODAS</button>'+
         '</div>'+
         '<div style="padding:0 20px">'+
           (vis||'<div style="padding:20px;text-align:center;color:#8896a5;font-size:12px">Nenhuma visita agendada para hoje</div>')+

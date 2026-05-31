@@ -2428,70 +2428,118 @@ function pDashCorretor(){
   var nome = U.nome;
   var hoje = new Date();
   var hojeStr = hoje.toISOString().slice(0,10);
+  var ms=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  var ds=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  var dataStr=ds[hoje.getDay()]+', '+hoje.getDate()+' de '+ms[hoje.getMonth()]+' de '+hoje.getFullYear();
 
-  // Metricas do corretor
-  var meusLeads = ldD.filter(function(l){ return l.cor===nome; });
-  var meusMCMV  = mcmvD.filter(function(m){ return m.corretor===nome; });
-  var minhasCapt = ivD.filter(function(iv){ return (iv.corretor||'').indexOf(nome)>=0; });
-  var minhasVis  = vD.filter(function(v){ return v.cor===nome; });
-  var meusProsp  = prD.filter(function(p){ return p.cor===nome; });
-  var meusEv     = agD.filter(function(ev){ return ev.cor===nome&&ev.dt===hojeStr; }).sort(function(a,b){ return a.hr.localeCompare(b.hr); });
+  // Dados do corretor
+  var meusLeads    = ldD.filter(function(l){ return l.cor===nome; });
+  var meusMCMV     = mcmvD.filter(function(m){ return m.corretor===nome; });
+  var minhasCapt   = ivD.filter(function(iv){ return (iv.corretor||'').indexOf(nome)>=0; });
+  var minhasVis    = vD.filter(function(v){ return v.cor===nome; });
+  var meusProsp    = prD.filter(function(p){ return p.cor===nome; });
+  var meusEv       = agD.filter(function(ev){ return ev.cor===nome&&ev.dt===hojeStr; }).sort(function(a,b){ return a.hr.localeCompare(b.hr); });
   var leadsQuentes = meusLeads.filter(function(l){ return iaScore(l)>=60&&l.st!=='Fechado'; });
-  var mcmvQuentes  = meusMCMV.filter(function(m){ return iaMCMVScore(m)>=60&&m.st!=='Fechado'; });
+  var fechados     = meusLeads.filter(function(l){ return l.st==='Fechado'; }).length;
 
-  // Score IA pessoal
-  var pts = minhasCapt.length*5 + meusLeads.length*2 + minhasVis.length*3 + meusProsp.length + meusLeads.filter(function(l){ return l.st==='Fechado'; }).length*15;
-  var rank = 0;
+  // Pontuação e ranking
+  var pts = minhasCapt.length*5 + meusLeads.length*2 + minhasVis.length*3 + meusProsp.length + fechados*15;
+  var rank = 1;
   COR.forEach(function(c){
+    if(c.nome===nome) return;
     var cPts = ivD.filter(function(iv){ return (iv.corretor||'').indexOf(c.nome)>=0; }).length*5 +
                ldD.filter(function(l){ return l.cor===c.nome; }).length*2 +
-               vD.filter(function(v){ return v.cor===c.nome; }).length*3;
+               vD.filter(function(v){ return v.cor===c.nome; }).length*3 +
+               ldD.filter(function(l){ return l.cor===c.nome&&l.st==='Fechado'; }).length*15;
     if(cPts > pts) rank++;
   });
-  rank++;
 
-  // Agenda do dia
+  // Agenda
   var agendaHtml = meusEv.length ? meusEv.map(function(ev){
     var t = AG_TIPOS[ev.tipo]||AG_TIPOS['Outro'];
-    return '<div style="display:flex;align-items:center;gap:8px;padding:8px;border-left:3px solid '+t.cor+';background:#f9fafb;border-radius:0 8px 8px 0;margin-bottom:6px;cursor:pointer" onclick="gP(\'agenda\')">' +
-      '<div style="font-size:13px;font-weight:800;color:'+t.cor+';min-width:42px">'+ev.hr+'</div>' +
-      '<div><div style="font-size:12px;font-weight:700">'+t.icon+' '+ev.titulo+'</div>' +
-      '<div style="font-size:10px;color:var(--lm)">'+ev.end+'</div></div>' +
+    return '<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f4f6f8">'+
+      '<div style="font-size:12px;font-weight:800;color:'+t.cor+';width:40px;flex-shrink:0">'+ev.hr+'</div>'+
+      '<div style="width:3px;height:32px;background:'+t.cor+';border-radius:2px;flex-shrink:0"></div>'+
+      '<div><div style="font-size:12px;font-weight:600;color:#0d1829">'+t.icon+' '+ev.titulo+'</div>'+
+      '<div style="font-size:11px;color:#8896a5;margin-top:1px">'+ev.end+'</div></div>'+
     '</div>';
-  }).join('') : '<div style="text-align:center;padding:16px;color:var(--lm)">Nenhum evento hoje — <span style="color:var(--navy);cursor:pointer" onclick="gP(\'agenda\')">Ver agenda</span></div>';
+  }).join('')
+  : '<div style="padding:20px;text-align:center;color:#8896a5;font-size:12px">Nenhum evento hoje</div>';
 
   // Leads quentes
-  var leadsHtml = leadsQuentes.slice(0,5).map(function(l){
-    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--lb);cursor:pointer" onclick="gP(\'leads\')">' +
-      '<span style="font-size:9px;background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:8px;font-weight:700">🔥</span>' +
-      '<div style="flex:1"><div style="font-size:12px;font-weight:700">'+l.nome+'</div>' +
-      '<div style="font-size:10px;color:var(--lm)">'+l.tipo+' · '+l.faixa+'</div></div>' +
-      '<div>'+sBadge(l.st)+'</div>' +
+  var leadsHtml = leadsQuentes.length ? leadsQuentes.slice(0,5).map(function(l){
+    return '<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f4f6f8;cursor:pointer" onclick="gP(&quot;leads&quot;)">'+
+      '<div style="flex:1"><div style="font-size:12px;font-weight:600;color:#0d1829">'+l.nome+'</div>'+
+      '<div style="font-size:11px;color:#8896a5;margin-top:1px">'+l.tipo+' · '+l.faixa+'</div></div>'+
+      sBadge(l.st)+
     '</div>';
-  }).join('') + (leadsQuentes.length===0?'<div style="text-align:center;padding:12px;color:var(--lm);font-size:12px">Sem leads quentes no momento</div>':'');
+  }).join('')
+  : '<div style="padding:20px;text-align:center;color:#8896a5;font-size:12px">Sem leads quentes no momento</div>';
 
   document.getElementById('pc').innerHTML =
-    '<div style="background:linear-gradient(135deg,#0f1a35,#003DA5);color:#fff;border-radius:14px;padding:20px;margin-bottom:16px;display:flex;align-items:center;gap:16px">' +
-      '<div style="width:56px;height:56px;border-radius:50%;background:'+U.cor+';display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;flex-shrink:0">'+U.ini+'</div>' +
-      '<div>' +
-        '<div style="font-size:20px;font-weight:800">Bom dia, '+U.nome.split(' ')[0]+'!</div>' +
-        '<div style="font-size:12px;opacity:.7">'+hoje.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+'</div>' +
-        '<div style="margin-top:6px;font-size:11px;opacity:.85">Você esta em <b>#'+rank+'</b> no ranking da equipe com <b>'+pts+' pontos</b></div>' +
-      '</div>' +
-    '</div>' +
-    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">' +
-      '<div class="kc blue" style="cursor:pointer" onclick="gP(\'iv\')"><div class="kc-l">Captacoes</div><div class="kc-v">'+minhasCapt.length+'</div></div>' +
-      '<div class="kc warn" style="cursor:pointer" onclick="gP(\'leads\')"><div class="kc-l">Leads</div><div class="kc-v">'+meusLeads.length+'</div><div class="kc-s">'+leadsQuentes.length+' quentes</div></div>' +
-      '<div class="kc" style="cursor:pointer" onclick="gP(\'visitas\')"><div class="kc-l">Visitas</div><div class="kc-v">'+minhasVis.length+'</div></div>' +
-      '<div class="kc green"><div class="kc-l">Fechamentos</div><div class="kc-v">'+meusLeads.filter(function(l){return l.st==='Fechado';}).length+'</div></div>' +
-    '</div>' +
-    '<div class="g2">' +
-      '<div>' +
-        '<div class="card"><div class="chd"><h3>📅 Agenda de Hoje</h3><button class="btn btn-sm btn-primary" onclick="gP(\'agenda\')">Ver tudo</button></div><div class="cbd">'+agendaHtml+'</div></div>' +
-        (meusMCMV.length?'<div class="card"><div class="chd"><h3>🏠 MCMV</h3></div><div class="cbd" style="font-size:13px"><b>'+meusMCMV.length+'</b> leads · <b style="color:#dc2626">'+mcmvQuentes.length+'</b> quentes</div></div>':'')+'</div>' +
-      '<div class="card"><div class="chd"><h3>🔥 Leads Quentes</h3><button class="btn btn-sm btn-primary" onclick="gP(\'leads\')">Ver todos</button></div><div class="cbd">'+leadsHtml+'</div></div>' +
+
+    // HEADER CORRETOR
+    '<div style="background:#0d1f4e;border-radius:12px;padding:24px 28px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between">'+
+      '<div style="display:flex;align-items:center;gap:16px">'+
+        '<div style="width:52px;height:52px;border-radius:12px;background:'+U.cor+';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0">'+U.ini+'</div>'+
+        '<div>'+
+          '<div style="font-size:9px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">'+dataStr+'</div>'+
+          '<div style="font-size:18px;font-weight:700;color:#fff">Olá, '+U.nome.split(' ')[0]+'</div>'+
+          '<div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">RE/MAX Space · Corretor</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="text-align:right;border-left:1px solid rgba(255,255,255,.1);padding-left:28px">'+
+        '<div style="font-size:9px;color:rgba(255,255,255,.35);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px">Ranking da Equipe</div>'+
+        '<div style="font-size:32px;font-weight:900;color:#fff;letter-spacing:-1px">#'+rank+'º</div>'+
+        '<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px">'+pts+' pontos acumulados</div>'+
+      '</div>'+
+    '</div>'+
+
+    // KPIs CORRETOR
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">'+
+      '<div style="background:#fff;border-radius:12px;padding:20px 22px;border:1px solid #e8edf2;border-top:3px solid #0d1f4e;cursor:pointer" onclick="gP(&quot;iv&quot;)">'+
+        '<div style="font-size:9px;font-weight:800;color:#8896a5;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Captações</div>'+
+        '<div style="font-size:34px;font-weight:900;color:#0d1829;letter-spacing:-1.5px;line-height:1;margin-bottom:4px">'+minhasCapt.length+'</div>'+
+        '<div style="font-size:11px;color:#a0aec0">imóveis captados</div>'+
+      '</div>'+
+      '<div style="background:#fff;border-radius:12px;padding:20px 22px;border:1px solid #e8edf2;border-top:3px solid #b91c1c;cursor:pointer" onclick="gP(&quot;leads&quot;)">'+
+        '<div style="font-size:9px;font-weight:800;color:#8896a5;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Leads</div>'+
+        '<div style="font-size:34px;font-weight:900;color:#0d1829;letter-spacing:-1.5px;line-height:1;margin-bottom:4px">'+meusLeads.length+'</div>'+
+        '<div style="font-size:11px;color:#a0aec0">'+leadsQuentes.length+' quentes</div>'+
+      '</div>'+
+      '<div style="background:#fff;border-radius:12px;padding:20px 22px;border:1px solid #e8edf2;border-top:3px solid #1a6e3a;cursor:pointer" onclick="gP(&quot;visitas&quot;)">'+
+        '<div style="font-size:9px;font-weight:800;color:#8896a5;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Visitas</div>'+
+        '<div style="font-size:34px;font-weight:900;color:#0d1829;letter-spacing:-1.5px;line-height:1;margin-bottom:4px">'+minhasVis.length+'</div>'+
+        '<div style="font-size:11px;color:#a0aec0">realizadas</div>'+
+      '</div>'+
+      '<div style="background:#fff;border-radius:12px;padding:20px 22px;border:1px solid #e8edf2;border-top:3px solid #b45309">'+
+        '<div style="font-size:9px;font-weight:800;color:#8896a5;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Fechamentos</div>'+
+        '<div style="font-size:34px;font-weight:900;color:#0d1829;letter-spacing:-1.5px;line-height:1;margin-bottom:4px">'+fechados+'</div>'+
+        '<div style="font-size:11px;color:#a0aec0">negócios fechados</div>'+
+      '</div>'+
+    '</div>'+
+
+    // CORPO — 2 colunas
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">'+
+
+      '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
+        '<div style="padding:14px 20px;border-bottom:1px solid #edf2f7;display:flex;align-items:center;justify-content:space-between;background:#fafbfd">'+
+          '<div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Agenda de Hoje</div>'+
+          '<button onclick="gP(&quot;agenda&quot;)" style="font-size:10px;font-weight:700;color:#0d1f4e;background:none;border:1px solid #0d1f4e;border-radius:6px;padding:3px 10px;cursor:pointer;letter-spacing:.5px">VER TUDO</button>'+
+        '</div>'+
+        '<div style="padding:4px 20px 8px">'+agendaHtml+'</div>'+
+      '</div>'+
+
+      '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
+        '<div style="padding:14px 20px;border-bottom:1px solid #edf2f7;display:flex;align-items:center;justify-content:space-between;background:#fafbfd">'+
+          '<div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">Leads Quentes</div>'+
+          '<button onclick="gP(&quot;leads&quot;)" style="font-size:10px;font-weight:700;color:#b91c1c;background:none;border:1px solid #b91c1c;border-radius:6px;padding:3px 10px;cursor:pointer;letter-spacing:.5px">VER TODOS</button>'+
+        '</div>'+
+        '<div style="padding:4px 20px 8px">'+leadsHtml+'</div>'+
+      '</div>'+
     '</div>';
 }
+
 
 
 function dKpi(label,val,sub,accent){

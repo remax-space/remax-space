@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="icon.svg">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RE/MAX Space — Caldas Novas</title>
+<title>RE/MAX Space · Caldas Novas GO</title>
 <meta name="version" content="1780097836">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
@@ -2551,19 +2551,22 @@ function pDashAdmin(){
     var alertas = [];
     ativos.filter(function(c){return c.fim;}).forEach(function(c){
       var fim = new Date(c.fim); var dias = Math.round((fim-hoje)/86400000);
-      if(dias>=0&&dias<=90) alertas.push({cor:dias<=30?'#dc2626':'#d97706',bg:dias<=30?'#fef2f2':'#fffbeb',tc:dias<=30?'#991b1b':'#92400e',txt:'CT '+c.id+' · '+c.prop+' — vence em <b>'+dias+'d</b>',pri:dias<=30?0:1});
+      if(dias>=0&&dias<=90) alertas.push({ic:dias<=30?'🔴':'🟠',cor:dias<=30?'#D42028':'#f59e0b',bg:dias<=30?'linear-gradient(135deg,#fef2f2,#fff5f5)':'linear-gradient(135deg,#fffbeb,#fffdf0)',tc:dias<=30?'#7f1d1d':'#78350f',txt:'CT '+c.id+' · '+c.prop+' vence em <b>'+dias+' dias</b>',tag:dias<=30?'URGENTE':'ATENÇÃO',tagbg:dias<=30?'#D42028':'#f59e0b',pri:dias<=30?0:1});
     });
-    if(venc10>0) alertas.push({cor:'#dc2626',bg:'#fef2f2',tc:'#991b1b',txt:'Vencimento dia 10: <b>'+venc10+' contratos</b>',pri:0});
-    if(inad>0) alertas.push({cor:'#dc2626',bg:'#fef2f2',tc:'#991b1b',txt:'<b>'+inad+' contratos</b> pendentes no mês',pri:0});
-    if(sf>0) alertas.push({cor:'#d97706',bg:'#fffbeb',tc:'#92400e',txt:'<b>'+sf+' imóveis</b> sem fotos',pri:1});
-    if(sc>0) alertas.push({cor:'#d97706',bg:'#fffbeb',tc:'#92400e',txt:'<b>'+sc+' imóveis</b> sem contrato',pri:1});
-    if(leadsNovos>0) alertas.push({cor:'#059669',bg:'#f0fdf4',tc:'#065f46',txt:'<b>'+leadsNovos+' leads</b> de locação novos',pri:2});
-    if(ldD.length>0) alertas.push({cor:'#003DA5',bg:'#eff6ff',tc:'#1e3a8a',txt:'<b>'+ldD.length+' leads</b> de venda no pipeline',pri:2});
+    if(venc10>0) alertas.push({ic:'📅',cor:'#D42028',bg:'linear-gradient(135deg,#fef2f2,#fff5f5)',tc:'#7f1d1d',txt:'Vencimento dia 10: <b>'+venc10+' contratos</b>',tag:'HOJE',tagbg:'#D42028',pri:0});
+    if(inad>0) alertas.push({ic:'💸',cor:'#D42028',bg:'linear-gradient(135deg,#fef2f2,#fff5f5)',tc:'#7f1d1d',txt:'<b>'+inad+' contratos</b> com pagamento pendente',tag:'CRÍTICO',tagbg:'#7f1d1d',pri:0});
+    if(sf>0) alertas.push({ic:'📷',cor:'#f59e0b',bg:'linear-gradient(135deg,#fffbeb,#fffdf0)',tc:'#78350f',txt:'<b>'+sf+' imóveis</b> sem fotos cadastradas',tag:'PENDENTE',tagbg:'#f59e0b',pri:1});
+    if(sc>0) alertas.push({ic:'📋',cor:'#f59e0b',bg:'linear-gradient(135deg,#fffbeb,#fffdf0)',tc:'#78350f',txt:'<b>'+sc+' imóveis</b> sem contrato de captação',tag:'PENDENTE',tagbg:'#f59e0b',pri:1});
+    if(leadsNovos>0) alertas.push({ic:'✨',cor:'#059669',bg:'linear-gradient(135deg,#f0fdf4,#f5fff8)',tc:'#065f46',txt:'<b>'+leadsNovos+' leads</b> de locação aguardando contato',tag:'NOVO',tagbg:'#059669',pri:2});
+    if(ldD.length>0) alertas.push({ic:'👥',cor:'#003DA5',bg:'linear-gradient(135deg,#eff6ff,#f5f8ff)',tc:'#1e3a8a',txt:'<b>'+ldD.length+' leads</b> de venda no pipeline',tag:'PIPELINE',tagbg:'#003DA5',pri:2});
     alertas.sort(function(a,b){return a.pri-b.pri;});
 
     var alertHtml = alertas.map(function(a){
-      return '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:'+a.bg+';border-left:3px solid '+a.cor+';border-radius:0 8px 8px 0;margin-bottom:5px">'+
-        '<div style="font-size:12px;color:'+a.tc+'">'+a.txt+'</div></div>';
+      return '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:'+a.bg+';border-radius:12px;margin-bottom:8px;border:1px solid '+a.cor+'22">'+
+        '<div style="font-size:22px;flex-shrink:0">'+a.ic+'</div>'+
+        '<div style="flex:1;font-size:12px;color:'+a.tc+'">'+a.txt+'</div>'+
+        '<div style="background:'+a.tagbg+';color:#fff;font-size:9px;font-weight:800;padding:3px 8px;border-radius:20px;letter-spacing:.5px;flex-shrink:0">'+a.tag+'</div>'+
+      '</div>';
     }).join('');
 
     // Data formatada

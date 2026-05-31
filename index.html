@@ -6129,10 +6129,30 @@ function mktGetArtHtml(id, v){
 }
 
 window.mktDownload = function(id){
-  var art = document.getElementById('mkt-art-'+id);
-  if(!art) return;
-  // Abrir em nova aba para salvar
-  var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Arte RE/MAX Space</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f3f4f6;padding:20px;}</style></head><body>'+art.innerHTML+'<br><button onclick="window.print()" style="margin-top:20px;padding:12px 24px;background:#003DA5;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer">🖨️ Imprimir / Salvar PDF</button></body></html>';
+  var campos = mktGetCampos(id);
+  var vals = mktGetVals(campos);
+  var artHtml = mktGetArtHtml(id, vals);
+  var tpl = _mktTemplates.find(function(t){return t.id===id;})||{nome:'Arte'};
+
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Arte RE/MAX Space — '+tpl.nome+'</title>'+
+    '<style>*{margin:0;padding:0;box-sizing:border-box;}'+
+    'body{background:#1a1a2e;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;font-family:Arial,sans-serif;}'+
+    'h2{color:#fff;margin-bottom:24px;font-size:18px;opacity:.7;}'+
+    '.art-wrap{box-shadow:0 20px 60px rgba(0,0,0,.5);border-radius:12px;overflow:hidden;}'+
+    '.actions{margin-top:24px;display:flex;gap:12px;}'+
+    '.btn{padding:14px 28px;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;}'+
+    '.btn-print{background:#D42028;color:#fff;}'+
+    '.btn-close{background:rgba(255,255,255,.15);color:#fff;}'+
+    '@media print{body{background:#fff;padding:0;}h2,.actions{display:none!important;}.art-wrap{box-shadow:none;border-radius:0;}}'+
+    '</style></head><body>'+
+    '<h2>'+tpl.nome+' · RE/MAX Space</h2>'+
+    '<div class="art-wrap">'+artHtml+'</div>'+
+    '<div class="actions">'+
+      '<button class="btn btn-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>'+
+      '<button class="btn btn-close" onclick="window.close()">✕ Fechar</button>'+
+    '</div>'+
+    '</body></html>';
+
   var w = window.open('','_blank');
   w.document.write(html);
   w.document.close();

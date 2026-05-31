@@ -2506,24 +2506,24 @@ function pDashCorretor(){
     // KPIs CORRETOR
     '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">'+
       '<div style="background:#fff;border-radius:12px;padding:20px 22px;border:1px solid #e8edf2;border-top:3px solid #0d1f4e;cursor:pointer" onclick="gP(&quot;iv&quot;)">'+
-        '<div style="font-size:9px;font-weight:800;color:#8896a5;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Captações</div>'+
+        '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Captações</div>'+
         '<div style="font-size:34px;font-weight:900;color:#0d1829;letter-spacing:-1.5px;line-height:1;margin-bottom:4px">'+minhasCapt.length+'</div>'+
-        '<div style="font-size:11px;color:#a0aec0">imóveis captados</div>'+
+        '<div style="font-size:11px;color:#4a5568">imóveis captados</div>'+
       '</div>'+
       '<div style="background:#fff;border-radius:12px;padding:20px 22px;border:1px solid #e8edf2;border-top:3px solid #b91c1c;cursor:pointer" onclick="gP(&quot;leads&quot;)">'+
-        '<div style="font-size:9px;font-weight:800;color:#8896a5;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Leads</div>'+
+        '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Leads</div>'+
         '<div style="font-size:34px;font-weight:900;color:#0d1829;letter-spacing:-1.5px;line-height:1;margin-bottom:4px">'+meusLeads.length+'</div>'+
-        '<div style="font-size:11px;color:#a0aec0">'+leadsQuentes.length+' quentes</div>'+
+        '<div style="font-size:11px;color:#4a5568">'+leadsQuentes.length+' quentes</div>'+
       '</div>'+
       '<div style="background:#fff;border-radius:12px;padding:20px 22px;border:1px solid #e8edf2;border-top:3px solid #1a6e3a;cursor:pointer" onclick="gP(&quot;visitas&quot;)">'+
-        '<div style="font-size:9px;font-weight:800;color:#8896a5;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Visitas</div>'+
+        '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Visitas</div>'+
         '<div style="font-size:34px;font-weight:900;color:#0d1829;letter-spacing:-1.5px;line-height:1;margin-bottom:4px">'+minhasVis.length+'</div>'+
-        '<div style="font-size:11px;color:#a0aec0">realizadas</div>'+
+        '<div style="font-size:11px;color:#4a5568">realizadas</div>'+
       '</div>'+
       '<div style="background:#fff;border-radius:12px;padding:20px 22px;border:1px solid #e8edf2;border-top:3px solid #b45309">'+
-        '<div style="font-size:9px;font-weight:800;color:#8896a5;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Fechamentos</div>'+
+        '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Fechamentos</div>'+
         '<div style="font-size:34px;font-weight:900;color:#0d1829;letter-spacing:-1.5px;line-height:1;margin-bottom:4px">'+fechados+'</div>'+
-        '<div style="font-size:11px;color:#a0aec0">negócios fechados</div>'+
+        '<div style="font-size:11px;color:#4a5568">negócios fechados</div>'+
       '</div>'+
     '</div>'+
 
@@ -2552,9 +2552,9 @@ function pDashCorretor(){
 
 function dKpi(label,val,sub,accent){
   return '<div style="background:#fff;border-radius:12px;padding:22px 24px;border:1px solid #e8edf2;border-top:3px solid '+accent+'">'+
-    '<div style="font-size:9px;font-weight:800;color:#8896a5;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px">'+label+'</div>'+
+    '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px">'+label+'</div>'+
     '<div style="font-size:34px;font-weight:900;color:#0d1829;letter-spacing:-1.5px;line-height:1;margin-bottom:6px">'+val+'</div>'+
-    '<div style="font-size:11px;color:#a0aec0">'+sub+'</div>'+
+    '<div style="font-size:11px;color:#4a5568">'+sub+'</div>'+
   '</div>';
 }
 
@@ -2700,7 +2700,7 @@ function pDashAdmin(){
 
   }catch(err){
     console.error('pDash erro:',err);
-    document.getElementById('pc').innerHTML='<div style="padding:20px;color:#8896a5">Erro: '+err.message+'</div>';
+    document.getElementById('pc').innerHTML='<div style="padding:20px;color:#4a5568">Erro: '+err.message+'</div>';
   }
 }
 

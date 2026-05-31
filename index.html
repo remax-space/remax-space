@@ -310,7 +310,28 @@ function getSB(){
 var logAcoes = [];
 var boletosD = [];
 var osD = []; // Ordens de Serviço
-var vitD = []; // Vitrine de Imóveis
+var vitD = [
+  {
+    id: 1,
+    op: 'Locação',
+    tipo: 'Flat/Apart-Hotel',
+    titulo: 'Flat Caldas Novas — Ideal para Temporada',
+    bairro: 'Caldas Novas · GO',
+    end: '',
+    valor: 1200,
+    area: 35,
+    quartos: 1,
+    banheiros: 1,
+    vagas: 1,
+    descricao: 'Flat moderno totalmente mobiliado em resort de Caldas Novas. Acesso às piscinas termais, lazer completo e estrutura de hotel. Ideal para temporada e investimento.',
+    fotos: [
+      'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80',
+      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80'
+    ],
+    corretor: 'T. Basile',
+    linkOrigem: 'https://www.remax.com.br/pt-br/imoveis/apart-hotel/-flat/alugar/caldas-novas/722251002-65'
+  }
+]; // Vitrine de Imóveis
 var llD = [
   {id:1,dt:'2026-05-16',nome:'Ana Claudia Santos',tel:'(64)9 9222-3333',tipo:'Casa',faixa:'R$ 800–1.200',bairro:'Centro',quartos:'2',pet:false,cor:'Meirielli',st:'Novo',obs:''},
   {id:2,dt:'2026-05-15',nome:'Pedro Henrique Lima',tel:'(64)9 9444-5555',tipo:'Kitnet',faixa:'R$ 600–900',bairro:'Jd. Turistas',quartos:'1',pet:false,cor:'T. Basile',st:'Em contato',obs:'Tem cachorro pequeno'}

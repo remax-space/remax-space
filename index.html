@@ -2494,166 +2494,137 @@ function pDashCorretor(){
 }
 
 
-function dKpi(ic,label,val,sub,color){
-  var isRed = color==='#D42028';
-  var isBlue = color==='#003DA5';
-  var isGreen = color==='#059669';
-  var bg = isRed?'#D42028':isBlue?'#003DA5':'#fff';
-  var fg = (isRed||isBlue)?'#fff':'#0f172a';
-  var subfg = (isRed||isBlue)?'rgba(255,255,255,.6)':'#94a3b8';
-  var labelfg = (isRed||isBlue)?'rgba(255,255,255,.5)':'#94a3b8';
-  var iconbg = (isRed||isBlue)?'rgba(255,255,255,.12)':color+'15';
-  var shadow = isRed?'0 8px 32px rgba(212,32,40,.25)':isBlue?'0 8px 32px rgba(0,61,165,.2)':'0 2px 12px rgba(0,0,0,.06)';
-  var border = (isRed||isBlue)?'none':'1px solid #f0f4f8';
-  return '<div style="background:'+bg+';border-radius:16px;padding:22px 24px;box-shadow:'+shadow+';border:'+border+';position:relative;overflow:hidden">'+
-    '<div style="position:absolute;right:-20px;top:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.05)"></div>'+
-    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;position:relative">'+
-      '<span style="font-size:10px;font-weight:800;color:'+labelfg+';letter-spacing:1.5px;text-transform:uppercase">'+label+'</span>'+
-      '<div style="width:34px;height:34px;border-radius:10px;background:'+iconbg+';display:flex;align-items:center;justify-content:center;font-size:17px">'+ic+'</div>'+
-    '</div>'+
-    '<div style="font-size:30px;font-weight:900;color:'+fg+';letter-spacing:-1px;margin-bottom:5px;position:relative">'+val+'</div>'+
-    '<div style="font-size:11px;color:'+subfg+';position:relative">'+sub+'</div>'+
+function dKpi(label,val,sub,accent){
+  return '<div style="background:#fff;border-radius:12px;padding:20px 24px;border:1px solid #e8edf2;border-top:3px solid '+accent+'">'+
+    '<div style="font-size:10px;font-weight:700;color:#8896a5;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">'+label+'</div>'+
+    '<div style="font-size:28px;font-weight:800;color:#0d1829;letter-spacing:-0.5px;margin-bottom:4px">'+val+'</div>'+
+    '<div style="font-size:11px;color:#8896a5">'+sub+'</div>'+
   '</div>';
 }
 
 function pDashAdmin(){
   try{
-    var ativos = ctD.filter(function(c){return c.status!=='Inativo';});
-    var tot = ativos.reduce(function(s,c){return s+c.valor;},0);
-    var sf = ivD.filter(function(i){return !i.fotos;}).length;
-    var sc = ivD.filter(function(i){return !i.contrato;}).length;
-    var hoje = new Date();
-    var hojeStr = hoje.toISOString().split('T')[0];
-    var leadsNovos = llD.filter(function(l){return l.st==='Novo';}).length;
-    var venc10 = ativos.filter(function(c){return c.venc===10;}).length;
-    var inad = ativos.filter(function(c){return c.rs&&c.rs[hoje.getMonth()]&&c.rs[hoje.getMonth()]!=='R';}).length;
+    var ativos=ctD.filter(function(c){return c.status!=='Inativo';});
+    var tot=ativos.reduce(function(s,c){return s+c.valor;},0);
+    var sf=ivD.filter(function(i){return !i.fotos;}).length;
+    var sc=ivD.filter(function(i){return !i.contrato;}).length;
+    var hoje=new Date();
+    var hojeStr=hoje.toISOString().split('T')[0];
+    var leadsNovos=llD.filter(function(l){return l.st==='Novo';}).length;
+    var venc10=ativos.filter(function(c){return c.venc===10;}).length;
+    var inad=ativos.filter(function(c){return c.rs&&c.rs[hoje.getMonth()]&&c.rs[hoje.getMonth()]!=='R';}).length;
 
     // Visitas
-    var vis = '';
+    var vis='';
     vD.filter(function(v){return v.dt===hojeStr;}).forEach(function(v){
-      vis += '<div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #f8fafc">'+
-        '<div style="width:42px;height:42px;border-radius:12px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏠</div>'+
-        '<div style="flex:1"><div style="font-size:13px;font-weight:600;color:#0f172a">'+(v.end||v.imovel||'Imóvel')+'</div>'+
-        '<div style="font-size:11px;color:#94a3b8;margin-top:2px">'+(v.hr||'')+' · '+(v.cor||'')+' · '+(v.cli||v.cliente||'')+'</div></div>'+
+      vis+='<div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #f4f6f8">'+
+        '<div style="flex:1"><div style="font-size:13px;font-weight:600;color:#0d1829">'+(v.end||v.imovel||'Imóvel')+'</div>'+
+        '<div style="font-size:11px;color:#8896a5;margin-top:2px">'+(v.hr||'')+' · '+(v.cor||'')+' · '+(v.cli||v.cliente||'')+'</div></div>'+
         sBadge(v.st||v.status)+'</div>';
     });
 
-    // Portfolio barras
-    var tipos = [['CASA','#003DA5'],['LOTE','#059669'],['APARTAMENTO','#7c3aed'],['CHACARA','#d97706'],['CHALE','#0891b2'],['FAZENDA','#D42028'],['FLAT','#B9975B']];
-    var bars = '';
+    // Portfolio
+    var tipos=[['CASA','#1a3fa4'],['LOTE','#1a7a4a'],['APARTAMENTO','#6d3db5'],['CHACARA','#b5620d'],['CHALE','#0c7a8a'],['FAZENDA','#b51d1d'],['FLAT','#8a7520']];
+    var bars='';
     tipos.forEach(function(tp){
-      var n = ivD.filter(function(i){return i.tipo===tp[0];}).length;
+      var n=ivD.filter(function(i){return i.tipo===tp[0];}).length;
       if(!n) return;
-      var pct = Math.round(n/Math.max(ivD.length,1)*100);
-      bars += '<div style="margin-bottom:14px">'+
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">'+
-          '<span style="font-size:11px;font-weight:700;color:#334155;letter-spacing:.3px">'+tp[0]+'</span>'+
-          '<span style="font-size:12px;font-weight:800;color:'+tp[1]+'">'+n+'</span>'+
+      var pct=Math.round(n/Math.max(ivD.length,1)*100);
+      bars+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">'+
+        '<div style="font-size:11px;font-weight:600;color:#4a5568;width:90px;flex-shrink:0">'+tp[0]+'</div>'+
+        '<div style="flex:1;background:#f0f4f8;border-radius:3px;height:4px">'+
+          '<div style="background:'+tp[1]+';height:4px;border-radius:3px;width:'+pct+'%"></div>'+
         '</div>'+
-        '<div style="background:#f1f5f9;border-radius:999px;height:6px">'+
-          '<div style="background:'+tp[1]+';height:6px;border-radius:999px;width:'+pct+'%"></div>'+
-        '</div></div>';
+        '<div style="font-size:12px;font-weight:700;color:'+tp[1]+';width:24px;text-align:right">'+n+'</div>'+
+      '</div>';
     });
 
     // Alertas
-    var alertas = [];
+    var alertas=[];
     ativos.filter(function(c){return c.fim;}).forEach(function(c){
       var fim=new Date(c.fim),dias=Math.round((fim-hoje)/86400000);
-      if(dias>=0&&dias<=90) alertas.push({ic:dias<=30?'🔴':'🟡',txt:'CT '+c.id+' · '+c.prop+' — <b>'+dias+' dias</b>',tag:dias<=30?'URGENTE':'60 DIAS',tagc:dias<=30?'#D42028':'#d97706',pri:dias<=30?0:1});
+      if(dias>=0&&dias<=90) alertas.push({nivel:dias<=30?0:1,cor:dias<=30?'#c41a1a':'#b5620d',tag:dias<=30?'URGENTE':'ATENÇÃO',txt:'CT '+c.id+' · '+c.prop+' — vence em '+dias+' dias'});
     });
-    if(venc10>0) alertas.push({ic:'📅',txt:'Vencimento dia 10 · <b>'+venc10+' contratos</b>',tag:'HOJE',tagc:'#D42028',pri:0});
-    if(inad>0) alertas.push({ic:'💸',txt:'<b>'+inad+' contratos</b> com pagamento pendente',tag:'CRÍTICO',tagc:'#7f1d1d',pri:0});
-    if(sf>0) alertas.push({ic:'📷',txt:'<b>'+sf+' imóveis</b> sem fotos',tag:'PENDENTE',tagc:'#d97706',pri:2});
-    if(sc>0) alertas.push({ic:'📋',txt:'<b>'+sc+' imóveis</b> sem contrato',tag:'PENDENTE',tagc:'#d97706',pri:2});
-    if(leadsNovos>0) alertas.push({ic:'✨',txt:'<b>'+leadsNovos+' leads</b> de locação novos',tag:'NOVO',tagc:'#059669',pri:3});
-    if(ldD.length>0) alertas.push({ic:'👥',txt:'<b>'+ldD.length+' leads</b> de venda no pipeline',tag:'PIPELINE',tagc:'#003DA5',pri:3});
-    alertas.sort(function(a,b){return a.pri-b.pri;});
+    if(venc10>0) alertas.push({nivel:0,cor:'#c41a1a',tag:'HOJE',txt:'Vencimento dia 10 — '+venc10+' contratos'});
+    if(inad>0) alertas.push({nivel:0,cor:'#c41a1a',tag:'CRÍTICO',txt:inad+' contratos com pagamento pendente'});
+    if(sf>0) alertas.push({nivel:2,cor:'#b5620d',tag:'PENDENTE',txt:sf+' imóveis sem fotos cadastradas'});
+    if(sc>0) alertas.push({nivel:2,cor:'#b5620d',tag:'PENDENTE',txt:sc+' imóveis sem contrato de captação'});
+    if(leadsNovos>0) alertas.push({nivel:3,cor:'#1a6e3a',tag:'NOVO',txt:leadsNovos+' leads de locação aguardando contato'});
+    if(ldD.length>0) alertas.push({nivel:3,cor:'#1a3fa4',tag:'PIPELINE',txt:ldD.length+' leads de venda ativos'});
+    alertas.sort(function(a,b){return a.nivel-b.nivel;});
 
-    var alertCards = alertas.map(function(a){
-      return '<div style="display:flex;align-items:center;gap:14px;padding:11px 16px;background:#fff;border:1px solid #f0f4f8;border-radius:12px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.03)">'+
-        '<span style="font-size:20px;flex-shrink:0">'+a.ic+'</span>'+
-        '<span style="flex:1;font-size:12.5px;color:#334155">'+a.txt+'</span>'+
-        '<span style="background:'+a.tagc+';color:#fff;font-size:9px;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.5px;white-space:nowrap">'+a.tag+'</span>'+
-      '</div>';
+    var alertRows=alertas.map(function(a){
+      return '<tr>'+
+        '<td style="padding:10px 16px;border-bottom:1px solid #f4f6f8">'+
+          '<span style="display:inline-block;font-size:9px;font-weight:700;color:'+a.cor+';border:1px solid '+a.cor+';border-radius:4px;padding:1px 7px;letter-spacing:.5px;margin-right:10px">'+a.tag+'</span>'+
+          '<span style="font-size:12.5px;color:#2d3748">'+a.txt+'</span>'+
+        '</td>'+
+      '</tr>';
     }).join('');
 
-    // Meses para data
     var ms=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-    var ds=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
-    var dataStr = ds[hoje.getDay()]+', '+hoje.getDate()+' de '+ms[hoje.getMonth()];
+    var ds=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+    var dataStr=ds[hoje.getDay()]+', '+hoje.getDate()+' de '+ms[hoje.getMonth()]+' de '+hoje.getFullYear();
 
     document.getElementById('pc').innerHTML =
 
-      // ══ HERO ══
-      '<div style="background:#003DA5;border-radius:20px;padding:26px 32px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden">'+
-        '<div style="position:absolute;right:0;top:0;bottom:0;width:300px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.04))"></div>'+
-        '<div style="position:absolute;right:-30px;top:-30px;width:160px;height:160px;border-radius:50%;border:1px solid rgba(255,255,255,.06)"></div>'+
-        '<div style="position:absolute;right:60px;bottom:-50px;width:120px;height:120px;border-radius:50%;border:1px solid rgba(255,255,255,.04)"></div>'+
-        '<div style="position:relative">'+
-          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'+
-            '<div style="width:8px;height:8px;border-radius:50%;background:#4ade80;box-shadow:0 0 6px #4ade80"></div>'+
-            '<span style="font-size:11px;color:rgba(255,255,255,.4);letter-spacing:1px;text-transform:uppercase">'+dataStr+'</span>'+
-          '</div>'+
-          '<div style="font-size:26px;font-weight:900;color:#fff;letter-spacing:-.5px;margin-bottom:4px">Olá, Tatiana 👋</div>'+
-          '<div style="font-size:13px;color:rgba(255,255,255,.45)">RE/MAX Space · Caldas Novas · GO</div>'+
+      // HEADER EXECUTIVO
+      '<div style="background:#0d1f4e;border-radius:12px;padding:24px 32px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between">'+
+        '<div>'+
+          '<div style="font-size:10px;color:rgba(255,255,255,.4);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">'+dataStr+'</div>'+
+          '<div style="font-size:20px;font-weight:700;color:#fff;letter-spacing:-.3px">RE/MAX Space — Painel Gerencial</div>'+
+          '<div style="font-size:12px;color:rgba(255,255,255,.4);margin-top:3px">Caldas Novas · Goiás</div>'+
         '</div>'+
-        '<div style="position:relative;text-align:right">'+
-          '<div style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Receita Mensal</div>'+
-          '<div style="font-size:36px;font-weight:900;color:#fff;letter-spacing:-1.5px;line-height:1">'+fmt(tot)+'</div>'+
-          '<div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:6px">'+ativos.length+' contratos · ADM '+fmt(tot*.1)+'</div>'+
+        '<div style="text-align:right;border-left:1px solid rgba(255,255,255,.1);padding-left:32px">'+
+          '<div style="font-size:10px;color:rgba(255,255,255,.4);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Receita Mensal</div>'+
+          '<div style="font-size:30px;font-weight:800;color:#fff;letter-spacing:-1px">'+fmt(tot)+'</div>'+
+          '<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:3px">'+ativos.length+' contratos ativos · ADM '+fmt(tot*.1)+'</div>'+
         '</div>'+
       '</div>'+
 
-      // ══ KPIs ══
-      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">'+
-        dKpi('🏠','Carteira Venda',ivD.length,'imóveis captados','#003DA5')+
-        dKpi('💰','ADM Mensal',fmt(tot*.1),'repasse '+fmt(tot*.9),'#fff')+
-        dKpi('⚡','Pendências',(sf+sc),sf+' s/foto · '+sc+' s/ct','#fff')+
-        dKpi('🔥','Leads Ativos',ldD.length+llD.length,leadsNovos>0?leadsNovos+' novos hoje':'pipeline ativo','#D42028')+
+      // KPIs
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">'+
+        dKpi('Carteira Venda',ivD.length,'imóveis captados','#0d1f4e')+
+        dKpi('ADM Mensal',fmt(tot*.1),'repasse '+fmt(tot*.9),'#1a6e3a')+
+        dKpi('Pendências',(sf+sc),sf+' s/foto · '+sc+' s/ct','#b5620d')+
+        dKpi('Leads Ativos',ldD.length+llD.length,(leadsNovos>0?leadsNovos+' novos':'pipeline ativo'),'#c41a1a')+
       '</div>'+
 
-      // ══ CORPO ══
-      '<div style="display:grid;grid-template-columns:3fr 2fr;gap:16px;margin-bottom:16px">'+
+      // CORPO
+      '<div style="display:grid;grid-template-columns:3fr 2fr;gap:14px;margin-bottom:14px">'+
 
-        '<div style="background:#fff;border-radius:16px;border:1px solid #f0f4f8;box-shadow:0 2px 16px rgba(0,0,0,.04);overflow:hidden">'+
-          '<div style="padding:16px 20px;border-bottom:1px solid #f8fafc;display:flex;align-items:center;justify-content:space-between">'+
-            '<div style="display:flex;align-items:center;gap:10px">'+
-              '<div style="width:32px;height:32px;border-radius:9px;background:#fef2f2;display:flex;align-items:center;justify-content:center;font-size:15px">🔔</div>'+
-              '<span style="font-size:13px;font-weight:700;color:#0f172a">Alertas do Dia</span>'+
-            '</div>'+
-            '<span style="background:#D42028;color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px">'+alertas.length+' itens</span>'+
+        '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
+          '<div style="padding:14px 20px;border-bottom:1px solid #f0f4f8;display:flex;align-items:center;justify-content:space-between;background:#fafbfd">'+
+            '<div style="font-size:12px;font-weight:700;color:#0d1829;letter-spacing:.3px;text-transform:uppercase">Alertas do Dia</div>'+
+            '<span style="background:#c41a1a;color:#fff;font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.5px">'+alertas.length+' ITENS</span>'+
           '</div>'+
-          '<div style="padding:14px 16px;background:#fafbfd">'+
-            (alertCards||'<div style="text-align:center;padding:24px;color:#94a3b8;font-size:13px">✅ Tudo em dia!</div>')+
-          '</div>'+
+          '<table style="width:100%;border-collapse:collapse">'+
+            (alertRows||'<tr><td style="padding:20px;text-align:center;color:#8896a5;font-size:12px">Nenhum alerta</td></tr>')+
+          '</table>'+
         '</div>'+
 
-        '<div style="background:#fff;border-radius:16px;border:1px solid #f0f4f8;box-shadow:0 2px 16px rgba(0,0,0,.04);overflow:hidden">'+
-          '<div style="padding:16px 20px;border-bottom:1px solid #f8fafc;display:flex;align-items:center;gap:10px">'+
-            '<div style="width:32px;height:32px;border-radius:9px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:15px">🏘️</div>'+
-            '<span style="font-size:13px;font-weight:700;color:#0f172a">Portfolio · '+ivD.length+' imóveis</span>'+
+        '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
+          '<div style="padding:14px 20px;border-bottom:1px solid #f0f4f8;background:#fafbfd">'+
+            '<div style="font-size:12px;font-weight:700;color:#0d1829;letter-spacing:.3px;text-transform:uppercase">Portfolio · '+ivD.length+' Imóveis</div>'+
           '</div>'+
           '<div style="padding:18px 20px">'+bars+'</div>'+
         '</div>'+
       '</div>'+
 
-      // ══ VISITAS ══
-      '<div style="background:#fff;border-radius:16px;border:1px solid #f0f4f8;box-shadow:0 2px 16px rgba(0,0,0,.04);overflow:hidden">'+
-        '<div style="padding:16px 20px;border-bottom:1px solid #f8fafc;display:flex;align-items:center;justify-content:space-between">'+
-          '<div style="display:flex;align-items:center;gap:10px">'+
-            '<div style="width:32px;height:32px;border-radius:9px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;font-size:15px">📅</div>'+
-            '<span style="font-size:13px;font-weight:700;color:#0f172a">Visitas Hoje</span>'+
-          '</div>'+
-          '<button onclick="gP(&quot;visitas&quot;)" style="font-size:11px;font-weight:700;color:#003DA5;background:#eff6ff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer">Ver todas →</button>'+
+      // VISITAS
+      '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
+        '<div style="padding:14px 20px;border-bottom:1px solid #f0f4f8;display:flex;align-items:center;justify-content:space-between;background:#fafbfd">'+
+          '<div style="font-size:12px;font-weight:700;color:#0d1829;letter-spacing:.3px;text-transform:uppercase">Visitas Hoje</div>'+
+          '<button onclick="gP(&quot;visitas&quot;)" style="font-size:11px;font-weight:600;color:#0d1f4e;background:none;border:1px solid #0d1f4e;border-radius:6px;padding:4px 12px;cursor:pointer">Ver todas</button>'+
         '</div>'+
-        '<div style="padding:16px 20px">'+
-          (vis||'<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px">📭 Nenhuma visita agendada para hoje</div>')+
+        '<div style="padding:0 20px">'+
+          (vis||'<div style="padding:20px;text-align:center;color:#8896a5;font-size:12px">Nenhuma visita agendada para hoje</div>')+
         '</div>'+
       '</div>';
 
   }catch(err){
     console.error('pDash erro:',err);
-    document.getElementById('pc').innerHTML='<div style="padding:20px;color:#94a3b8">Erro: '+err.message+'</div>';
+    document.getElementById('pc').innerHTML='<div style="padding:20px;color:#8896a5">Erro: '+err.message+'</div>';
   }
 }
 

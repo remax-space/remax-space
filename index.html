@@ -5577,28 +5577,116 @@ window.vitGerarLista = function(){
       '<button onclick="navigator.clipboard.writeText(document.getElementById(\'vit-lista-txt\').value).then(function(){alert(\'Copiado! ✓\');})" style="flex:1;padding:12px;background:#003DA5;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">📋 Copiar texto</button>'+
       '<button onclick="var t=document.getElementById(\'vit-lista-txt\').value;window.open(\'https://wa.me/?text=\'+encodeURIComponent(t),\'_blank\')" style="flex:1;padding:12px;background:#25D366;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">📤 Abrir no WhatsApp</button>'+
     '</div>',
-    null, 'Fechar', true);
-};
-  var txt = '🏠 *Imóveis Disponíveis RE/MAX Space*'+op+'\n\n';
-  lista.forEach(function(v,i){
-    var val = v.valor?'R$ '+Number(v.valor).toLocaleString('pt-BR'):'Consulte';
-    txt += (i+1)+'. *'+v.titulo+'*\n';
-    txt += '   📍 '+(v.bairro||v.end||'')+'\n';
-    txt += '   🏷️ '+v.tipo;
-    if(v.quartos) txt += ' · '+v.quartos+' qto'+(v.quartos>1?'s':'');
-    if(v.area) txt += ' · '+v.area+'m²';
-    txt += '\n   💰 '+val+'\n\n';
-  });
-  txt += '📞 *RE/MAX Space — Caldas Novas*\nMais informações pelo WhatsApp!';
-  oM('Lista para Cliente',
-    '<textarea id="vit-lista-txt" style="width:100%;height:320px;font-family:monospace;font-size:12px;border:1px solid #e5e7eb;border-radius:8px;padding:12px;resize:none">'+txt+'</textarea>'+
-    '<div style="margin-top:10px;display:flex;gap:8px">'+
-      '<button onclick="navigator.clipboard.writeText(document.getElementById(\'vit-lista-txt\').value).then(function(){alert(\'Copiado! ✓\');})" style="flex:1;padding:10px;background:#003DA5;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer">📋 Copiar texto</button>'+
-      '<button onclick="var t=document.getElementById(\'vit-lista-txt\').value;window.open(\'https://wa.me/?text=\'+encodeURIComponent(t),\'_blank\')" style="flex:1;padding:10px;background:#25D366;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer">📤 Abrir no WhatsApp</button>'+
-    '</div>',
-    null, 'Fechar', true);
+    null,'Fechar',true);
 };
 
+window.vitGerarLista = function(){
+  var lista = vitD.filter(function(v){
+    if(_vitFiltOp!=='Todos'&&v.op!==_vitFiltOp) return false;
+    if(_vitFiltTipo!=='Todos'&&v.tipo!==_vitFiltTipo) return false;
+    if(_vitFiltQ!=='Todos'){var q=parseInt(v.quartos)||0;if(_vitFiltQ==='4+'&&q<4)return false;if(_vitFiltQ!=='4+'&&q!==parseInt(_vitFiltQ))return false;}
+    return true;
+  });
+  if(!lista.length){alert('Nenhum imóvel com esses filtros.');return;}
+
+  function qrUrl(u){return 'https://api.qrserver.com/v1/create-qr-code/?size=90x90&data='+encodeURIComponent(u||'https://remaxspace.com.br');}
+
+  // Texto WhatsApp
+  var txt='🏠 *IMÓVEIS DISPONÍVEIS — RE/MAX Space*\n📍 Caldas Novas · GO\n━━━━━━━━━━━━━━━━━━━━━━\n\n';
+  lista.forEach(function(v,i){
+    var val=v.valor?(v.op==='Locação'?'R$ '+Number(v.valor).toLocaleString('pt-BR')+'/mês':'R$ '+Number(v.valor).toLocaleString('pt-BR')):'Consulte';
+    txt+=(v.op==='Venda'?'🔑':'🏡')+' *'+(i+1)+'. '+v.titulo+'*\n';
+    if(v.bairro) txt+='📍 '+v.bairro+'\n';
+    var d=[];
+    if(v.quartos) d.push('🛏 '+v.quartos+' qto'+(v.quartos>1?'s':''));
+    if(v.area) d.push('📐 '+v.area+'m²');
+    if(v.vagas) d.push('🚗 '+v.vagas+' vaga'+(v.vagas>1?'s':''));
+    if(d.length) txt+=d.join(' · ')+'\n';
+    txt+='💰 *'+val+'*\n';
+    if(v.descricao) txt+='✨ '+v.descricao.slice(0,80)+'...\n';
+    if(v.linkOrigem) txt+='🔗 '+v.linkOrigem+'\n';
+    txt+='━━━━━━━━━━━━━━━━━━━━━━\n\n';
+  });
+  txt+='📲 *Gostou? Entre em contato!*\n🏢 RE/MAX Space — Caldas Novas\n📞 (64) 9 9999-9999\n🌐 remaxspace.com.br';
+
+  // Cards visuais
+  var cards=lista.map(function(v,i){
+    var val=v.valor?(v.op==='Locação'?'R$ '+Number(v.valor).toLocaleString('pt-BR')+'/mês':'R$ '+Number(v.valor).toLocaleString('pt-BR')):'Consulte';
+    var foto=(v.fotos||[]).filter(Boolean)[0]||'';
+    var opCor=v.op==='Venda'?'#003DA5':'#059669';
+    var qrLink=v.linkOrigem||'https://remaxspace.com.br';
+    var tags=[];
+    if(v.quartos) tags.push('🛏 '+v.quartos+' qto'+(v.quartos>1?'s':''));
+    if(v.area) tags.push('📐 '+v.area+'m²');
+    if(v.vagas) tags.push('🚗 '+v.vagas+' vaga'+(v.vagas>1?'s':''));
+    if(v.banheiros) tags.push('🚿 '+v.banheiros+' ban.');
+    return '<div style="background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.12);margin-bottom:20px;border:1px solid #e5e7eb">'+
+      '<div style="position:relative;height:200px;background:linear-gradient(135deg,#0f1a35,#003DA5);overflow:hidden">'+
+        (foto?'<img src="'+foto+'" style="width:100%;height:100%;object-fit:cover">':'<div style="height:100%;display:flex;align-items:center;justify-content:center;font-size:56px">🏠</div>')+
+        '<div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,rgba(0,0,0,.1) 50%,transparent 100%)"></div>'+
+        '<div style="position:absolute;top:14px;left:14px;display:flex;gap:8px">'+
+          '<span style="background:'+opCor+';color:#fff;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:.5px">'+v.op.toUpperCase()+'</span>'+
+          (v.tipo?'<span style="background:rgba(255,255,255,.2);backdrop-filter:blur(4px);color:#fff;padding:5px 12px;border-radius:20px;font-size:11px">'+v.tipo+'</span>':'')+
+        '</div>'+
+        '<div style="position:absolute;bottom:14px;left:14px;right:14px">'+
+          '<div style="color:#fff;font-weight:800;font-size:17px;line-height:1.3;text-shadow:0 2px 8px rgba(0,0,0,.5)">'+v.titulo+'</div>'+
+          (v.bairro?'<div style="color:rgba(255,255,255,.85);font-size:12px;margin-top:4px">📍 '+v.bairro+'</div>':'')+
+        '</div>'+
+      '</div>'+
+      '<div style="padding:16px;display:flex;gap:14px;align-items:flex-start">'+
+        '<div style="flex:1">'+
+          (tags.length?'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">'+
+            tags.map(function(t){return '<span style="background:#f0f4ff;color:#374151;padding:5px 11px;border-radius:20px;font-size:12px;font-weight:500">'+t+'</span>';}).join('')+
+          '</div>':'')+
+          (v.descricao?'<div style="font-size:12px;color:#6b7280;line-height:1.6;margin-bottom:12px">'+v.descricao.slice(0,110)+(v.descricao.length>110?'…':'')+'</div>':'')+
+          '<div style="font-size:26px;font-weight:900;color:'+opCor+'">'+val+'</div>'+
+        '</div>'+
+        '<div style="text-align:center;flex-shrink:0;background:#f9fafb;border-radius:12px;padding:10px;border:1px solid #e5e7eb">'+
+          '<img src="'+qrUrl(qrLink)+'" style="width:80px;height:80px;border-radius:6px;display:block">'+
+          '<div style="font-size:9px;color:#9ca3af;margin-top:5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Ver fotos</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="background:linear-gradient(90deg,#0f1a35,#003DA5);padding:10px 16px;display:flex;justify-content:space-between;align-items:center">'+
+        '<div style="display:flex;align-items:center;gap:8px">'+
+          '<div style="width:6px;height:6px;background:#D42028;border-radius:50%"></div>'+
+          '<span style="color:#fff;font-size:11px;font-weight:700">RE/MAX Space · Caldas Novas</span>'+
+        '</div>'+
+        '<span style="color:#D42028;font-size:11px;font-weight:800">(64) 9 9999-9999</span>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  document.getElementById('mov').style.display='flex';
+  document.getElementById('mt').textContent='Lista para Cliente — '+lista.length+' imóvel(is)';
+  document.getElementById('mb').innerHTML=
+    '<style>@media print{.no-print{display:none!important}}</style>'+
+    '<div class="no-print" style="display:flex;gap:8px;margin-bottom:16px">'+
+      '<button id="vit-btn-cards" onclick="vitAba(\'cards\')" style="flex:1;padding:10px;background:#003DA5;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">🃏 Cards Visuais</button>'+
+      '<button id="vit-btn-txt" onclick="vitAba(\'txt\')" style="flex:1;padding:10px;background:#f3f4f6;color:#374151;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">💬 Texto WhatsApp</button>'+
+    '</div>'+
+    '<div id="vit-tab-cards">'+cards+
+      '<button onclick="window.print()" class="no-print" style="width:100%;padding:12px;background:#0f1a35;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;margin-top:4px">🖨️ Imprimir / Salvar PDF</button>'+
+    '</div>'+
+    '<div id="vit-tab-txt" style="display:none">'+
+      '<textarea id="vit-lista-txt" style="width:100%;height:300px;font-family:monospace;font-size:11px;border:1px solid #e5e7eb;border-radius:8px;padding:12px;resize:none;background:#f9fafb">'+txt+'</textarea>'+
+      '<div style="display:flex;gap:8px;margin-top:10px">'+
+        '<button onclick="navigator.clipboard.writeText(document.getElementById(\'vit-lista-txt\').value).then(function(){alert(\'Copiado! ✓\');})" style="flex:1;padding:12px;background:#003DA5;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">📋 Copiar</button>'+
+        '<button onclick="var t=document.getElementById(\'vit-lista-txt\').value;window.open(\'https://wa.me/?text=\'+encodeURIComponent(t),\'_blank\')" style="flex:1;padding:12px;background:#25D366;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">📤 WhatsApp</button>'+
+      '</div>'+
+    '</div>';
+  document.getElementById('mc').onclick=cM;
+};
+
+window.vitAba=function(aba){
+  document.getElementById('vit-tab-cards').style.display=aba==='cards'?'block':'none';
+  document.getElementById('vit-tab-txt').style.display=aba==='txt'?'block':'none';
+  document.getElementById('vit-btn-cards').style.background=aba==='cards'?'#003DA5':'#f3f4f6';
+  document.getElementById('vit-btn-cards').style.color=aba==='cards'?'#fff':'#374151';
+  document.getElementById('vit-btn-txt').style.background=aba==='txt'?'#003DA5':'#f3f4f6';
+  document.getElementById('vit-btn-txt').style.color=aba==='txt'?'#fff':'#374151';
+};
+
+// Adicionar campo linkOrigem no vitFormHtml e vitSalvarForm
 window.vitImportarLink = async function(){
   var url = (document.getElementById('vf-import-url')||{}).value||'';
   if(!url.trim()){ alert('Cole o link do imóvel primeiro.'); return; }
@@ -5735,7 +5823,8 @@ function vitFormHtml(v){
       '</div>';
     }).join('')+
   '</div>'+
-  '<div class="fg"><label>Corretor responsável</label><select id="vf-cor">'+corrSel(v.corretor)+'</select></div>';
+  '<div class="fg"><label>Corretor responsável</label><select id="vf-cor">'+corrSel(v.corretor)+'</select></div>'+
+  '<div class="fg"><label>Link do anúncio (iList, ZAP, RE/MAX — aparece no QR Code)</label><input id="vf-link" value="'+(v.linkOrigem||'')+'" placeholder="https://www.ilist.com.br/imovel/..."></div>';
 }
 
 function vitSalvarForm(idx){
@@ -5760,7 +5849,8 @@ function vitSalvarForm(idx){
     vagas: parseInt(document.getElementById('vf-vagas').value)||0,
     descricao: (document.getElementById('vf-desc')||{}).value||'',
     fotos: fotos,
-    corretor: (document.getElementById('vf-cor')||{}).value||''
+    corretor: (document.getElementById('vf-cor')||{}).value||'',
+    linkOrigem: (document.getElementById('vf-link')||{}).value||''
   };
   if(idx>=0) vitD[idx]=obj; else vitD.unshift(obj);
   cM(); salvarTudo(); pVitrine();

@@ -2494,14 +2494,15 @@ function pDashCorretor(){
 
 
 function dKpi(ic,label,val,sub,color,trend){
-  return '<div style="background:#fff;border-radius:16px;padding:20px 22px;border:1px solid #f0f4f8;box-shadow:0 2px 12px rgba(0,0,0,.05);position:relative;overflow:hidden">'+
-    '<div style="position:absolute;top:0;left:0;right:0;height:3px;background:'+color+'"></div>'+
-    '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">'+
-      '<div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:1px;text-transform:uppercase">'+label+'</div>'+
-      '<div style="width:36px;height:36px;border-radius:10px;background:'+color+'12;display:flex;align-items:center;justify-content:center;font-size:18px">'+ic+'</div>'+
+  return '<div style="background:'+color+';border-radius:18px;padding:22px 24px;box-shadow:0 8px 24px '+color+'55;position:relative;overflow:hidden;cursor:default">'+
+    '<div style="position:absolute;right:-18px;top:-18px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.1)"></div>'+
+    '<div style="position:absolute;right:16px;bottom:-20px;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.06)"></div>'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;position:relative">'+
+      '<div style="font-size:10px;font-weight:800;color:rgba(255,255,255,.65);letter-spacing:1.5px;text-transform:uppercase">'+label+'</div>'+
+      '<div style="font-size:26px">'+ic+'</div>'+
     '</div>'+
-    '<div style="font-size:28px;font-weight:900;color:#0f172a;letter-spacing:-1px;margin-bottom:6px">'+val+'</div>'+
-    '<div style="font-size:11px;color:#94a3b8">'+sub+'</div>'+
+    '<div style="font-size:32px;font-weight:900;color:#fff;letter-spacing:-1.5px;margin-bottom:6px;position:relative">'+val+'</div>'+
+    '<div style="font-size:11px;color:rgba(255,255,255,.6);position:relative">'+sub+'</div>'+
   '</div>';
 }
 
@@ -2599,8 +2600,8 @@ function pDashAdmin(){
       '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">'+
         dKpi('🏠','Carteira Venda',ivD.length,'imóveis captados','#003DA5')+
         dKpi('💰','ADM Mensal',fmt(tot*.1),'repasse '+fmt(tot*.9),'#059669')+
-        dKpi('⚠️','Pendências',(sf+sc),sf+' s/foto · '+sc+' s/ct','#d97706')+
-        dKpi('🔥','Leads Ativos',ldD.length+llD.length,(leadsNovos>0?leadsNovos+' locação novos':'pipeline completo'),'#D42028')+
+        dKpi('⚡','Pendências',(sf+sc),sf+' s/foto · '+sc+' s/ct','#f59e0b')+
+        dKpi('🔥','Leads Ativos',ldD.length+llD.length,(leadsNovos>0?leadsNovos+' loc. novos':'pipeline ativo'),'#D42028')+
       '</div>'+
 
       // ══ LINHA 2 — Alertas + Portfolio ══

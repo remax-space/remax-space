@@ -5528,11 +5528,85 @@ window.vitGerarLista = function(){
     null, 'Fechar', true);
 };
 
+window.vitImportarLink = async function(){
+  var url = (document.getElementById('vf-import-url')||{}).value||'';
+  if(!url.trim()){ alert('Cole o link do imóvel primeiro.'); return; }
+  var st = document.getElementById('vf-import-status');
+  if(st){ st.style.color='#2563eb'; st.textContent='⏳ Buscando dados do imóvel com IA...'; }
+
+  // Desabilita botão durante busca
+  var btn = document.querySelector('[onclick="vitImportarLink()"]');
+  if(btn){ btn.disabled=true; btn.textContent='Carregando...'; }
+
+  try{
+    var PROXY = 'https://pokgfnlywtgubpuswmni.supabase.co/functions/v1/claude-proxy';
+    var resp = await fetch(PROXY, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBva2dmbmx5d3RndWJwdXN3bW5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1OTYwNzgsImV4cCI6MjA5NTE3MjA3OH0.wK2qG14wMA7FVnVT0NKEbbLZyAIZkSahsChRivgd-Ko'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        system:'Você é um assistente que extrai informações de anúncios imobiliários. Acesse o link fornecido e extraia os dados. Responda APENAS com JSON válido, sem markdown, sem texto extra. Formato exato:\n{"titulo":"","op":"Venda","tipo":"Casa","bairro":"","valor":0,"area":0,"quartos":0,"banheiros":0,"vagas":0,"descricao":"","fotos":[]}',
+        messages:[{role:'user',content:'Acesse este anúncio imobiliário e extraia todas as informações: '+url+'\n\nRetorne JSON com: titulo, op (Venda ou Locação), tipo (Casa/Apartamento/Flat/Chalé/Terreno/Chácara/Fazenda/Kitnet/Sala Comercial/Outro), bairro, valor (número), area (m², número), quartos (número), banheiros (número), vagas (número), descricao (resumo atrativo), fotos (array de URLs das fotos encontradas, máximo 5).'}]
+      })
+    });
+
+    var data = await resp.json();
+    var txt = (data.content||[]).filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('');
+    // limpar markdown se vier
+    txt = txt.replace(/```json|```/g,'').trim();
+    var info = JSON.parse(txt);
+
+    // Preencher campos
+    function set(id,val){ var el=document.getElementById(id); if(el&&val!==undefined&&val!==null) el.value=val; }
+    set('vf-titulo', info.titulo);
+    set('vf-op',     info.op==='Locação'||info.op==='locacao'||info.op==='aluguel'?'Locação':'Venda');
+    set('vf-tipo',   info.tipo||'Casa');
+    set('vf-bairro', info.bairro);
+    set('vf-valor',  info.valor||0);
+    set('vf-area',   info.area||0);
+    set('vf-quartos',   info.quartos||0);
+    set('vf-banheiros', info.banheiros||0);
+    set('vf-vagas',     info.vagas||0);
+    var desc = document.getElementById('vf-desc'); if(desc) desc.value = info.descricao||'';
+
+    // Preencher fotos
+    var fotos = (info.fotos||[]).filter(Boolean).slice(0,5);
+    fotos.forEach(function(f,i){ set('vf-foto'+i, f); });
+
+    // Selecionar tipo no select
+    var selTipo = document.getElementById('vf-tipo');
+    if(selTipo && info.tipo){
+      for(var i=0;i<selTipo.options.length;i++){
+        if(selTipo.options[i].value===info.tipo||selTipo.options[i].text===info.tipo){
+          selTipo.selectedIndex=i; break;
+        }
+      }
+    }
+
+    if(st){ st.style.color='#059669'; st.textContent='✅ Dados preenchidos! Confira e ajuste se necessário.'; }
+  } catch(e){
+    console.error(e);
+    if(st){ st.style.color='#D42028'; st.textContent='❌ Não consegui extrair os dados. Preencha manualmente.'; }
+  } finally {
+    if(btn){ btn.disabled=false; btn.textContent='✨ Preencher com IA'; }
+  }
+};
+
 function vitFormHtml(v){
   v = v||{};
   var fotos = v.fotos||['','','','',''];
   while(fotos.length<5) fotos.push('');
-  return '<div class="fg2">'+
+  return '<div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:10px;padding:14px;margin-bottom:16px;border:1.5px solid #bfdbfe">'+
+    '<div style="font-size:12px;font-weight:700;color:#1d4ed8;margin-bottom:8px">🔗 Importar automaticamente pelo link</div>'+
+    '<div style="display:flex;gap:8px;align-items:center">'+
+      '<input id="vf-import-url" placeholder="Cole o link do iList, ZAP, OLX..." style="flex:1;border:1px solid #bfdbfe;border-radius:8px;padding:9px 12px;font-size:13px">'+
+      '<button onclick="vitImportarLink()" style="padding:9px 18px;background:#003DA5;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">✨ Preencher com IA</button>'+
+    '</div>'+
+    '<div id="vf-import-status" style="font-size:11px;color:#6b7280;margin-top:6px"></div>'+
+  '</div>'+
+  '<div class="fg2">'+
     '<div class="fg"><label>Operação *</label>'+
       '<select id="vf-op">'+
         ['Venda','Locação'].map(function(o){ return '<option'+(o===(v.op||'Venda')?' selected':'')+'>'+o+'</option>'; }).join('')+

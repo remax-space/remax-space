@@ -5532,13 +5532,91 @@ window.vitImportarLink = async function(){
   var url = (document.getElementById('vf-import-url')||{}).value||'';
   if(!url.trim()){ alert('Cole o link do imóvel primeiro.'); return; }
   var st = document.getElementById('vf-import-status');
-  if(st){ st.style.color='#2563eb'; st.textContent='⏳ Buscando conteúdo do link...'; }
+  if(st){ st.style.color='#2563eb'; st.textContent='⏳ Buscando dados...'; }
   var btn = document.querySelector('[onclick="vitImportarLink()"]');
   if(btn){ btn.disabled=true; btn.textContent='Carregando...'; }
 
   try{
-    // Buscar HTML via allorigins
-    var proxyUrl = 'https://api.allorigins.win/get?url='+encodeURIComponent(url);
+    // Tentar múltiplos proxies
+    var html = '';
+    var proxies = [
+      'https://api.allorigins.win/get?url='+encodeURIComponent(url),
+      'https://corsproxy.io/?'+encodeURIComponent(url),
+      'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(url)
+    ];
+    for(var pi=0;pi<proxies.length;pi++){
+      try{
+        var pr = await fetch(proxies[pi], {signal: AbortSignal.timeout(8000)});
+        if(pr.ok){
+          var pj = await pr.json().catch(async function(){ return {contents: await pr.text()}; });
+          html = pj.contents || pj || '';
+          if(html && html.length > 200) break;
+        }
+      } catch(pe){ console.log('Proxy '+pi+' falhou:', pe.message); }
+    }
+
+    // Extrair metadados do HTML (se conseguiu)
+    var jsonLdData='', metaTags='', texto='', imgUrls=[];
+    if(html && html.length>200){
+      var jlds = html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi)||[];
+      jlds.forEach(function(m){ jsonLdData+=m+'\n'; });
+      var metas = html.match(/<meta[^>]+>/gi)||[];
+      metas.forEach(function(m){ metaTags+=m+'\n'; });
+      var tmp=document.createElement('div');
+      tmp.innerHTML=html;
+      tmp.querySelectorAll('script,style,nav,footer,header,aside').forEach(function(el){el.remove();});
+      texto=(tmp.innerText||tmp.textContent||'').replace(/\s+/g,' ').trim().slice(0,2000);
+      var imgs=[].concat(
+        (html.match(/content="(https?:\/\/[^"]+\.(jpg|jpeg|png|webp)[^"]*)"/gi)||[]).map(function(m){var x=m.match(/content="([^"]+)"/);return x?x[1]:''; }),
+        (html.match(/src="(https?:\/\/[^"]+\.(jpg|jpeg|png|webp)[^"]*)"/gi)||[]).map(function(m){var x=m.match(/src="([^"]+)"/);return x?x[1]:''; })
+      );
+      imgUrls=imgs.filter(Boolean).filter(function(u){return u.length>20&&!/logo|icon|avatar|sprite/i.test(u);}).filter(function(u,i,a){return a.indexOf(u)===i;}).slice(0,5);
+    }
+
+    if(st){ st.style.color='#2563eb'; st.textContent='🤖 IA analisando...'; }
+
+    // Montar prompt — mesmo sem HTML a IA usa a URL para inferir dados
+    var prompt = 'Analise este anúncio imobiliário.\n\nURL: '+url+'\n\n'+(metaTags?'META TAGS:\n'+metaTags.slice(0,1000)+'\n\n':'')+(jsonLdData?'JSON-LD:\n'+jsonLdData.slice(0,1000)+'\n\n':'')+(texto?'TEXTO:\n'+texto+'\n\n':'')+(imgUrls.length?'IMAGENS:\n'+JSON.stringify(imgUrls)+'\n\n':'')+'IMPORTANTE: Use a URL para inferir dados que não estão no texto. Por exemplo "/apartamento-a-venda-3-quartos" indica 3 quartos e venda. "/alugar" ou "/locacao" indica Locação. "/caldas-novas" indica a cidade. Estime o valor se não encontrar (coloque 0 se não conseguir estimar).\n\nRetorne APENAS JSON:\n{"titulo":"","op":"Venda","tipo":"Apartamento","bairro":"","valor":0,"area":0,"quartos":0,"banheiros":0,"vagas":0,"descricao":"","fotos":[]}';
+
+    var system = 'Você extrai e infere dados de anúncios imobiliários. Use a URL e todo contexto disponível. Retorne APENAS JSON válido. op: Venda ou Locação. tipo: Casa/Apartamento/Flat\\/Apart-Hotel/Chalé/Terreno\\/Lote/Chácara/Fazenda/Kitnet/Sala Comercial/Outro.';
+
+    var txt = await callClaude(prompt, system, 1000);
+    txt = txt.replace(/```json|```/g,'').trim();
+    var ini=txt.indexOf('{'), fim=txt.lastIndexOf('}');
+    if(ini>=0&&fim>ini) txt=txt.slice(ini,fim+1);
+    var info = JSON.parse(txt);
+
+    function set(id,val){ var el=document.getElementById(id); if(el&&val!==undefined&&val!==null&&val!=='') el.value=val; }
+    function setNum(id,val){ var el=document.getElementById(id); if(el&&val&&val>0) el.value=val; }
+    set('vf-titulo',   info.titulo);
+    set('vf-bairro',   info.bairro);
+    setNum('vf-valor',    info.valor);
+    setNum('vf-area',     info.area);
+    setNum('vf-quartos',  info.quartos);
+    setNum('vf-banheiros',info.banheiros);
+    setNum('vf-vagas',    info.vagas);
+    var desc=document.getElementById('vf-desc'); if(desc&&info.descricao) desc.value=info.descricao;
+    var selOp=document.getElementById('vf-op');
+    if(selOp) selOp.value=(/loca|alugu/i.test(info.op||''))?'Locação':'Venda';
+    var selTipo=document.getElementById('vf-tipo');
+    if(selTipo&&info.tipo){ for(var ii=0;ii<selTipo.options.length;ii++){ if(selTipo.options[ii].value===info.tipo||selTipo.options[ii].text===info.tipo){selTipo.selectedIndex=ii;break;} } }
+    var fotos=(info.fotos||[]).concat(imgUrls).filter(Boolean).filter(function(u,i,a){return a.indexOf(u)===i;}).slice(0,5);
+    fotos.forEach(function(f,i){ var el=document.getElementById('vf-foto'+i); if(el) el.value=f; });
+
+    var r=[];
+    if(info.valor>0) r.push('R$ '+Number(info.valor).toLocaleString('pt-BR'));
+    if(info.quartos>0) r.push(info.quartos+' qtos');
+    if(info.area>0) r.push(info.area+'m²');
+    if(fotos.length) r.push(fotos.length+' foto(s)');
+    if(st){ st.style.color='#059669'; st.textContent='✅ Preenchido'+(r.length?' — '+r.join(', '):'')+'. Confira e ajuste se necessário.'; }
+
+  } catch(e){
+    console.error('vitImportarLink:',e);
+    if(st){ st.style.color='#D42028'; st.textContent='❌ Erro ao extrair. Preencha manualmente ou tente outro link.'; }
+  } finally {
+    if(btn){ btn.disabled=false; btn.textContent='✨ Preencher com IA'; }
+  }
+};
     var r = await fetch(proxyUrl);
     var j = await r.json();
     var html = j.contents||'';

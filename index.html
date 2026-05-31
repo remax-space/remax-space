@@ -5601,7 +5601,6 @@ window.vitGerarLista = function(){
     '</div>';
   }).join('');
 
-  document.getElementById('mov').style.display='flex';
   document.getElementById('mt').textContent='Lista para Cliente — '+lista.length+' imóvel(is)';
   document.getElementById('mb').innerHTML=
     '<style>@media print{.no-print{display:none!important}}</style>'+
@@ -5620,6 +5619,10 @@ window.vitGerarLista = function(){
       '</div>'+
     '</div>';
   var mc = document.getElementById('mc'); if(mc) mc.onclick=cM;
+  // Abrir modal corretamente via className
+  document.getElementById('mov').className='mov open';
+  document.getElementById('mbox').style.width='860px';
+  document.getElementById('mok').style.display='none';
 };
 
 window.vitAba=function(aba){

@@ -5968,19 +5968,22 @@ function mktRenderPreview(id, v){
 
 function mktGetArtHtml(id, v){
   // Logo SVG inline RE/MAX Space
-  var logo = '<div style="display:flex;align-items:center;gap:8px">'+
-    '<div style="width:32px;height:38px;position:relative">'+
-      '<div style="width:32px;height:32px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;background:linear-gradient(135deg,#8B0000 0%,#D42028 50%,#003DA5 50%,#001f5c 100%);border:2px solid #fff;position:relative;overflow:hidden">'+
-        '<div style="position:absolute;top:50%;left:0;right:0;height:3px;background:#fff;transform:translateY(-50%)"></div>'+
-        '<div style="position:absolute;top:0;bottom:0;left:50%;width:2px;background:rgba(255,255,255,.4)"></div>'+
-      '</div>'+
-      '<div style="position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid #003DA5"></div>'+
+  var balaoCss = '<div style="width:36px;height:42px;position:relative;flex-shrink:0">'+
+    '<div style="width:36px;height:36px;border-radius:50%;border:2.5px solid #fff;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr">'+
+      '<div style="background:#8B0000"></div>'+
+      '<div style="background:#D42028"></div>'+
+      '<div style="background:#fff;display:flex;align-items:center;justify-content:center"><div style="width:60%;height:2px;background:#e5e7eb"></div></div>'+
+      '<div style="background:#003DA5"></div>'+
     '</div>'+
+    '<div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:10px solid #003DA5"></div>'+
+  '</div>';
+  var logo = '<div style="display:flex;align-items:center;gap:8px">'+
+    balaoCss+
     '<div>'+
-      '<div style="font-size:8px;color:rgba(255,255,255,.6);letter-spacing:2px;font-family:Arial">IMÓVEIS</div>'+
-      '<div style="font-size:18px;font-weight:900;color:#fff;line-height:1;letter-spacing:-0.5px;font-family:Arial Black,Arial">RE/MAX</div>'+
-      '<div style="font-size:12px;font-weight:700;color:#fff;font-family:Arial">Space</div>'+
-      '<div style="font-size:7px;color:rgba(255,255,255,.5);font-family:Arial">CRECI: 41.377-J</div>'+
+      '<div style="font-size:7px;color:rgba(255,255,255,.6);letter-spacing:3px;font-family:Arial;text-transform:uppercase">Imóveis</div>'+
+      '<div style="font-size:20px;font-weight:900;color:#fff;line-height:1;letter-spacing:-1px;font-family:Impact,Arial Black,Arial">RE/MAX</div>'+
+      '<div style="font-size:13px;font-weight:700;color:#fff;font-family:Arial;letter-spacing:1px">Space</div>'+
+      '<div style="font-size:7px;color:rgba(255,255,255,.45);font-family:Arial">CRECI: 41.377-J</div>'+
     '</div>'+
   '</div>';
 

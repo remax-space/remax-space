@@ -2562,9 +2562,9 @@ function pDashCorretor(){
     var prospStatus = {};
     meusProsp.forEach(function(p){ prospStatus[p.st]=(prospStatus[p.st]||0)+1; });
 
-    document.getElementById('pc').innerHTML +=
+    document.getElementById('pc').innerHTML = document.getElementById('pc').innerHTML +
 
-      // LINHA 2 — Funil + Gráfico
+      // LINHA 2 — Funil + Gráfico (aparece logo após KPIs)
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">'+
 
         '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
@@ -2585,7 +2585,7 @@ function pDashCorretor(){
         '</div>'+
       '</div>'+
 
-      // LINHA 3 — Agenda + Leads quentes
+      // LINHA 2 — Agenda + Leads quentes
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">'+
 
         '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+

@@ -4866,6 +4866,9 @@ function pLC(){
     '<div style="background:rgba(255,255,255,.1);border-radius:8px;padding:6px 12px"><div style="font-size:9px;opacity:.7">Repasse proprietarios</div><div style="font-size:16px;font-weight:700;color:#fde047">'+fmt(liq)+'</div></div>'+
     '<div style="background:rgba(255,255,255,.1);border-radius:8px;padding:6px 12px"><div style="font-size:9px;opacity:.7">Recebido no mes</div><div style="font-size:16px;font-weight:700;color:#6ee7b7">'+fmt(recMes)+'</div></div>'+
     '</div></div>'+
+    '<div style="display:flex;justify-content:flex-end;margin-bottom:10px">'+
+    '<button onclick="relatorioContratos()" style="background:#0d1f4e;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer">🖨️ Gerar Relatório PDF</button>'+
+    '</div>'+
     '<div class="card"><div class="fbar"><input class="sinp" placeholder="Buscar..." id="ct-si"><div class="chip on" onclick="fSt(this,\'ct-b\',\'todos\')">Todos</div><div class="chip" onclick="fSt(this,\'ct-b\',\'Ativa\')">Ativos</div><div class="chip" onclick="fSt(this,\'ct-b\',\'Encerrada\')">Encerrados</div></div>'+
     '<div class="tw"><table><thead><tr><th>ID</th><th>Proprietário</th><th>Inquilino</th><th>Tipo</th><th>Endereço</th><th>Valor</th><th>Venc</th><th>Início</th><th>Fim</th><th>Corretor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="ct-b">'+r+'</tbody></table></div></div>';
   document.getElementById('ct-si').oninput=function(){var q=this.value.toLowerCase();document.querySelectorAll('#ct-b tr').forEach(function(r){r.style.display=r.dataset.sr.indexOf(q)>=0?'':'none';});};

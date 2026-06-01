@@ -2,18 +2,6 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<script>
-// Limpar service workers antigos automaticamente
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.getRegistrations().then(function(regs){
-    regs.forEach(function(r){ r.unregister(); });
-  });
-  caches.keys().then(function(keys){
-    keys.forEach(function(k){ caches.delete(k); });
-  });
-}
-</script>
-
 <meta name="theme-color" content="#0f1a35">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -26,65 +14,11 @@ if('serviceWorker' in navigator){
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RE/MAX Space · Caldas Novas GO</title>
-<meta name="version" content="1780097836">
-<link rel="stylesheet" href="app.css?v=104"></head><body>'+
-    '<div style="text-align:center;margin-bottom:6px"><b>RE/MAX SPACE — CALDAS NOVAS</b></div>'+
-    '<h1>Contrato de Representação Imobiliária<br>com Exclusividade</h1>'+
-    '<div class="sub">Caldas Novas — GO, '+hoje+'</div>'+
-
-    '<h2>DAS PARTES</h2>'+
-    '<p><b>OUTORGANTE (PROPRIETÁRIO):</b> '+nome+', portador do CPF nº '+cpf+', RG nº '+rg+', '+
-    'residente e domiciliado em '+end+', telefone '+tel+', e-mail '+email+'.</p>'+
-    '<p><b>OUTORGADA (IMOBILIÁRIA):</b> RE/MAX Space Consultoria Imobiliária, com sede em Caldas Novas — GO, '+
-    'representada pela Corretora Tatiana Basile, inscrita no CRECI/GO, e pelo Corretor '+corNome+
-    (corCreci?', CRECI nº '+corCreci:'')+'.</p>'+
-
-    '<h2>CLÁUSULA 1ª — DO OBJETO</h2>'+
-    '<p>O presente instrumento tem por objeto a autorização exclusiva conferida pelo OUTORGANTE à OUTORGADA '+
-    'para promover a intermediação imobiliária referente ao imóvel: <b>'+imTipo+'</b>, localizado em <b>'+imEnd+'</b>'+
-    (imArea&&imArea!=='_______________'?', com área de '+imArea+' m²':'')+', doravante denominado simplesmente "IMÓVEL".</p>'+
-
-    '<h2>CLÁUSULA 2ª — DA EXCLUSIVIDADE E DO PRAZO</h2>'+
-    '<p>A presente autorização é concedida em caráter de EXCLUSIVIDADE, pelo prazo de <b>'+prazo+' ('+
-    (prazo==='180'?'cento e oitenta':prazo==='90'?'noventa':prazo==='120'?'cento e vinte':prazo)+
-    ') dias</b>, contados da data de assinatura deste instrumento, renovável por igual período, salvo manifestação contrária das partes.</p>'+
-    '<p>Durante a vigência desta exclusividade, o OUTORGANTE se compromete a não celebrar qualquer outro instrumento de representação com terceiros para o mesmo imóvel, sob pena de responder pelas comissões devidas à OUTORGADA.</p>'+
-
-    '<h2>CLÁUSULA 3ª — DO VALOR E DA COMISSÃO</h2>'+
-    '<p>O imóvel é ofertado pelo valor de <b>R$ '+imValor+'</b>. A comissão devida à OUTORGADA é de <b>'+com+'% ('+
-    (com==='6'?'seis':com==='5'?'cinco':com==='7'?'sete':com)+'por cento)</b> sobre o valor efetivo da transação, a ser paga no ato da assinatura do instrumento definitivo ou liberação do financiamento.</p>'+
-
-    '<h2>CLÁUSULA 4ª — DAS OBRIGAÇÕES DA OUTORGADA</h2>'+
-    '<p>A OUTORGADA se compromete a: (i) divulgar o imóvel em portais imobiliários, redes sociais e demais canais de marketing; (ii) realizar visitas com potenciais compradores; (iii) apresentar propostas ao OUTORGANTE; (iv) acompanhar toda a negociação até a conclusão da transação.</p>'+
-
-    '<h2>CLÁUSULA 5ª — DAS OBRIGAÇÕES DO OUTORGANTE</h2>'+
-    '<p>O OUTORGANTE se compromete a: (i) manter o imóvel disponível para visitas; (ii) fornecer toda a documentação necessária; (iii) não negociar diretamente com compradores apresentados pela OUTORGADA sem o seu conhecimento.</p>'+
-
-    '<h2>CLÁUSULA 6ª — DO FORO</h2>'+
-    '<p>Fica eleito o foro da Comarca de Caldas Novas — Estado de Goiás para dirimir quaisquer controvérsias oriundas deste instrumento, com renúncia expressa a qualquer outro, por mais privilegiado que seja.</p>'+
-
-    '<p>Por estarem justas e acordadas, as partes assinam o presente instrumento em 2 (duas) vias de igual teor e forma.</p>'+
-
-    '<div class="ass">'+
-    '<div class="al">'+nome+'<br>CPF: '+cpf+'<br><span style="font-size:9pt;color:#666">Proprietário</span></div>'+
-    '<div class="al">Tatiana Basile / '+corNome+'<br>RE/MAX Space — Caldas Novas<br><span style="font-size:9pt;color:#666">Corretora Responsável</span></div>'+
-    '</div>'+
-    '<p style="text-align:center;margin-top:40px;font-size:10pt">Testemunhas:<br>'+
-    '1. _________________________________ CPF: _______________________<br>'+
-    '2. _________________________________ CPF: _______________________</p>'+
-    '</body></html>';
-
-  var blob=new Blob([doc],{type:'application/msword'});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');
-  a.href=url;
-  a.download='Contrato_Representacao_'+nome.split(' ')[0]+'_'+new Date().toISOString().slice(0,10)+'.doc';
-  a.click();
-  URL.revokeObjectURL(url);
-  alert('Contrato gerado e baixado com sucesso!');
-}
-
-
-</script>
+<link rel="stylesheet" href="app.css?v=105">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<script src="app.js?v=105"></script>
 </body>
 </html>

@@ -4346,7 +4346,7 @@ function pAcoes(){
       r+='<td style="padding:10px 12px;font-size:11px;color:#4a5568;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+iv.end+'</td>';
       r+='<td style="padding:10px 12px;font-size:11px">'+iv.corretor+'</td>';
       ['fotos','video','contrato','ig','site','zap','olx','trafego'].forEach(function(f){
-        r+='<td style="padding:10px 12px;text-align:center"><span onclick="togF('+i+',''+f+'')" style="cursor:pointer;font-size:14px" title="'+(iv[f]?'Marcar como não feito':'Marcar como feito')+'">'+(iv[f]?'✅':'❌')+'</span></td>';
+        r+='<td style="padding:10px 12px;text-align:center"><span onclick="togF('+i+',&quot;'+f+'&quot;)" style="cursor:pointer;font-size:14px">'+(iv[f]?'✅':'❌')+'</span></td>';
       });
       r+='<td style="padding:10px 12px;font-size:10px;color:#94a3b8;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(iv.sit||'-')+'</td>';
       r+='<td style="padding:10px 12px"><div style="display:flex;gap:4px">'+

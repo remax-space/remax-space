@@ -1,4 +1,3 @@
-
 // Limpar service workers antigos automaticamente
 if('serviceWorker' in navigator){
   navigator.serviceWorker.getRegistrations().then(function(regs){

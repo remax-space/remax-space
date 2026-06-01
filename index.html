@@ -9030,110 +9030,69 @@ function abrirModelo(nome){
 }
 
 function baixarModelo(nome){
-  // Gera um documento Word básico via blob
-  var content_doc = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
-    '<!DOCTYPE html>'+
-    '<html><head><meta charset="UTF-8"><title>'+nome+'</title>'+
-    '<style>body{font-family:Arial,sans-serif;font-size:12pt;line-height:1.8;margin:3cm 2.5cm;color:#000}'+
-    'h1{text-align:center;font-size:14pt;text-transform:uppercase;margin-bottom:30px}'+
-    '.campo{border-bottom:1px solid #000;display:inline-block;min-width:200px}&nbsp;'+
-    'p{margin-bottom:12px;text-align:justify}'+
-    '.assinatura{margin-top:60px;display:grid;grid-template-columns:1fr 1fr;gap:40px}'+
-    '.ass-linha{border-top:1px solid #000;padding-top:8px;text-align:center;font-size:10pt}</style></head>'+
-    '<body>'+
-    '<div style="text-align:center;margin-bottom:10px"><img style="height:50px" src="" alt="RE/MAX Space"></div>'+
-    '<h1>'+nome+'</h1>'+
-    '<p><b>Data:</b> _________________ de _________________ de _______</p>'+
-    '<p><b>Local:</b> Caldas Novas — Goiás</p>'+
-    '<br><p>As partes abaixo identificadas celebram o presente instrumento nas condições a seguir:</p>'+
-    '<p><b>PARTE 1 — CONTRATANTE:</b></p>'+
-    '<p>Nome: _______________________________________________<br>'+
-    'CPF: _____________________ RG: _____________________<br>'+
-    'Endereço: _____________________________________________</p>'+
-    '<p><b>PARTE 2 — CONTRATADA:</b></p>'+
-    '<p>RE/MAX Space Consultoria Imobiliária Ltda<br>'+
-    'CNPJ: XX.XXX.XXX/0001-XX<br>'+
-    'Caldas Novas — Goiás</p>'+
-    '<br><p><b>CLÁUSULA 1ª — DO OBJETO</b></p>'+
-    '<p>_____________________________________________________________________________________________________________</p>'+
-    '<p><b>CLÁUSULA 2ª — DO PRAZO</b></p>'+
-    '<p>_____________________________________________________________________________________________________________</p>'+
-    '<p><b>CLÁUSULA 3ª — DO VALOR E FORMA DE PAGAMENTO</b></p>'+
-    '<p>_____________________________________________________________________________________________________________</p>'+
-    '<p><b>CLÁUSULA 4ª — DAS OBRIGAÇÕES DAS PARTES</b></p>'+
-    '<p>_____________________________________________________________________________________________________________</p>'+
-    '<p><b>CLÁUSULA 5ª — DO FORO</b></p>'+
-    '<p>Fica eleito o foro da Comarca de Caldas Novas — GO para dirimir quaisquer controvérsias.</p>'+
-    '<div class="assinatura">'+
-    '<div class="ass-linha">Contratante<br>Nome: ___________________<br>CPF: ___________________</div>'+
-    '<div class="ass-linha">RE/MAX Space<br>Tatiana Basile — CRECI GO-XXXXX<br>Especialista em Contratos</div>'+
+  var hoje = new Date().toLocaleDateString('pt-BR');
+  var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'+
+    '<title>'+nome+'</title>'+
+    '<style>'+
+      '@page{margin:3cm 2.5cm}'+
+      'body{font-family:Arial,sans-serif;font-size:12pt;line-height:1.8;color:#000;max-width:800px;margin:40px auto;padding:40px}'+
+      'h1{text-align:center;font-size:13pt;text-transform:uppercase;margin-bottom:4px;letter-spacing:1px}'+
+      '.sub{text-align:center;font-size:10pt;color:#555;margin-bottom:30px;border-bottom:2px solid #000;padding-bottom:10px}'+
+      'h2{font-size:11pt;font-weight:bold;margin:20px 0 6px;text-transform:uppercase;letter-spacing:.5px}'+
+      'p{margin:0 0 10px;text-align:justify}'+
+      '.campo{display:inline-block;border-bottom:1px solid #000;min-width:200px;padding:0 4px}'+
+      '.ass{margin-top:60px;display:grid;grid-template-columns:1fr 1fr;gap:40px}'+
+      '.al{border-top:1px solid #000;padding-top:8px;text-align:center;font-size:10pt}'+
+      '.test{margin-top:40px;text-align:center;font-size:10pt}'+
+      '.header-logo{text-align:center;margin-bottom:20px;font-size:16pt;font-weight:900;color:#003DA5;letter-spacing:2px}'+
+      '@media print{.no-print{display:none}body{margin:0;padding:0}}'+
+    '</style></head><body>'+
+    '<div class="no-print" style="background:#0d1f4e;color:#fff;padding:12px 20px;margin:-40px -40px 30px;display:flex;align-items:center;justify-content:space-between">'+
+      '<div style="font-size:13px;font-weight:700">📄 '+nome+'</div>'+
+      '<button onclick="window.print()" style="background:#D42028;color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:12px;font-weight:700;cursor:pointer">🖨️ Imprimir / Salvar PDF</button>'+
     '</div>'+
-    '<br><p style="text-align:center;font-size:10pt;color:#666">Testemunhas:<br>1. ___________________________ CPF: ________________<br>2. ___________________________ CPF: ________________</p>'+
+    '<div class="header-logo">RE/MAX SPACE</div>'+
+    '<div style="text-align:center;font-size:10pt;color:#555;margin-bottom:20px">Caldas Novas — Goiás</div>'+
+    '<h1>'+nome+'</h1>'+
+    '<div class="sub">Caldas Novas — GO, '+hoje+'</div>'+
+    '<h2>Das Partes</h2>'+
+    '<p><b>PARTE 1 — CONTRATANTE:</b></p>'+
+    '<p>Nome: <span class="campo">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></p>'+
+    '<p>CPF: <span class="campo">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> &nbsp;&nbsp; RG: <span class="campo">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></p>'+
+    '<p>Endereço: <span class="campo" style="min-width:350px">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></p>'+
+    '<p><b>PARTE 2 — CONTRATADA:</b></p>'+
+    '<p>RE/MAX Space Consultoria Imobiliária Ltda — Caldas Novas — GO</p>'+
+    '<h2>Cláusula 1ª — Do Objeto</h2>'+
+    '<p>_______________________________________________________________________________________</p>'+
+    '<p>_______________________________________________________________________________________</p>'+
+    '<h2>Cláusula 2ª — Do Prazo</h2>'+
+    '<p>_______________________________________________________________________________________</p>'+
+    '<h2>Cláusula 3ª — Do Valor e Forma de Pagamento</h2>'+
+    '<p>_______________________________________________________________________________________</p>'+
+    '<h2>Cláusula 4ª — Das Obrigações das Partes</h2>'+
+    '<p>_______________________________________________________________________________________</p>'+
+    '<p>_______________________________________________________________________________________</p>'+
+    '<h2>Cláusula 5ª — Do Foro</h2>'+
+    '<p>Fica eleito o foro da Comarca de Caldas Novas — GO para dirimir quaisquer controvérsias.</p>'+
+    '<p>Por estarem justas e acordadas, as partes assinam o presente instrumento em 2 (duas) vias.</p>'+
+    '<div class="ass">'+
+      '<div class="al">Contratante<br><br>Nome: ___________________________<br>CPF: ____________________________</div>'+
+      '<div class="al">RE/MAX Space<br>Tatiana Basile — CRECI GO<br>Especialista em Contratos</div>'+
+    '</div>'+
+    '<div class="test">Testemunhas:<br><br>'+
+      '1. _________________________________ CPF: _____________________<br><br>'+
+      '2. _________________________________ CPF: _____________________'+
+    '</div>'+
     '</body></html>';
 
-  var blob = new Blob([content_doc], {type:'application/msword'});
+  var blob = new Blob([html], {type:'text/html;charset=utf-8'});
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
   a.href = url;
-  a.download = nome.replace(/[^a-zA-Z0-9 ]/g,'') + '.doc';
+  a.download = nome.replace(/[^a-zA-Z0-9 ]/g,'_') + '.html';
   a.click();
   URL.revokeObjectURL(url);
   cM();
-}
-
-// Modelo de Representação — acesso também para corretores
-function pModeloRepresentacao(){
-  var html=
-    '<div style="background:#fff;border-radius:14px;border:1px solid #e8edf2;overflow:hidden;max-width:900px;margin:0 auto">'+
-      '<div style="background:#1a6e3a;padding:20px 28px;display:flex;align-items:center;gap:12px">'+
-        '<div style="font-size:28px">🤝</div>'+
-        '<div>'+
-          '<div style="font-size:15px;font-weight:800;color:#fff">Contrato de Representação / Gestão Exclusiva</div>'+
-          '<div style="font-size:12px;color:rgba(255,255,255,.6)">Captação com exclusividade — RE/MAX Space</div>'+
-        '</div>'+
-      '</div>'+
-      '<div style="padding:24px 28px">'+
-        '<div style="font-size:12px;color:#64748b;margin-bottom:20px;background:#f0fdf4;border-radius:8px;padding:12px 16px;border-left:3px solid #1a6e3a">'+
-          '📌 Preencha os dados do proprietário e imóvel abaixo. O contrato será gerado automaticamente para download.'+
-        '</div>'+
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">'+
-          '<div><div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Dados do Proprietário</div>'+
-            mCampo('Nome completo','mod-prop-nome','text')+
-            mCampo('CPF','mod-prop-cpf','text')+
-            mCampo('RG','mod-prop-rg','text')+
-            mCampo('Telefone','mod-prop-tel','text')+
-            mCampo('E-mail','mod-prop-email','email')+
-            mCampo('Endereço completo','mod-prop-end','text')+
-          '</div>'+
-          '<div><div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Dados do Imóvel</div>'+
-            mCampo('Tipo do imóvel','mod-im-tipo','text')+
-            mCampo('Endereço do imóvel','mod-im-end','text')+
-            mCampo('Área (m²)','mod-im-area','text')+
-            mCampo('Valor de venda (R$)','mod-im-valor','text')+
-            mCampo('Prazo de exclusividade (dias)','mod-im-prazo','number')+
-            mCampo('Comissão (%)','mod-im-com','number')+
-          '</div>'+
-        '</div>'+
-        '<div style="margin-bottom:16px"><div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Corretor Responsável</div>'+
-          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">'+
-            mCampo('Nome do corretor','mod-cor-nome','text')+
-            mCampo('CRECI','mod-cor-creci','text')+
-          '</div>'+
-        '</div>'+
-        '<div style="display:flex;gap:10px;justify-content:flex-end">'+
-          '<button onclick="gerarModeloRep()" style="background:#1a6e3a;color:#fff;border:none;border-radius:8px;padding:12px 24px;font-size:13px;font-weight:700;cursor:pointer">📄 Gerar e Baixar Contrato</button>'+
-        '</div>'+
-      '</div>'+
-    '</div>';
-
-  document.getElementById('pc').innerHTML=html;
-}
-
-function mCampo(label, id, tipo){
-  return '<div style="margin-bottom:10px">'+
-    '<label style="font-size:11px;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">'+label+'</label>'+
-    '<input id="'+id+'" type="'+tipo+'" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#0d1829">'+
-  '</div>';
 }
 
 function gerarModeloRep(){

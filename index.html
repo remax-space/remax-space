@@ -8933,16 +8933,28 @@ function pModelos(){
 }
 
 function abrirModelo(nome){
-  oM('📄 '+nome,
-    '<div style="padding:10px 0">'+
-      '<div style="font-size:12px;color:#64748b;margin-bottom:16px">Escolha o que deseja fazer com este modelo:</div>'+
-      '<div style="display:flex;flex-direction:column;gap:10px">'+
-        '<button onclick="baixarModelo(''+nome+'')" style="background:#0d1f4e;color:#fff;border:none;border-radius:8px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;text-align:left">⬇️ Baixar modelo em branco (.docx)</button>'+
-        '<button onclick="cM()" style="background:#f1f5f9;color:#334155;border:none;border-radius:8px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;text-align:left">✕ Fechar</button>'+
-      '</div>'+
-    '</div>',
-    null, null, true
-  );
+  var body = document.createElement('div');
+  body.style.cssText = 'padding:10px 0';
+  var desc = document.createElement('div');
+  desc.style.cssText = 'font-size:12px;color:#64748b;margin-bottom:16px';
+  desc.textContent = 'Escolha o que deseja fazer com este modelo:';
+  body.appendChild(desc);
+  var btnDl = document.createElement('button');
+  btnDl.textContent = '⬇️ Baixar modelo em branco (.doc)';
+  btnDl.style.cssText = 'background:#0d1f4e;color:#fff;border:none;border-radius:8px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;text-align:left;width:100%;margin-bottom:8px';
+  btnDl.onclick = function(){ baixarModelo(nome); };
+  body.appendChild(btnDl);
+  var btnClose = document.createElement('button');
+  btnClose.textContent = '✕ Fechar';
+  btnClose.style.cssText = 'background:#f1f5f9;color:#334155;border:none;border-radius:8px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;text-align:left;width:100%';
+  btnClose.onclick = function(){ cM(); };
+  body.appendChild(btnClose);
+  var mt = document.getElementById('mt');
+  var mb = document.getElementById('mb');
+  var mf = document.getElementById('mf');
+  if(mt) mt.textContent = '📄 ' + nome;
+  if(mb) { mb.innerHTML=''; mb.appendChild(body); }
+  if(mf) mf.style.display='flex';
 }
 
 function baixarModelo(nome){

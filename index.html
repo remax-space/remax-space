@@ -8896,47 +8896,40 @@ function pModelos(){
     document.getElementById('pc').innerHTML='<div style="text-align:center;padding:60px;color:#94a3b8">Acesso restrito ao administrador.</div>';
     return;
   }
-
-  var html='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">';
-
+  var pc=document.getElementById('pc');
+  pc.innerHTML='';
+  var grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px';
   MODELOS_ADM.forEach(function(cat){
-    html+='<div style="background:#fff;border-radius:14px;border:1px solid #e8edf2;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04)">'+
-      '<div style="background:'+cat.cor+';padding:16px 20px;display:flex;align-items:center;gap:10px">'+
-        '<div style="font-size:24px">'+cat.icone+'</div>'+
-        '<div>'+
-          '<div style="font-size:13px;font-weight:800;color:#fff">'+cat.cat+'</div>'+
-          '<div style="font-size:11px;color:rgba(255,255,255,.6)">'+cat.docs.length+' modelos</div>'+
-        '</div>'+
-      '</div>'+
-      '<div style="padding:8px 0">';
-
+    var card=document.createElement('div');
+    card.style.cssText='background:#fff;border-radius:14px;border:1px solid #e8edf2;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04)';
+    var head=document.createElement('div');
+    head.style.cssText='background:'+cat.cor+';padding:16px 20px;display:flex;align-items:center;gap:10px';
+    head.innerHTML='<span style="font-size:22px">'+cat.icone+'</span><div><div style="font-size:13px;font-weight:800;color:#fff">'+cat.cat+'</div><div style="font-size:11px;color:rgba(255,255,255,.6)">'+cat.docs.length+' modelos</div></div>';
+    card.appendChild(head);
+    var body=document.createElement('div');
     cat.docs.forEach(function(doc){
-      html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #f8fafc;cursor:pointer" onclick="abrirModelo(''+doc.nome+'')">'+
-        '<div>'+
-          '<div style="font-size:12px;font-weight:600;color:#0d1829">'+doc.nome+'</div>'+
-          '<div style="font-size:10px;color:#94a3b8;margin-top:1px">'+doc.desc+'</div>'+
-        '</div>'+
-        '<div style="display:flex;gap:6px;flex-shrink:0;margin-left:8px">'+
-          '<button onclick="event.stopPropagation();baixarModelo(''+doc.nome+'')" style="background:#eff6ff;color:#0d1f4e;border:none;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer">⬇ Baixar</button>'+
-        '</div>'+
-      '</div>';
+      var row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #f8fafc;cursor:pointer';
+      var info=document.createElement('div');
+      info.innerHTML='<div style="font-size:12px;font-weight:600;color:#0d1829">'+doc.nome+'</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">'+doc.desc+'</div>';
+      var btn=document.createElement('button');
+      btn.textContent='⬇ Baixar';
+      btn.style.cssText='background:#eff6ff;color:#0d1f4e;border:none;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer;flex-shrink:0;margin-left:8px';
+      btn.onclick=function(e){e.stopPropagation();baixarModelo(doc.nome);};
+      row.appendChild(info);
+      row.appendChild(btn);
+      row.onclick=function(){abrirModelo(doc.nome);};
+      body.appendChild(row);
     });
-
-    html+='</div></div>';
+    card.appendChild(body);
+    grid.appendChild(card);
   });
-
-  html+='</div>'+
-    '<div style="margin-top:20px;background:#fafbfd;border-radius:12px;border:1px solid #e8edf2;padding:20px">'+
-      '<div style="font-size:12px;font-weight:700;color:#0d1829;margin-bottom:8px">📌 Como usar os modelos</div>'+
-      '<div style="font-size:12px;color:#64748b;line-height:1.8">'+
-        '• Clique em <b>Baixar</b> para obter o modelo em Word (.docx) pronto para preencher<br>'+
-        '• Os modelos seguem o padrão jurídico da RE/MAX Space e podem ser editados<br>'+
-        '• Após assinar, salve o documento no Drive do sistema para registro<br>'+
-        '• Dúvidas sobre cláusulas: consulte Tatiana Basile — Especialista em Contratos'+
-      '</div>'+
-    '</div>';
-
-  document.getElementById('pc').innerHTML=html;
+  pc.appendChild(grid);
+  var info=document.createElement('div');
+  info.style.cssText='background:#fafbfd;border-radius:12px;border:1px solid #e8edf2;padding:20px';
+  info.innerHTML='<div style="font-size:12px;font-weight:700;color:#0d1829;margin-bottom:8px">📌 Como usar os modelos</div><div style="font-size:12px;color:#64748b;line-height:1.8">• Clique em <b>Baixar</b> para obter o modelo em Word pronto para preencher<br>• Os modelos seguem o padrão jurídico da RE/MAX Space<br>• Após assinar, salve o documento para registro<br>• Dúvidas: consulte Tatiana Basile — Especialista em Contratos</div>';
+  pc.appendChild(info);
 }
 
 function abrirModelo(nome){

@@ -1786,7 +1786,18 @@ function waMsgRepasseProp(i){
 
 function pWhatsApp(){
   document.getElementById('pt').textContent='📱 Central WhatsApp';
-  document.getElementById('pa').innerHTML='';
+
+  // Configuração dos números
+  var CFG_WA = JSON.parse(localStorage.getItem('wa_config')||'{}');
+  var numLocacao = CFG_WA.locacao||'';
+  var numGeral = CFG_WA.geral||'';
+
+  document.getElementById('pa').innerHTML=
+    '<div style="display:flex;gap:8px;align-items:center">'+
+      '<button onclick="waConfig()" style="background:#fff;color:#0d1f4e;border:1px solid #0d1f4e;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">⚙️ Configurar Números</button>'+
+      (numGeral?'<a href="https://web.whatsapp.com" target="_blank" style="background:#25D366;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none">📱 Abrir WhatsApp Web</a>':'')+
+    '</div>';
+
   var mi=new Date().getMonth();
   var pendentes=ctD.filter(function(c){return c.status!=='Inativo'&&(!c.rs||c.rs[mi]!=='R');});
   var leadsNovos=ldD.filter(function(l){return l.st==='Novo';});
@@ -1795,58 +1806,184 @@ function pWhatsApp(){
   var propVisto={},propAtivos=[];
   ctD.filter(function(c){return c.status!=='Inativo';}).forEach(function(c){if(!propVisto[c.prop]){propVisto[c.prop]=true;propAtivos.push(c.prop);}});
 
+  function waBtn(tel,msg,label,color){
+    if(!tel||tel.length<5) return '<span style="font-size:10px;color:#94a3b8">Sem tel.</span>';
+    var num=tel.replace(/\D/g,'');
+    if(num.length<=11) num='55'+num;
+    var url='https://wa.me/'+num+'?text='+encodeURIComponent(msg);
+    return '<a href="'+url+'" target="_blank" style="background:'+(color||'#25D366')+';color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;text-decoration:none;white-space:nowrap">📱 '+label+'</a>';
+  }
+
+  // Cobranças Locação
   var cobRows=pendentes.map(function(c){
     var inq2=inqCad.find(function(q){return q.ct===c.id||q.nome===c.inq;})||{};
-    var i=ctD.indexOf(c);
-    var temTel=inq2.tel&&inq2.tel.length>5;
-    return '<tr><td><b>'+c.id+'</b></td><td>'+c.inq+'</td><td>'+fmt(c.valor)+'</td><td>dia '+c.venc+'</td>'+
-      '<td>'+(temTel?'<button class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366" onclick="waMsgCobrancaInq('+i+')">📱 Cobrar</button>':'<span style="font-size:10px;color:var(--lm)">Sem tel.</span>')+'</td></tr>';
+    var msg='Olá '+c.inq.split(' ')[0]+'! 😊 Passando para avisar que o aluguel referente ao imóvel está com vencimento no dia '+c.venc+'. Valor: '+fmt(c.valor)+'. Qualquer dúvida estou à disposição! — RE/MAX Space';
+    return '<tr style="border-bottom:1px solid #f4f6f8">'+
+      '<td style="padding:10px 12px"><b style="color:#0d1f4e">'+c.id+'</b></td>'+
+      '<td style="padding:10px 12px;font-size:12px">'+c.inq+'</td>'+
+      '<td style="padding:10px 12px;font-weight:700;color:#b91c1c">'+fmt(c.valor)+'</td>'+
+      '<td style="padding:10px 12px;font-size:11px">dia '+c.venc+'</td>'+
+      '<td style="padding:10px 12px">'+waBtn(inq2.tel,msg,'Cobrar','#25D366')+'</td>'+
+    '</tr>';
   }).join('');
 
+  // Leads Novos
   var leadRows=leadsNovos.map(function(l){
-    var i=ldD.indexOf(l);
-    var temTel=l.tel&&l.tel.length>5&&l.tel!=='-';
-    return '<tr><td><b>'+l.nome+'</b></td><td>'+l.tipo+'</td><td style="font-size:10px">'+l.orig+'</td><td style="font-size:10px">'+l.cor+'</td>'+
-      '<td>'+(temTel?'<button class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366" onclick="waMsgBoasVindasLead('+i+')">📱 Contatar</button>':'<span style="font-size:10px;color:var(--lm)">Sem tel.</span>')+'</td></tr>';
+    var msg='Olá '+l.nome.split(' ')[0]+'! 😊 Aqui é da RE/MAX Space, Caldas Novas. Vi seu interesse em '+l.tipo.toLowerCase()+' e adoraria ajudar! Posso te passar mais informações? — Att, '+l.cor;
+    return '<tr style="border-bottom:1px solid #f4f6f8">'+
+      '<td style="padding:10px 12px;font-weight:700;color:#0d1829">'+l.nome+'</td>'+
+      '<td style="padding:10px 12px"><span style="background:#f1f5f9;color:#334155;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px">'+l.tipo+'</span></td>'+
+      '<td style="padding:10px 12px;font-size:11px;color:#64748b">'+l.orig+'</td>'+
+      '<td style="padding:10px 12px;font-size:11px">'+l.cor+'</td>'+
+      '<td style="padding:10px 12px">'+waBtn(l.tel,msg,'Contatar','#25D366')+'</td>'+
+    '</tr>';
   }).join('');
 
+  // Visitas
   var visitRows=visitasHoje.map(function(ev){
-    var i=agD.indexOf(ev);
-    return '<tr><td><b>'+ev.hr+'</b></td><td style="font-size:11px">'+ev.end+'</td><td>'+ev.cli+'</td><td style="font-size:11px">'+ev.cor+'</td>'+
-      '<td><button class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366" onclick="waMsgConfirmacaoVisita('+i+')">📱 Confirmar</button></td></tr>';
+    var msg='Olá '+ev.cli+'! 😊 Confirmando sua visita ao imóvel em '+ev.end+' hoje às '+ev.hr+'. Qualquer dúvida me chame! — '+ev.cor+', RE/MAX Space';
+    return '<tr style="border-bottom:1px solid #f4f6f8">'+
+      '<td style="padding:10px 12px;font-weight:800;color:#0d1f4e">'+ev.hr+'</td>'+
+      '<td style="padding:10px 12px;font-size:11px">'+ev.end+'</td>'+
+      '<td style="padding:10px 12px;font-size:12px">'+ev.cli+'</td>'+
+      '<td style="padding:10px 12px;font-size:11px">'+ev.cor+'</td>'+
+      '<td style="padding:10px 12px"><a href="https://wa.me/?text='+encodeURIComponent(msg)+'" target="_blank" style="background:#25D366;color:#fff;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;text-decoration:none">📱 Confirmar</a></td>'+
+    '</tr>';
   }).join('');
 
+  // Proprietários
   var propRows=propAtivos.map(function(pNome){
     var pi=propCad.findIndex(function(p){return p.nome===pNome;});
     var prop2=propCad[pi]||{};
     var cts2=ctD.filter(function(c){return c.prop===pNome&&c.status!=='Inativo';});
     var liq=cts2.reduce(function(s,c){return s+c.valor;},0)*0.9;
-    var temTel=prop2.tel&&prop2.tel.length>5;
-    return '<tr><td><b>'+pNome+'</b></td><td style="text-align:center">'+cts2.length+'</td><td style="font-weight:700;color:#059669">'+fmt(liq)+'</td>'+
-      '<td>'+(temTel?'<button class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366" onclick="waMsgRepasseProp('+pi+')">📱 Avisar</button>':'<span style="font-size:10px;color:var(--lm)">Sem tel.</span>')+'</td></tr>';
+    var msg='Olá '+pNome.split(' ')[0]+'! 😊 Informamos que o repasse referente ao(s) seu(s) '+cts2.length+' contrato(s) no valor de '+fmt(liq)+' foi processado. Qualquer dúvida estou à disposição! — RE/MAX Space Locação';
+    return '<tr style="border-bottom:1px solid #f4f6f8">'+
+      '<td style="padding:10px 12px;font-weight:700;color:#0d1829">'+pNome+'</td>'+
+      '<td style="padding:10px 12px;text-align:center">'+cts2.length+'</td>'+
+      '<td style="padding:10px 12px;font-weight:700;color:#1a6e3a">'+fmt(liq)+'</td>'+
+      '<td style="padding:10px 12px">'+waBtn(prop2.tel,msg,'Avisar Repasse','#1a6e3a')+'</td>'+
+    '</tr>';
   }).join('');
 
-  document.getElementById('pc').innerHTML=
-    '<div class="g4" style="margin-bottom:14px">'+
-      '<div class="kc warn"><div class="kc-l">💰 Cobranças</div><div class="kc-v">'+pendentes.length+'</div></div>'+
-      '<div class="kc blue"><div class="kc-l">🔥 Leads Novos</div><div class="kc-v">'+leadsNovos.length+'</div></div>'+
-      '<div class="kc green"><div class="kc-l">🏠 Visitas Hoje</div><div class="kc-v">'+visitasHoje.length+'</div></div>'+
-      '<div class="kc gold"><div class="kc-l">👤 Proprietários</div><div class="kc-v">'+propAtivos.length+'</div></div>'+
+  function secao(titulo, num, badge, badgeCor, thead, tbody, empty){
+    var numBadge = num ? '<span style="background:#25D366;color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;margin-left:8px">'+num+'</span>' : '';
+    return '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden;margin-bottom:14px">'+
+      '<div style="padding:14px 20px;border-bottom:1px solid #edf2f7;background:#fafbfd;display:flex;align-items:center;justify-content:space-between">'+
+        '<div style="display:flex;align-items:center;gap:8px">'+
+          '<div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">'+titulo+'</div>'+
+          numBadge+
+        '</div>'+
+        (badge?'<span style="background:'+badgeCor+';color:#fff;font-size:9px;font-weight:800;padding:2px 10px;border-radius:20px">'+badge+'</span>':'')+
+      '</div>'+
+      '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">'+
+        '<thead style="background:#fafbfd"><tr>'+thead+'</tr></thead>'+
+        '<tbody>'+(tbody||'<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px;font-size:12px">'+empty+'</td></tr>')+'</tbody>'+
+      '</table></div></div>';
+  }
+
+  function th(t){ return '<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #edf2f7">'+t+'</th>'; }
+
+  var pc=document.getElementById('pc');
+
+  // Avisos de números não configurados
+  var avisos='';
+  if(!numLocacao||!numGeral){
+    avisos='<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:16px 20px;margin-bottom:18px;display:flex;align-items:center;gap:12px">'+
+      '<span style="font-size:22px">⚠️</span>'+
+      '<div style="flex:1"><div style="font-size:13px;font-weight:700;color:#92400e">Configure os números do WhatsApp</div>'+
+      '<div style="font-size:12px;color:#b45309;margin-top:2px">Clique em "Configurar Números" para cadastrar o WhatsApp de Locação e o Geral</div></div>'+
+      '<button onclick="waConfig()" style="background:#d97706;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer">Configurar agora</button>'+
+    '</div>';
+  }
+
+  // KPIs
+  var kpis='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">'+
+    '<div style="background:#fff;border-radius:12px;padding:18px 20px;border:1px solid #e8edf2;border-top:3px solid #b91c1c">'+
+      '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Cobranças Pendentes</div>'+
+      '<div style="font-size:28px;font-weight:900;color:#b91c1c;letter-spacing:-1px;margin-bottom:3px">'+pendentes.length+'</div>'+
+      '<div style="font-size:11px;color:#64748b">aluguéis em aberto</div>'+
     '</div>'+
-    '<div class="card" style="margin-bottom:12px"><div class="chd"><h3>💰 Cobranças Pendentes</h3></div>'+
-      '<div class="tw"><table><thead><tr><th>CT</th><th>Inquilino</th><th>Valor</th><th>Venc.</th><th>WhatsApp</th></tr></thead>'+
-      '<tbody>'+(cobRows||'<tr><td colspan="5" style="text-align:center;color:var(--lm);padding:12px">Nenhuma cobrança pendente</td></tr>')+'</tbody></table></div></div>'+
-    '<div class="g2" style="margin-bottom:12px">'+
-      '<div class="card"><div class="chd"><h3>🔥 Leads Novos</h3></div>'+
-        '<div class="tw"><table><thead><tr><th>Nome</th><th>Tipo</th><th>Canal</th><th>Corretor</th><th>WA</th></tr></thead>'+
-        '<tbody>'+(leadRows||'<tr><td colspan="5" style="text-align:center;color:var(--lm);padding:12px">Sem leads novos</td></tr>')+'</tbody></table></div></div>'+
-      '<div class="card"><div class="chd"><h3>🏠 Visitas Hoje</h3></div>'+
-        '<div class="tw"><table><thead><tr><th>Hora</th><th>Imóvel</th><th>Cliente</th><th>Corretor</th><th>WA</th></tr></thead>'+
-        '<tbody>'+(visitRows||'<tr><td colspan="5" style="text-align:center;color:var(--lm);padding:12px">Sem visitas hoje</td></tr>')+'</tbody></table></div></div>'+
+    '<div style="background:#fff;border-radius:12px;padding:18px 20px;border:1px solid #e8edf2;border-top:3px solid #0d1f4e">'+
+      '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Leads Novos</div>'+
+      '<div style="font-size:28px;font-weight:900;color:#0d1f4e;letter-spacing:-1px;margin-bottom:3px">'+leadsNovos.length+'</div>'+
+      '<div style="font-size:11px;color:#64748b">aguardando contato</div>'+
     '</div>'+
-    '<div class="card"><div class="chd"><h3>💰 Repasses — Avisar Proprietários</h3></div>'+
-      '<div class="tw"><table><thead><tr><th>Proprietário</th><th>Contratos</th><th>Repasse Líq.</th><th>WhatsApp</th></tr></thead>'+
-      '<tbody>'+(propRows||'<tr><td colspan="4" style="text-align:center;color:var(--lm);padding:12px">Sem proprietários</td></tr>')+'</tbody></table></div></div>';
+    '<div style="background:#fff;border-radius:12px;padding:18px 20px;border:1px solid #e8edf2;border-top:3px solid #1a6e3a">'+
+      '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Visitas Hoje</div>'+
+      '<div style="font-size:28px;font-weight:900;color:#1a6e3a;letter-spacing:-1px;margin-bottom:3px">'+visitasHoje.length+'</div>'+
+      '<div style="font-size:11px;color:#64748b">para confirmar</div>'+
+    '</div>'+
+    '<div style="background:#fff;border-radius:12px;padding:18px 20px;border:1px solid #e8edf2;border-top:3px solid #b45309">'+
+      '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Proprietários</div>'+
+      '<div style="font-size:28px;font-weight:900;color:#b45309;letter-spacing:-1px;margin-bottom:3px">'+propAtivos.length+'</div>'+
+      '<div style="font-size:11px;color:#64748b">avisar repasse</div>'+
+    '</div>'+
+  '</div>';
+
+  // Números configurados
+  var numInfo = (numLocacao||numGeral) ?
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">'+
+      '<div style="background:#f0fdf4;border-radius:10px;padding:14px 16px;border:1px solid #bbf7d0;display:flex;align-items:center;gap:10px">'+
+        '<span style="font-size:20px">📱</span>'+
+        '<div><div style="font-size:10px;font-weight:800;color:#1a6e3a;letter-spacing:1px;text-transform:uppercase">WhatsApp Locação</div>'+
+        '<div style="font-size:13px;font-weight:700;color:#0d1829">'+(numLocacao||'Não configurado')+'</div></div>'+
+        (numLocacao?'<a href="https://wa.me/55'+numLocacao.replace(/\D/g,'')+'" target="_blank" style="margin-left:auto;background:#25D366;color:#fff;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none">Abrir</a>':'')+
+      '</div>'+
+      '<div style="background:#eff6ff;border-radius:10px;padding:14px 16px;border:1px solid #bfdbfe;display:flex;align-items:center;gap:10px">'+
+        '<span style="font-size:20px">📱</span>'+
+        '<div><div style="font-size:10px;font-weight:800;color:#0d1f4e;letter-spacing:1px;text-transform:uppercase">WhatsApp Geral / Leads</div>'+
+        '<div style="font-size:13px;font-weight:700;color:#0d1829">'+(numGeral||'Não configurado')+'</div></div>'+
+        (numGeral?'<a href="https://wa.me/55'+numGeral.replace(/\D/g,'')+'" target="_blank" style="margin-left:auto;background:#25D366;color:#fff;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none">Abrir</a>':'')+
+      '</div>'+
+    '</div>' : '';
+
+  pc.innerHTML = avisos + kpis + numInfo +
+
+    // LOCAÇÃO — cobranças
+    '<div style="font-size:10px;font-weight:800;color:#b91c1c;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px">'+
+      '<span style="font-size:16px">🏠</span> WhatsApp Locação'+
+    '</div>'+
+    secao('Cobranças Pendentes',pendentes.length,'','',
+      th('CT')+th('Inquilino')+th('Valor')+th('Venc.')+th('Ação'),
+      cobRows,'✅ Nenhuma cobrança pendente')+
+    secao('Avisar Repasses — Proprietários',propAtivos.length,'','',
+      th('Proprietário')+th('Contratos')+th('Repasse Líq.')+th('Ação'),
+      propRows,'Sem proprietários ativos')+
+
+    // GERAL — leads e visitas
+    '<div style="font-size:10px;font-weight:800;color:#0d1f4e;letter-spacing:2px;text-transform:uppercase;margin:18px 0 10px;display:flex;align-items:center;gap:8px">'+
+      '<span style="font-size:16px">🔥</span> WhatsApp Geral / Leads'+
+    '</div>'+
+    secao('Leads Novos para Contatar',leadsNovos.length,'','',
+      th('Nome')+th('Tipo')+th('Canal')+th('Corretor')+th('Ação'),
+      leadRows,'✅ Nenhum lead novo pendente')+
+    secao('Confirmar Visitas de Hoje',visitasHoje.length,'','',
+      th('Hora')+th('Imóvel')+th('Cliente')+th('Corretor')+th('Ação'),
+      visitRows,'Sem visitas hoje');
+}
+
+function waConfig(){
+  var CFG=JSON.parse(localStorage.getItem('wa_config')||'{}');
+  var body=document.createElement('div');
+  body.innerHTML=
+    '<div style="margin-bottom:14px">'+
+      '<label style="font-size:11px;font-weight:700;color:#4a5568;display:block;margin-bottom:6px">📱 WhatsApp Locação (número com DDD)</label>'+
+      '<input id="wa-loc" type="tel" placeholder="Ex: 64999999999" value="'+(CFG.locacao||'')+'" style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box">'+
+      '<div style="font-size:10px;color:#94a3b8;margin-top:4px">Usado para cobranças de aluguel e repasses</div>'+
+    '</div>'+
+    '<div>'+
+      '<label style="font-size:11px;font-weight:700;color:#4a5568;display:block;margin-bottom:6px">📱 WhatsApp Geral / Leads (número com DDD)</label>'+
+      '<input id="wa-ger" type="tel" placeholder="Ex: 64988888888" value="'+(CFG.geral||'')+'" style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box">'+
+      '<div style="font-size:10px;color:#94a3b8;margin-top:4px">Usado para leads, visitas e contato geral</div>'+
+    '</div>';
+  oM('⚙️ Configurar Números WhatsApp', body.innerHTML, function(){
+    var loc=(document.getElementById('wa-loc')||{value:''}).value.replace(/\D/g,'');
+    var ger=(document.getElementById('wa-ger')||{value:''}).value.replace(/\D/g,'');
+    localStorage.setItem('wa_config',JSON.stringify({locacao:loc,geral:ger}));
+    cM();
+    pWhatsApp();
+  }, 'Salvar');
 }
 
 function pRelat(){

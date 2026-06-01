@@ -8044,6 +8044,138 @@ function filtrarExtrato(){
   pExtrato(parseInt(document.getElementById('ext-m').value),parseInt(document.getElementById('ext-a').value));
 }
 
+// ===== DESCONTOS AUTORIZADOS =====
+function getDescontos(prop, mes, ano){
+  var key = 'desc_'+prop.replace(/[^a-z0-9]/gi,'_')+'_'+ano+'_'+mes;
+  return JSON.parse(localStorage.getItem(key)||'[]');
+}
+function saveDescontos(prop, mes, ano, lista){
+  var key = 'desc_'+prop.replace(/[^a-z0-9]/gi,'_')+'_'+ano+'_'+mes;
+  localStorage.setItem(key, JSON.stringify(lista));
+}
+function totalDescontos(prop, mes, ano){
+  return getDescontos(prop,mes,ano).reduce(function(s,d){return s+(d.valor||0);},0);
+}
+
+function abrirDescontos(prop, mes, ano, totalBruto, totalAdm){
+  var lista = getDescontos(prop, mes, ano);
+  var meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  var tipos = ['Conserto/Reparo','IPTU','Condomínio','Seguro','Taxa de Administração Extra','Multa','Outros'];
+
+  function renderLista(){
+    var lista2 = getDescontos(prop, mes, ano);
+    var total = lista2.reduce(function(s,d){return s+(d.valor||0);},0);
+    var liq = (totalBruto * 0.9) - total;
+    var rows = lista2.map(function(d, i){
+      return '<tr style="border-bottom:1px solid #f4f6f8">'+
+        '<td style="padding:8px 12px;font-size:12px;font-weight:600;color:#0d1829">'+d.tipo+'</td>'+
+        '<td style="padding:8px 12px;font-size:12px;color:#4a5568">'+d.desc+'</td>'+
+        '<td style="padding:8px 12px;font-size:12px;color:#4a5568">'+d.data+'</td>'+
+        '<td style="padding:8px 12px;font-weight:700;color:#b91c1c;text-align:right">- '+fmt(d.valor)+'</td>'+
+        '<td style="padding:8px 12px;text-align:center">'+
+          (d.autorizado?'<span style="background:#f0fdf4;color:#1a6e3a;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px">✅ Autorizado</span>':
+          '<span style="background:#fffbeb;color:#b45309;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px">⏳ Pendente</span>')+
+        '</td>'+
+        '<td style="padding:8px 12px;text-align:center">'+
+          '<button onclick="removerDesconto(''+prop.replace(/'/g,"\'")+'',' +mes+','+ano+','+i+')" '+
+          'style="background:#fef2f2;color:#b91c1c;border:none;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer">✕</button>'+
+        '</td>'+
+      '</tr>';
+    }).join('');
+
+    var mb = document.getElementById('mb');
+    if(!mb) return;
+    mb.innerHTML =
+      '<div style="margin-bottom:16px">'+
+        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">'+
+          '<div style="background:#f0fdf4;border-radius:10px;padding:12px;text-align:center">'+
+            '<div style="font-size:10px;color:#4a5568;font-weight:700;text-transform:uppercase;letter-spacing:1px">Aluguel Bruto</div>'+
+            '<div style="font-size:18px;font-weight:800;color:#1a6e3a">'+fmt(totalBruto)+'</div>'+
+          '</div>'+
+          '<div style="background:#fef2f2;border-radius:10px;padding:12px;text-align:center">'+
+            '<div style="font-size:10px;color:#4a5568;font-weight:700;text-transform:uppercase;letter-spacing:1px">Total Descontos</div>'+
+            '<div style="font-size:18px;font-weight:800;color:#b91c1c">- '+fmt(total)+'</div>'+
+          '</div>'+
+          '<div style="background:#eff6ff;border-radius:10px;padding:12px;text-align:center">'+
+            '<div style="font-size:10px;color:#4a5568;font-weight:700;text-transform:uppercase;letter-spacing:1px">Repasse Líquido</div>'+
+            '<div style="font-size:18px;font-weight:800;color:#0d1f4e">'+fmt(Math.max(0,liq))+'</div>'+
+          '</div>'+
+        '</div>'+
+        (lista2.length?
+          '<div style="overflow-x:auto;margin-bottom:16px"><table style="width:100%;border-collapse:collapse">'+
+            '<thead><tr style="background:#fafbfd">'+
+              '<th style="padding:8px 12px;font-size:10px;font-weight:800;color:#4a5568;text-align:left;text-transform:uppercase">Tipo</th>'+
+              '<th style="padding:8px 12px;font-size:10px;font-weight:800;color:#4a5568;text-align:left;text-transform:uppercase">Descrição</th>'+
+              '<th style="padding:8px 12px;font-size:10px;font-weight:800;color:#4a5568;text-align:left;text-transform:uppercase">Data</th>'+
+              '<th style="padding:8px 12px;font-size:10px;font-weight:800;color:#4a5568;text-align:right;text-transform:uppercase">Valor</th>'+
+              '<th style="padding:8px 12px;font-size:10px;font-weight:800;color:#4a5568;text-align:center;text-transform:uppercase">Status</th>'+
+              '<th></th>'+
+            '</tr></thead>'+
+            '<tbody>'+rows+'</tbody>'+
+          '</table></div>':
+          '<div style="text-align:center;padding:16px;color:#94a3b8;font-size:12px;margin-bottom:16px">Nenhum desconto lançado para '+meses[mes]+'/'+ano+'</div>')+
+        '<div style="background:#fafbfd;border-radius:12px;padding:16px;border:1px solid #e8edf2">'+
+          '<div style="font-size:11px;font-weight:800;color:#0d1f4e;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">+ Adicionar Desconto</div>'+
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'+
+            '<div><label style="font-size:11px;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">Tipo</label>'+
+              '<select id="desc-tipo" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">'+
+                tipos.map(function(t){return '<option>'+t+'</option>';}).join('')+
+              '</select></div>'+
+            '<div><label style="font-size:11px;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">Valor (R$)</label>'+
+              '<input id="desc-valor" type="number" placeholder="0,00" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;box-sizing:border-box"></div>'+
+          '</div>'+
+          '<div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:10px">'+
+            '<div><label style="font-size:11px;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">Descrição / Observação</label>'+
+              '<input id="desc-desc" type="text" placeholder="Ex: Conserto do chuveiro autorizado em 15/05" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;box-sizing:border-box"></div>'+
+            '<div><label style="font-size:11px;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">Data</label>'+
+              '<input id="desc-data" type="date" value="'+new Date().toISOString().slice(0,10)+'" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;box-sizing:border-box"></div>'+
+          '</div>'+
+          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'+
+            '<input id="desc-aut" type="checkbox" checked style="width:16px;height:16px;cursor:pointer">'+
+            '<label for="desc-aut" style="font-size:12px;color:#4a5568;cursor:pointer">Proprietário autorizou este desconto</label>'+
+          '</div>'+
+          '<button onclick="addDesconto(''+prop.replace(/'/g,"\'")+'','+mes+','+ano+')" '+
+            'style="background:#0d1f4e;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;width:100%">'+
+            '+ Lançar Desconto'+
+          '</button>'+
+        '</div>'+
+      '</div>';
+  }
+
+  oM('💰 Descontos Autorizados — '+prop+' · '+meses[mes]+'/'+ano,
+    '<div id="mb"></div>', null, null, true);
+  
+  setTimeout(renderLista, 50);
+  window._descProp=prop; window._descMes=mes; window._descAno=ano;
+}
+
+function addDesconto(prop, mes, ano){
+  var tipo=(document.getElementById('desc-tipo')||{value:''}).value;
+  var valor=parseFloat((document.getElementById('desc-valor')||{value:0}).value)||0;
+  var desc=(document.getElementById('desc-desc')||{value:''}).value;
+  var data=(document.getElementById('desc-data')||{value:''}).value;
+  var aut=(document.getElementById('desc-aut')||{checked:true}).checked;
+  if(!valor||valor<=0){alert('Informe o valor do desconto.');return;}
+  var lista=getDescontos(prop,mes,ano);
+  lista.push({tipo:tipo,valor:valor,desc:desc,data:data,autorizado:aut});
+  saveDescontos(prop,mes,ano,lista);
+  // Reabrir para atualizar
+  var contratos=ctD.filter(function(c){return c.prop===prop&&c.status!=='Inativo';});
+  var tb=contratos.reduce(function(s,c){return s+c.valor;},0);
+  abrirDescontos(prop,mes,ano,tb,tb*.1);
+}
+
+function removerDesconto(prop,mes,ano,idx){
+  if(!confirm('Remover este desconto?')) return;
+  var lista=getDescontos(prop,mes,ano);
+  lista.splice(idx,1);
+  saveDescontos(prop,mes,ano,lista);
+  var contratos=ctD.filter(function(c){return c.prop===prop&&c.status!=='Inativo';});
+  var tb=contratos.reduce(function(s,c){return s+c.valor;},0);
+  abrirDescontos(prop,mes,ano,tb,tb*.1);
+}
+
+
 function pExtrato(selMes, selAno){
   var hoje = new Date();
   var mesAtual = (selMes!==undefined) ? selMes : hoje.getMonth();
@@ -8113,6 +8245,7 @@ function pExtrato(selMes, selAno){
       +'<div><h3 style="color:#fff;font-size:16px">'+prop+'</h3>'
       +'<div style="font-size:11px;opacity:.7">'+contratos.length+' contrato(s) — '+meses[mesAtual]+'/'+anoAtual+'</div></div>'
       +'<div style="display:flex;gap:8px">'
+      +'<button onclick="abrirDescontos('+JSON.stringify(prop)+','+mesAtual+','+anoAtual+','+totalBruto+','+totalAdm+')" style="background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer">💸 Descontos</button>'
       +'<button class="btn-extrato-wa" data-prop="'+prop+'" style="background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer">📱 WhatsApp</button>'
       +'<button class="btn-extrato-pdf" data-prop="'+prop+'" style="background:#D42028;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer">📄 PDF</button>'
       +'</div></div></div>'
@@ -8120,7 +8253,8 @@ function pExtrato(selMes, selAno){
       +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">'
       +'<div style="background:#f0fdf4;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--lm)">Aluguel bruto</div><div style="font-size:16px;font-weight:700;color:#166534">'+fmt(totalBruto)+'</div></div>'
       +'<div style="background:#fef2f2;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--lm)">ADM 10%</div><div style="font-size:16px;font-weight:700;color:#dc2626">'+fmt(totalAdm)+'</div></div>'
-      +'<div style="background:#eff6ff;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--lm)">Repasse líq.</div><div style="font-size:16px;font-weight:700;color:#1d4ed8">'+fmt(totalLiq)+'</div></div>'
+      +(function(){var td=totalDescontos(prop,mesAtual,anoAtual);return td>0?'<div style="background:#fef9c3;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--lm)">Descontos</div><div style="font-size:16px;font-weight:700;color:#b45309">- '+fmt(td)+'</div></div>':'';})()+
+      +'<div style="background:#eff6ff;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--lm)">Repasse líq.</div><div style="font-size:16px;font-weight:700;color:#1d4ed8">'+fmt(totalLiq-totalDescontos(prop,mesAtual,anoAtual))+'</div></div>'
       +'<div style="background:#fefce8;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--lm)">Status</div><div style="font-size:13px;font-weight:700">'+recebidos+'/'+contratos.length+'<span style="font-size:10px;color:var(--lm)"> rec.</span></div></div>'
       +'</div>'
       +'<div class="tw"><table><thead><tr><th>CT</th><th>Inquilino</th><th>Tipo</th><th style="text-align:right">Aluguel</th><th style="text-align:right">Repasse</th><th>Venc</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>'

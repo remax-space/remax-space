@@ -8895,40 +8895,57 @@ var MODELOS_ADM = [
 var modelosUpload = {}; // cache local dos uploads
 
 async function uploadModelo(nome, file){
-  if(!sb){ alert('Supabase não conectado'); return; }
-  try{
-    var slug = nome.replace(/[^a-zA-Z0-9]/g,'_').toLowerCase();
-    var ext = file.name.split('.').pop();
-    var path = 'modelos/' + slug + '.' + ext;
-    var {data, error} = await sb.storage.from('documentos').upload(path, file, {upsert:true});
-    if(error) throw error;
-    modelosUpload[nome] = path;
-    // Salvar referência no localStorage
-    var refs = JSON.parse(localStorage.getItem('modelos_refs')||'{}');
+  // Ler arquivo como dataURL para salvar localmente
+  var dataURL = await new Promise(function(resolve){
+    var reader = new FileReader();
+    reader.onload = function(e){ resolve(e.target.result); };
+    reader.readAsDataURL(file);
+  });
+  var refs = JSON.parse(localStorage.getItem('modelos_refs')||'{}');
+  // Tentar Supabase Storage
+  var path = null;
+  if(sb){
+    try{
+      var slug = nome.replace(/[^a-zA-Z0-9]/g,'_').toLowerCase();
+      var ext = file.name.split('.').pop();
+      path = 'modelos/' + slug + '.' + ext;
+      var {data, error} = await sb.storage.from('documentos').upload(path, file, {upsert:true});
+      if(error) path = null;
+    }catch(e){ path = null; }
+  }
+  // Salvar referência + dataURL no localStorage (funciona offline também)
+  refs[nome] = {path:path, nome:file.name, data:new Date().toLocaleDateString('pt-BR'), dataURL:dataURL};
+  try{ localStorage.setItem('modelos_refs', JSON.stringify(refs)); }catch(e){
+    // Se localStorage cheio, salvar sem dataURL
     refs[nome] = {path:path, nome:file.name, data:new Date().toLocaleDateString('pt-BR')};
     localStorage.setItem('modelos_refs', JSON.stringify(refs));
-    return path;
-  }catch(e){
-    console.error('Upload erro:', e);
-    // Fallback: salvar só o nome localmente
-    var refs = JSON.parse(localStorage.getItem('modelos_refs')||'{}');
-    refs[nome] = {path:null, nome:file.name, data:new Date().toLocaleDateString('pt-BR'), local:true};
-    localStorage.setItem('modelos_refs', JSON.stringify(refs));
-    return null;
   }
+  return path||'local';
 }
 
 async function downloadModeloReal(nome){
   var refs = JSON.parse(localStorage.getItem('modelos_refs')||'{}');
   var ref = refs[nome];
   if(!ref){ baixarModelo(nome); return; }
+  // Tentar Supabase Storage
   if(ref.path && sb){
     try{
       var {data} = await sb.storage.from('documentos').createSignedUrl(ref.path, 3600);
       if(data&&data.signedUrl){ window.open(data.signedUrl,'_blank'); return; }
     }catch(e){}
   }
-  alert('Arquivo "'+ref.nome+'" cadastrado em '+ref.data+'. Para baixar, acesse o Supabase Storage ou refaça o upload.');
+  // Fallback: verificar se temos o arquivo em IndexedDB/cache local
+  if(ref.dataURL){
+    var a=document.createElement('a');
+    a.href=ref.dataURL;
+    a.download=ref.nome;
+    a.click();
+    return;
+  }
+  // Informar e pedir novo upload
+  if(confirm('O arquivo "'+ref.nome+'" foi registrado em '+ref.data+' mas não está acessível agora.\n\nClique OK para fazer o upload novamente.')){
+    triggerUploadModelo(nome);
+  }
 }
 
 function triggerUploadModelo(nome){

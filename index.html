@@ -8833,17 +8833,6 @@ document.addEventListener('click', function(e){
   if(wrap&&!wrap.contains(e.target)) closeGS();
 });
 
-</script>
-<div id="toast-nuvem" style="position:fixed;bottom:20px;right:20px;background:#059669;color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;z-index:99999;opacity:0;transition:opacity .4s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.25)">✓ Salvo</div>
-<script>
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.getRegistrations().then(function(regs){
-    regs.forEach(function(r){ r.unregister(); console.log('SW unregistered'); });
-  });
-  if(window.caches){
-    caches.keys().then(function(keys){ keys.forEach(function(k){ caches.delete(k); }); });
-  }
-}
 
 // ===== MODELOS DE CONTRATOS (só admin) =====
 var MODELOS_ADM = [
@@ -9143,6 +9132,7 @@ function gerarModeloRep(){
   URL.revokeObjectURL(url);
   alert('Contrato gerado e baixado com sucesso!');
 }
+
 
 </script>
 </body>

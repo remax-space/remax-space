@@ -4335,41 +4335,49 @@ function pAcoes(){
   var semPortal = ivD.filter(function(iv){return !iv.site&&!iv.zap&&!iv.olx;}).length;
 
   function buildRows(lista){
-    var r='';
+    var tbody = document.createElement('tbody');
+    tbody.id = 'ac-b';
     lista.forEach(function(iv){
       var i=ivD.indexOf(iv);
-      r+='<tr style="border-bottom:1px solid #f4f6f8" data-sr="'+(iv.prop+iv.end+iv.tipo+(iv.corretor||'')).toLowerCase()+'">';
-      r+='<td style="padding:10px 12px">'+sem(iv)+'</td>';
-      r+='<td style="padding:10px 12px;font-weight:800;color:#0d1f4e">'+iv.id+'</td>';
-      r+='<td style="padding:10px 12px"><span style="background:#f1f5f9;color:#334155;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px">'+iv.tipo+'</span></td>';
-      r+='<td style="padding:10px 12px;font-weight:600;font-size:12px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+iv.prop+'</td>';
-      r+='<td style="padding:10px 12px;font-size:11px;color:#4a5568;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+iv.end+'</td>';
-      r+='<td style="padding:10px 12px;font-size:11px">'+iv.corretor+'</td>';
+      var tr=document.createElement('tr');
+      tr.style.borderBottom='1px solid #f4f6f8';
+      tr.dataset.sr=(iv.prop+iv.end+iv.tipo+(iv.corretor||'')).toLowerCase();
+      function td(html,css){var t=document.createElement('td');t.style.cssText='padding:10px 12px;'+(css||'');t.innerHTML=html;return t;}
+      tr.appendChild(td(sem(iv)));
+      tr.appendChild(td('<b style="color:#0d1f4e">'+iv.id+'</b>'));
+      tr.appendChild(td('<span style="background:#f1f5f9;color:#334155;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px">'+iv.tipo+'</span>'));
+      tr.appendChild(td(iv.prop,'font-weight:600;font-size:12px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'));
+      tr.appendChild(td(iv.end,'font-size:11px;color:#4a5568;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'));
+      tr.appendChild(td(iv.corretor,'font-size:11px'));
       ['fotos','video','contrato','ig','site','zap','olx','trafego'].forEach(function(f){
-        r+='<td style="padding:10px 12px;text-align:center"><span onclick="togF('+i+',&quot;'+f+'&quot;)" style="cursor:pointer;font-size:14px">'+(iv[f]?'✅':'❌')+'</span></td>';
+        var cell=document.createElement('td');
+        cell.style.cssText='padding:10px 12px;text-align:center';
+        var span=document.createElement('span');
+        span.style.cssText='cursor:pointer;font-size:14px';
+        span.textContent=iv[f]?'✅':'❌';
+        span.onclick=(function(idx,field){return function(){togF(idx,field);};})(i,f);
+        cell.appendChild(span);
+        tr.appendChild(cell);
       });
-      r+='<td style="padding:10px 12px;font-size:10px;color:#94a3b8;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(iv.sit||'-')+'</td>';
-      r+='<td style="padding:10px 12px"><div style="display:flex;gap:4px">'+
-        '<button style="background:#eff6ff;color:#0d1f4e;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer" onclick="eAcoes('+i+')">Editar</button>'+
-        '<button style="background:#fef2f2;color:#b91c1c;border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer" onclick="excluirImovelSaida('+i+')">✕</button>'+
-      '</div></td>';
-      r+='</tr>';
+      tr.appendChild(td(iv.sit||'-','font-size:10px;color:#94a3b8;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'));
+      var acTd=document.createElement('td');
+      acTd.style.padding='10px 12px';
+      var btnE=document.createElement('button');
+      btnE.textContent='Editar';
+      btnE.style.cssText='background:#eff6ff;color:#0d1f4e;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px';
+      btnE.onclick=(function(idx){return function(){eAcoes(idx);};})(i);
+      var btnD=document.createElement('button');
+      btnD.textContent='✕';
+      btnD.style.cssText='background:#fef2f2;color:#b91c1c;border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer';
+      btnD.onclick=(function(idx){return function(){excluirImovelSaida(idx);};})(i);
+      acTd.appendChild(btnE);
+      acTd.appendChild(btnD);
+      tr.appendChild(acTd);
+      tbody.appendChild(tr);
     });
-    return r;
+    return tbody;
   }
-
-  // Aplicar filtro
-  var listaFiltrada;
-  if(filtroAtual==='sem-fotos') listaFiltrada=ivD.filter(function(iv){return !iv.fotos;});
-  else if(filtroAtual==='sem-video') listaFiltrada=ivD.filter(function(iv){return !iv.video;});
-  else if(filtroAtual==='sem-contrato') listaFiltrada=ivD.filter(function(iv){return !iv.contrato;});
-  else if(filtroAtual==='completos') listaFiltrada=ivD.filter(function(iv){return iv.fotos&&iv.video&&iv.contrato&&iv.site&&iv.zap;});
-  else if(filtroAtual==='sem-portal') listaFiltrada=ivD.filter(function(iv){return !iv.site&&!iv.zap&&!iv.olx;});
-  else listaFiltrada=ivD;
-
-  var r=buildRows(listaFiltrada);
-
-  function filtroBtn(id, label, count, ativo){
+    function filtroBtn(id, label, count, ativo){
     var active = filtroAtual===id;
     return '<button onclick="window._acoesFiltro=''+id+'';pAcoes()" style="background:'+(active?'#0d1f4e':'#fff')+';color:'+(active?'#fff':'#0d1f4e')+';border:1px solid '+(active?'#0d1f4e':'#e2e8f0')+';border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px">'+
       label+' <span style="background:'+(active?'rgba(255,255,255,.2)':'#f1f5f9')+';color:'+(active?'#fff':'#64748b')+';font-size:10px;font-weight:800;padding:1px 7px;border-radius:20px">'+count+'</span>'+
@@ -4432,10 +4440,13 @@ function pAcoes(){
           th('Fotos')+th('Vídeo')+th('Contrato')+th('IG')+th('Site')+th('ZAP')+th('OLX')+th('Tráfego')+
           th('Situação')+th('Ações')+
         '</tr></thead>'+
-        '<tbody id="ac-b">'+r+'</tbody>'+
+        
       '</table></div>'+
     '</div>';
 
+  var tbodyEl=buildRows(listaFiltrada);
+  document.querySelector('#ac-b') && document.querySelector('#ac-b').replaceWith(tbodyEl);
+  document.querySelector('table') && !document.getElementById('ac-b') && document.querySelector('table').appendChild(tbodyEl);
   document.getElementById('ac-si').oninput=function(){
     var q=this.value.toLowerCase();
     document.querySelectorAll('#ac-b tr').forEach(function(row){

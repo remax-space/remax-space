@@ -4710,8 +4710,101 @@ function delMCMV(i){
 }
 
 // ===== CONTRATOS DE LOCACAO (com total mes e saldo) =====
+function relatorioContratos(){
+  var hoje = new Date().toLocaleDateString('pt-BR');
+  var mesAtual = mesAno();
+  var ativos = ctD.filter(function(c){return c.status !== 'Inativo' && c.status !== 'Encerrada';});
+  var encerrados = ctD.filter(function(c){return c.status === 'Encerrada';});
+  var tot = ativos.reduce(function(s,c){return s+c.valor;},0);
+  var adm = tot * 0.1;
+  var liq = tot * 0.9;
+  var mi = new Date().getMonth();
+  var recebidos = ativos.filter(function(c){return c.rs&&c.rs[mi]==='R';});
+  var pendentes = ativos.filter(function(c){return !c.rs||c.rs[mi]!=='R';});
+
+  function row(c, status){
+    var st = c.status === 'Ativa' ? '<span style="background:#f0fdf4;color:#1a6e3a;font-size:9pt;font-weight:700;padding:2px 8px;border-radius:4px">Ativo</span>'
+           : '<span style="background:#fef2f2;color:#b91c1c;font-size:9pt;font-weight:700;padding:2px 8px;border-radius:4px">Encerrado</span>';
+    var pgto = c.rs&&c.rs[mi]==='R'
+      ? '<span style="color:#1a6e3a;font-weight:700">✓ Recebido</span>'
+      : '<span style="color:#b91c1c;font-weight:700">✗ Pendente</span>';
+    return '<tr style="border-bottom:1px solid #f0f0f0">'
+      + '<td style="padding:7px 10px;font-weight:700;color:#003DA5">' + c.id + '</td>'
+      + '<td style="padding:7px 10px;font-size:10pt">' + c.prop + '</td>'
+      + '<td style="padding:7px 10px;font-size:10pt">' + c.inq + '</td>'
+      + '<td style="padding:7px 10px;font-size:10pt">' + c.tipo + '</td>'
+      + '<td style="padding:7px 10px;font-size:9pt;color:#555">' + c.end + '</td>'
+      + '<td style="padding:7px 10px;font-weight:700;text-align:right">' + fmt(c.valor) + '</td>'
+      + '<td style="padding:7px 10px;text-align:center">dia ' + c.venc + '</td>'
+      + '<td style="padding:7px 10px;font-size:9pt">' + (c.inicio||'-') + '</td>'
+      + '<td style="padding:7px 10px;font-size:9pt">' + (c.fim||'-') + '</td>'
+      + '<td style="padding:7px 10px;text-align:center">' + pgto + '</td>'
+      + '<td style="padding:7px 10px;text-align:center">' + st + '</td>'
+      + '</tr>';
+  }
+
+  var rowsAtivos = ativos.map(function(c){return row(c);}).join('');
+  var rowsEnc = encerrados.map(function(c){return row(c);}).join('');
+
+  var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Contratos de Locação — RE/MAX Space</title>'
+    + '<style>'
+    + '@page{margin:2cm}'
+    + 'body{font-family:Arial,sans-serif;font-size:10pt;color:#000;margin:0;padding:24px}'
+    + '.logo{color:#003DA5;font-size:18pt;font-weight:900;letter-spacing:2px}'
+    + 'h1{font-size:13pt;text-transform:uppercase;margin:4px 0}'
+    + '.sub{font-size:10pt;color:#555;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #003DA5}'
+    + '.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}'
+    + '.kpi{background:#f8fafc;border-radius:8px;padding:12px;text-align:center;border:1px solid #e2e8f0}'
+    + '.kpi-l{font-size:9pt;color:#555;text-transform:uppercase;letter-spacing:.5px}'
+    + '.kpi-v{font-size:16pt;font-weight:800;color:#003DA5;margin-top:4px}'
+    + 'h2{font-size:11pt;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#0d1f4e;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0}'
+    + 'table{width:100%;border-collapse:collapse;font-size:9pt}'
+    + 'th{background:#0d1f4e;color:#fff;padding:8px 10px;text-align:left;font-size:8pt;text-transform:uppercase;letter-spacing:.5px}'
+    + 'tr:nth-child(even){background:#f9fafb}'
+    + '.noprint{background:#0d1f4e;color:#fff;padding:10px 20px;margin:-24px -24px 24px;display:flex;align-items:center;justify-content:space-between}'
+    + '@media print{.noprint{display:none}}'
+    + '</style></head><body>'
+    + '<div class="noprint">'
+    +   '<span style="font-size:13px;font-weight:700">📋 Contratos de Locação — RE/MAX Space</span>'
+    +   '<button onclick="window.print()" style="background:#D42028;color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:12px;font-weight:700;cursor:pointer">🖨️ Imprimir / Salvar PDF</button>'
+    + '</div>'
+    + '<div class="logo">RE/MAX SPACE — Caldas Novas</div>'
+    + '<h1>Relatório de Contratos de Locação</h1>'
+    + '<div class="sub">' + hoje + ' · Período: ' + mesAtual + '</div>'
+    + '<div class="kpis">'
+    +   '<div class="kpi"><div class="kpi-l">Contratos Ativos</div><div class="kpi-v">' + ativos.length + '</div></div>'
+    +   '<div class="kpi"><div class="kpi-l">Receita Total</div><div class="kpi-v">' + fmt(tot) + '</div></div>'
+    +   '<div class="kpi"><div class="kpi-l">ADM 10%</div><div class="kpi-v" style="color:#1a6e3a">' + fmt(adm) + '</div></div>'
+    +   '<div class="kpi"><div class="kpi-l">Repasse Líquido</div><div class="kpi-v" style="color:#1a6e3a">' + fmt(liq) + '</div></div>'
+    +   '<div class="kpi"><div class="kpi-l">Recebidos</div><div class="kpi-v" style="color:#1a6e3a">' + recebidos.length + '</div></div>'
+    +   '<div class="kpi"><div class="kpi-l">Pendentes</div><div class="kpi-v" style="color:#b91c1c">' + pendentes.length + '</div></div>'
+    +   '<div class="kpi"><div class="kpi-l">Encerrados</div><div class="kpi-v" style="color:#555">' + encerrados.length + '</div></div>'
+    +   '<div class="kpi"><div class="kpi-l">Total Carteira</div><div class="kpi-v">' + ctD.length + '</div></div>'
+    + '</div>'
+    + '<h2>Contratos Ativos (' + ativos.length + ')</h2>'
+    + '<table><thead><tr>'
+    +   '<th>ID</th><th>Proprietário</th><th>Inquilino</th><th>Tipo</th><th>Endereço</th>'
+    +   '<th>Valor</th><th>Venc.</th><th>Início</th><th>Fim</th><th>Pgto ' + mesAtual + '</th><th>Status</th>'
+    + '</tr></thead><tbody>' + rowsAtivos + '</tbody></table>'
+    + (encerrados.length ? '<h2>Contratos Encerrados (' + encerrados.length + ')</h2>'
+    + '<table><thead><tr>'
+    +   '<th>ID</th><th>Proprietário</th><th>Inquilino</th><th>Tipo</th><th>Endereço</th>'
+    +   '<th>Valor</th><th>Venc.</th><th>Início</th><th>Fim</th><th>Pgto ' + mesAtual + '</th><th>Status</th>'
+    + '</tr></thead><tbody>' + rowsEnc + '</tbody></table>' : '')
+    + '<div style="margin-top:20px;font-size:9pt;color:#555;text-align:right">RE/MAX Space · Caldas Novas — GO · ' + hoje + '</div>'
+    + '</body></html>';
+
+  var blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'Contratos_Locacao_' + new Date().toISOString().slice(0,10) + '.html';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function pLC(){
-  document.getElementById('pa').innerHTML='<button class="btn btn-red" onclick="nCT()">+ Novo Contrato</button> <button class="btn btn-primary" onclick="pReajustes()" style="background:#7c3aed">📈 Reajustes</button>';
+  document.getElementById('pa').innerHTML='<button class="btn btn-red" onclick="nCT()">+ Novo Contrato</button> <button class="btn btn-primary" onclick="pReajustes()" style="background:#7c3aed">📈 Reajustes</button> <button class="btn btn-primary" onclick="relatorioContratos()" style="background:#0d1f4e">🖨️ Relatório</button>';
   var tot=ctD.reduce(function(s,c){return s+c.valor;},0);
   var adm=tot*0.1, liq=tot*0.9;
   var recMes=ctD.filter(function(c){return c.rs&&c.rs[new Date().getMonth()]==='R';}).reduce(function(s,c){return s+c.valor;},0);
@@ -4774,7 +4867,7 @@ function pLC(){
     '<div style="background:rgba(255,255,255,.1);border-radius:8px;padding:6px 12px"><div style="font-size:9px;opacity:.7">Recebido no mes</div><div style="font-size:16px;font-weight:700;color:#6ee7b7">'+fmt(recMes)+'</div></div>'+
     '</div></div>'+
     '<div class="card"><div class="fbar"><input class="sinp" placeholder="Buscar..." id="ct-si"><div class="chip on" onclick="fSt(this,\'ct-b\',\'todos\')">Todos</div><div class="chip" onclick="fSt(this,\'ct-b\',\'Ativa\')">Ativos</div><div class="chip" onclick="fSt(this,\'ct-b\',\'Encerrada\')">Encerrados</div></div>'+
-    '<div class="tw"><table><thead><tr><th>ID</th><th>Proprietario</th><th>Inquilino</th><th>Tipo</th><th>Endereco</th><th>Valor</th><th>Venc</th><th>Inicio</th><th>Fim</th><th>Corretor</th><th>Status</th><th>Acoes</th></tr></thead><tbody id="ct-b">'+r+'</tbody></table></div></div>';
+    '<div class="tw"><table><thead><tr><th>ID</th><th>Proprietário</th><th>Inquilino</th><th>Tipo</th><th>Endereço</th><th>Valor</th><th>Venc</th><th>Início</th><th>Fim</th><th>Corretor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="ct-b">'+r+'</tbody></table></div></div>';
   document.getElementById('ct-si').oninput=function(){var q=this.value.toLowerCase();document.querySelectorAll('#ct-b tr').forEach(function(r){r.style.display=r.dataset.sr.indexOf(q)>=0?'':'none';});};
   ctD.forEach(function(c,i){
     ied(document.getElementById('cp-'+i), c.prop, function(v){ctD[i].prop=v;});
@@ -4786,9 +4879,10 @@ function excluirCT(i){
   var c = ctD[i];
   excluirComSenha(
     'Contrato '+c.id,
-    'Excluir contrato <b>'+c.id+'</b> — '+c.prop+' / '+c.inq+' ('+fmt(c.valor)+'/mês)',
+    'Arquivar contrato <b>'+c.id+'</b> — '+c.prop+' / '+c.inq+' ('+fmt(c.valor)+'/mês)?<br><small style="color:#64748b">O contrato será marcado como Encerrado e ficará no histórico.</small>',
     function(){
-      ctD.splice(i,1);
+      ctD[i].status = 'Encerrada';
+      ctD[i].encerradoEm = new Date().toISOString().slice(0,10);
       salvarTudo();
       pLC();
     }
@@ -4808,7 +4902,7 @@ function nCT(){
 // ===== REPASSES =====
 function pLR(){
   var tot=ctD.reduce(function(s,c){return s+c.valor;},0);
-  var hdr='<th>ID</th><th>Proprietario</th><th>Inquilino</th><th>Valor</th>';
+  var hdr='<th>ID</th><th>Proprietário</th><th>Inquilino</th><th>Valor</th>';
   MES.forEach(function(m){hdr+='<th style="min-width:32px;text-align:center">'+m+'</th>';});
   hdr+='<th>ADM</th><th>Forma</th><th>Banco</th><th>Obs</th><th></th>';
   var r='';
@@ -5127,8 +5221,8 @@ function pLV(){
   document.getElementById('pc').innerHTML=
     '<div class="card"><div class="chd"><h3>Arquivo de Laudos de Vistoria</h3></div>'+
     '<div class="tw"><table><thead><tr>'+
-    '<th>Num</th><th>Tipo</th><th>Proprietario</th><th>Inquilino</th><th>Data/Hora</th><th>Vistoriador</th>'+
-    '<th>Resultado</th><th>Assinado</th><th>Contestado</th><th>Arquivos</th><th>Acoes</th>'+
+    '<th>Num</th><th>Tipo</th><th>Proprietário</th><th>Inquilino</th><th>Data/Hora</th><th>Vistoriador</th>'+
+    '<th>Resultado</th><th>Assinado</th><th>Contestado</th><th>Arquivos</th><th>Ações</th>'+
     '</tr></thead><tbody>'+r+'</tbody></table></div></div>';
 }
 
@@ -6625,7 +6719,7 @@ function pIV(){
     '<div class="chip" onclick="fIV(this,\'sem-ilist\')">Fora iList</div>'+
     '<div class="chip" onclick="fIV(this,\'critico\')">Criticos</div>'+
     '<select class="chip" style="border:1px solid var(--lb)" onchange="fIVCor(this.value)">'+cors+'</select></div>'+
-    '<div class="tw"><table><thead><tr><th></th><th>ID</th><th>Tipo</th><th>Prop.</th><th>Endereco</th><th>Valor</th><th>Corretor</th><th>V/A</th><th>CT</th><th>Foto</th><th>iList</th><th>Gestao</th><th>Situacao</th><th>Acoes</th></tr></thead><tbody id="iv-b">'+r+'</tbody></table></div></div>';
+    '<div class="tw"><table><thead><tr><th></th><th>ID</th><th>Tipo</th><th>Prop.</th><th>Endereço</th><th>Valor</th><th>Corretor</th><th>V/A</th><th>CT</th><th>Foto</th><th>iList</th><th>Gestao</th><th>Situacao</th><th>Ações</th></tr></thead><tbody id="iv-b">'+r+'</tbody></table></div></div>';
   document.getElementById('iv-si').oninput=function(){var q=this.value.toLowerCase();document.querySelectorAll('#iv-b tr').forEach(function(r){r.style.display=r.dataset.sr.indexOf(q)>=0?'':'none';});};
 }
 function fIV(el,val){el.parentElement.querySelectorAll('.chip:not(select)').forEach(function(c){c.classList.remove('on');});el.classList.add('on');document.querySelectorAll('#iv-b tr').forEach(function(r){r.style.display=(val==='todos'||(' '+r.dataset.fl+' ').indexOf(' '+val+' ')>=0)?'':'none';});}
@@ -6771,7 +6865,7 @@ function pProp(){
     '<div class="g3"><div class="kc green"><div class="kc-l">Total aluguel/mes</div><div class="kc-v">'+fmt(tot)+'</div></div>'+
     '<div class="kc blue"><div class="kc-l">ADM 10%</div><div class="kc-v">'+fmt(tot*.1)+'</div></div>'+
     '<div class="kc gold"><div class="kc-l">Repasse liquido</div><div class="kc-v">'+fmt(tot*.9)+'</div></div></div>'+
-    '<div class="card"><div class="tw"><table><thead><tr><th>Proprietario</th><th>Contratos</th><th>Aluguel total</th><th>ADM 10%</th><th>Repasse liquido</th><th>Status</th></tr></thead><tbody>'+r+'</tbody></table></div></div>';
+    '<div class="card"><div class="tw"><table><thead><tr><th>Proprietário</th><th>Contratos</th><th>Aluguel total</th><th>ADM 10%</th><th>Repasse liquido</th><th>Status</th></tr></thead><tbody>'+r+'</tbody></table></div></div>';
 }
 
 // ===== FINANCEIRO =====
@@ -7194,7 +7288,7 @@ function pFRP(){
   var ri='';
   if(inativos.length){
     ri='<div style="margin-top:16px"><div class="chd" style="background:#f3f4f6"><h3 style="color:var(--lm)">Inativos / Contratos Encerrados</h3></div>'+
-    '<div class="tw"><table><thead><tr style="background:#f9fafb"><th>Proprietario</th><th>Inquilino</th><th>Valor</th><th>Motivo</th><th>Acao</th></tr></thead><tbody>';
+    '<div class="tw"><table><thead><tr style="background:#f9fafb"><th>Proprietário</th><th>Inquilino</th><th>Valor</th><th>Motivo</th><th>Acao</th></tr></thead><tbody>';
     inativos.forEach(function(c){
       var i=ctD.indexOf(c);
       ri+='<tr style="opacity:.6"><td>'+c.prop+'</td><td>'+c.inq+'</td><td>'+fmt(c.valor)+'</td><td>'+( c.motivoInativo||'Contrato encerrado')+'</td>'+
@@ -7208,7 +7302,7 @@ function pFRP(){
     '<div class="kc red"><div class="kc-l">ADM 10%</div><div class="kc-v">'+fmt(tot*.1)+'</div></div>'+
     '<div class="kc gold"><div class="kc-l">A repassar</div><div class="kc-v">'+fmt(tot*.9)+'</div></div></div>'+
     '<div class="card"><div class="chd"><h3>Repasses a Proprietários — '+mesAno()+'</h3><small style="color:var(--lm)">Clique nos campos para editar</small></div>'+
-    '<div class="tw"><table><thead><tr><th>Proprietario</th><th>Inquilino</th><th>Aluguel</th><th>ADM 10%</th><th>Repasse liq.</th><th>Venc.</th><th>Recebido?</th><th>Forma</th><th>Banco</th><th>PIX/Conta</th><th>Acao</th></tr></thead><tbody>'+r+'</tbody></table></div>'+ri+'</div>';
+    '<div class="tw"><table><thead><tr><th>Proprietário</th><th>Inquilino</th><th>Aluguel</th><th>ADM 10%</th><th>Repasse liq.</th><th>Venc.</th><th>Recebido?</th><th>Forma</th><th>Banco</th><th>PIX/Conta</th><th>Acao</th></tr></thead><tbody>'+r+'</tbody></table></div>'+ri+'</div>';
 
   ativos.forEach(function(c){
     (function(i){
@@ -7469,7 +7563,7 @@ function showRepTab(n){
 function renderRepTab1(){
   // Chama pLR mas renderiza no panel
   var tot=ctD.filter(function(c){return c.status!=='Inativo';}).reduce(function(s,c){return s+c.valor;},0);
-  var hdr='<th>ID</th><th>Proprietario</th><th>Inquilino</th><th>Valor</th>';
+  var hdr='<th>ID</th><th>Proprietário</th><th>Inquilino</th><th>Valor</th>';
   MES.forEach(function(m){hdr+='<th style="min-width:32px;text-align:center">'+m+'</th>';});
   hdr+='<th>ADM</th><th>Forma</th><th>Banco</th><th>Obs</th><th></th>';
   var r='';
@@ -8770,7 +8864,7 @@ pAcm=function(){
       '<button class="btn btn-xs btn-red" onclick="pdfACM('+i+')">PDF</button>'+
       '</td></tr>';
   });
-  document.getElementById('pc').innerHTML='<div class="card"><div class="tw"><table><thead><tr><th>Imovel</th><th>Tipo</th><th>Proprietario</th><th>Corretor</th><th>Data</th><th>Valor</th><th>Amostras</th><th>Feito</th><th>Apres.</th><th>Acoes</th></tr></thead><tbody>'+r+'</tbody></table></div></div>';
+  document.getElementById('pc').innerHTML='<div class="card"><div class="tw"><table><thead><tr><th>Imovel</th><th>Tipo</th><th>Proprietário</th><th>Corretor</th><th>Data</th><th>Valor</th><th>Amostras</th><th>Feito</th><th>Apres.</th><th>Ações</th></tr></thead><tbody>'+r+'</tbody></table></div></div>';
 };
 
 function abrirACM(i){
@@ -8833,7 +8927,7 @@ function pdfACM(i){
     '<div style="flex:1;border:1px solid #e2e5ed;border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase">Otimista</div><div style="font-size:17px;font-weight:900">'+fBRL(res.otim)+'</div></div></div>':'<p>Sem amostras.</p>';
   var h='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;font-size:12px;color:#111;margin:0}.c{background:#0f1a35;color:#fff;padding:32px 40px}.s{padding:16px 40px;border-bottom:1px solid #e2e5ed}.s h2{font-size:11px;font-weight:800;color:#D42028;text-transform:uppercase;margin-bottom:8px}table{width:100%;border-collapse:collapse;font-size:11px}th{background:#f0f4ff;padding:5px 8px;text-align:left;font-size:9px;text-transform:uppercase}td{padding:5px 8px;border-bottom:1px solid #e2e5ed}.ft{background:#0f1a35;color:#fff;padding:8px 40px;font-size:9px;display:flex;justify-content:space-between}@media print{body{-webkit-print-color-adjust:exact}}</style></head><body>'+
     '<div class="c"><div style="font-size:15px;font-weight:900;letter-spacing:2px">RE/MAX SPACE</div><div style="font-size:10px;opacity:.6;margin-bottom:12px">CRECI 41.377-J - Caldas Novas GO</div><div style="font-size:19px;font-weight:900">ESTUDO DE MERCADO</div><div style="opacity:.7;font-size:12px;margin-top:3px">'+a.im+'</div></div>'+
-    '<div class="s"><h2>Imovel</h2><table><tr><th>Proprietario</th><th>Tipo</th><th>Area</th><th>Corretor</th></tr><tr><td>'+a.prop+'</td><td>'+a.tipo+'</td><td>'+(a.area||'-')+'m2</td><td>'+a.cor+'</td></tr></table></div>'+
+    '<div class="s"><h2>Imovel</h2><table><tr><th>Proprietário</th><th>Tipo</th><th>Area</th><th>Corretor</th></tr><tr><td>'+a.prop+'</td><td>'+a.tipo+'</td><td>'+(a.area||'-')+'m2</td><td>'+a.cor+'</td></tr></table></div>'+
     '<div class="s"><h2>Cenarios</h2>'+cens+'</div>'+
     (rows?'<div class="s"><h2>Amostras</h2><table><thead><tr><th>#</th><th>Fonte</th><th>Ref</th><th>Area</th><th>Valor</th><th>R$/m2</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'')+
     (a.parecer?'<div class="s"><h2>Parecer</h2><p>'+a.parecer+'</p></div>':'')+
@@ -8871,7 +8965,7 @@ function pContratos(){
       '</td></tr>';
   });
   document.getElementById('pc').innerHTML='<div class="card">'+
-    (ctContratos.length?'<div class="tw"><table><thead><tr><th>#</th><th>Proprietario</th><th>Imovel</th><th>Comissao</th><th>Data</th><th>Status</th><th>Acoes</th></tr></thead><tbody>'+r+'</tbody></table></div>'
+    (ctContratos.length?'<div class="tw"><table><thead><tr><th>#</th><th>Proprietário</th><th>Imovel</th><th>Comissao</th><th>Data</th><th>Status</th><th>Ações</th></tr></thead><tbody>'+r+'</tbody></table></div>'
     :'<div style="text-align:center;padding:40px;color:#6b7280"><div style="font-size:32px">📄</div><div style="margin-top:8px;font-weight:700">Nenhum contrato</div><div style="font-size:12px">Clique em + Novo Contrato</div></div>')+'</div>';
 }
 

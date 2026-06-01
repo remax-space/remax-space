@@ -4318,28 +4318,199 @@ function delDocs(i){
 
 // ===== ACOES NO IMOVEL (com tipo, proprietario e EXCLUIR) =====
 function pAcoes(){
-  document.getElementById('pa').innerHTML='<button class="btn btn-red" onclick="pIV()">Ver todos os imoveis</button>';
-  var r='';
-  ivD.forEach(function(iv,i){
-    r+='<tr data-sr="'+(iv.prop+iv.end+iv.tipo+iv.corretor).toLowerCase()+'">';
-    r+='<td>'+sem(iv)+'</td>';
-    r+='<td style="font-weight:700;color:var(--navy)">'+iv.id+'</td>';
-    r+='<td><span class="badge bgr" style="font-size:9px">'+iv.tipo+'</span></td>';
-    r+='<td style="font-weight:600;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+iv.prop+'">'+iv.prop+'</td>';
-    r+='<td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px">'+iv.end+'</td>';
-    r+='<td style="font-size:10.5px">'+iv.corretor+'</td>';
-    ['fotos','video','ig','fb','zap','olx','site','trafego'].forEach(function(f){
-      r+='<td style="text-align:center"><span onclick="togF('+i+',\''+f+'\')" style="cursor:pointer;font-size:13px">'+(iv[f]?'&#9989;':'&#10060;')+'</span></td>';
+  document.getElementById('pa').innerHTML=
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+      '<button onclick="pIV()" style="background:#fff;color:#0d1f4e;border:1px solid #0d1f4e;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">📋 Ver todos os imóveis</button>'+
+      '<button onclick="relAcoes()" style="background:#0d1f4e;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">🖨️ Gerar Relatório PDF</button>'+
+    '</div>';
+
+  // Filtro atual
+  var filtroAtual = window._acoesFiltro || 'todos';
+
+  var total = ivD.length;
+  var semFotos = ivD.filter(function(iv){return !iv.fotos;}).length;
+  var semVideo = ivD.filter(function(iv){return !iv.video;}).length;
+  var semContrato = ivD.filter(function(iv){return !iv.contrato;}).length;
+  var completos = ivD.filter(function(iv){return iv.fotos&&iv.video&&iv.contrato&&iv.site&&iv.zap;}).length;
+  var semPortal = ivD.filter(function(iv){return !iv.site&&!iv.zap&&!iv.olx;}).length;
+
+  function buildRows(lista){
+    var r='';
+    lista.forEach(function(iv){
+      var i=ivD.indexOf(iv);
+      r+='<tr style="border-bottom:1px solid #f4f6f8" data-sr="'+(iv.prop+iv.end+iv.tipo+(iv.corretor||'')).toLowerCase()+'">';
+      r+='<td style="padding:10px 12px">'+sem(iv)+'</td>';
+      r+='<td style="padding:10px 12px;font-weight:800;color:#0d1f4e">'+iv.id+'</td>';
+      r+='<td style="padding:10px 12px"><span style="background:#f1f5f9;color:#334155;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px">'+iv.tipo+'</span></td>';
+      r+='<td style="padding:10px 12px;font-weight:600;font-size:12px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+iv.prop+'</td>';
+      r+='<td style="padding:10px 12px;font-size:11px;color:#4a5568;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+iv.end+'</td>';
+      r+='<td style="padding:10px 12px;font-size:11px">'+iv.corretor+'</td>';
+      ['fotos','video','contrato','ig','site','zap','olx','trafego'].forEach(function(f){
+        r+='<td style="padding:10px 12px;text-align:center"><span onclick="togF('+i+',''+f+'')" style="cursor:pointer;font-size:14px" title="'+(iv[f]?'Marcar como não feito':'Marcar como feito')+'">'+(iv[f]?'✅':'❌')+'</span></td>';
+      });
+      r+='<td style="padding:10px 12px;font-size:10px;color:#94a3b8;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(iv.sit||'-')+'</td>';
+      r+='<td style="padding:10px 12px"><div style="display:flex;gap:4px">'+
+        '<button style="background:#eff6ff;color:#0d1f4e;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer" onclick="eAcoes('+i+')">Editar</button>'+
+        '<button style="background:#fef2f2;color:#b91c1c;border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer" onclick="excluirImovelSaida('+i+')">✕</button>'+
+      '</div></td>';
+      r+='</tr>';
     });
-    r+='<td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:var(--lm)">'+iv.sit+'</td>';
-    r+='<td style="display:flex;gap:3px"><button class="btn btn-sm btn-blue" onclick="eAcoes('+i+')">Editar</button><button class="btn btn-sm btn-gray" onclick="excluirImovelSaida('+i+')" title="Remover ao sair">Del</button></td>';
-    r+='</tr>';
-  });
-  document.getElementById('pc').innerHTML=
-    '<div class="card"><div class="fbar"><input class="sinp" placeholder="Buscar por prop., imovel, corretor..." id="ac-si"></div>'+
-    '<div class="tw"><table><thead><tr><th></th><th>ID</th><th>Tipo</th><th>Proprietario</th><th>Endereco</th><th>Corretor</th><th>Fotos</th><th>Vid.</th><th>IG</th><th>FB</th><th>ZAP</th><th>OLX</th><th>Site</th><th>Traf.</th><th>Situacao</th><th>Acoes</th></tr></thead><tbody id="ac-b">'+r+'</tbody></table></div></div>';
-  document.getElementById('ac-si').oninput=function(){var q=this.value.toLowerCase();document.querySelectorAll('#ac-b tr').forEach(function(r){r.style.display=r.dataset.sr.indexOf(q)>=0?'':'none';});};
+    return r;
+  }
+
+  // Aplicar filtro
+  var listaFiltrada;
+  if(filtroAtual==='sem-fotos') listaFiltrada=ivD.filter(function(iv){return !iv.fotos;});
+  else if(filtroAtual==='sem-video') listaFiltrada=ivD.filter(function(iv){return !iv.video;});
+  else if(filtroAtual==='sem-contrato') listaFiltrada=ivD.filter(function(iv){return !iv.contrato;});
+  else if(filtroAtual==='completos') listaFiltrada=ivD.filter(function(iv){return iv.fotos&&iv.video&&iv.contrato&&iv.site&&iv.zap;});
+  else if(filtroAtual==='sem-portal') listaFiltrada=ivD.filter(function(iv){return !iv.site&&!iv.zap&&!iv.olx;});
+  else listaFiltrada=ivD;
+
+  var r=buildRows(listaFiltrada);
+
+  function filtroBtn(id, label, count, ativo){
+    var active = filtroAtual===id;
+    return '<button onclick="window._acoesFiltro=''+id+'';pAcoes()" style="background:'+(active?'#0d1f4e':'#fff')+';color:'+(active?'#fff':'#0d1f4e')+';border:1px solid '+(active?'#0d1f4e':'#e2e8f0')+';border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px">'+
+      label+' <span style="background:'+(active?'rgba(255,255,255,.2)':'#f1f5f9')+';color:'+(active?'#fff':'#64748b')+';font-size:10px;font-weight:800;padding:1px 7px;border-radius:20px">'+count+'</span>'+
+    '</button>';
+  }
+
+  function th(t){ return '<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #edf2f7;white-space:nowrap">'+t+'</th>'; }
+
+  var pc=document.getElementById('pc');
+  pc.innerHTML=
+
+    // KPIs
+    '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px">'+
+      '<div style="background:#fff;border-radius:12px;padding:16px 18px;border:1px solid #e8edf2;border-top:3px solid #0d1f4e">'+
+        '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Total</div>'+
+        '<div style="font-size:26px;font-weight:900;color:#0d1829">'+total+'</div>'+
+        '<div style="font-size:10px;color:#64748b">imóveis na carteira</div>'+
+      '</div>'+
+      '<div style="background:#fff;border-radius:12px;padding:16px 18px;border:1px solid #e8edf2;border-top:3px solid #1a6e3a">'+
+        '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Completos</div>'+
+        '<div style="font-size:26px;font-weight:900;color:#1a6e3a">'+completos+'</div>'+
+        '<div style="font-size:10px;color:#64748b">fotos+vídeo+contrato+portais</div>'+
+      '</div>'+
+      '<div style="background:#fff;border-radius:12px;padding:16px 18px;border:1px solid #e8edf2;border-top:3px solid #b91c1c">'+
+        '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Sem Fotos</div>'+
+        '<div style="font-size:26px;font-weight:900;color:#b91c1c">'+semFotos+'</div>'+
+        '<div style="font-size:10px;color:#64748b">precisam de fotos</div>'+
+      '</div>'+
+      '<div style="background:#fff;border-radius:12px;padding:16px 18px;border:1px solid #e8edf2;border-top:3px solid #b45309">'+
+        '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Sem Contrato</div>'+
+        '<div style="font-size:26px;font-weight:900;color:#b45309">'+semContrato+'</div>'+
+        '<div style="font-size:10px;color:#64748b">sem contrato assinado</div>'+
+      '</div>'+
+      '<div style="background:#fff;border-radius:12px;padding:16px 18px;border:1px solid #e8edf2;border-top:3px solid #5b21b6">'+
+        '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Sem Portal</div>'+
+        '<div style="font-size:26px;font-weight:900;color:#5b21b6">'+semPortal+'</div>'+
+        '<div style="font-size:10px;color:#64748b">sem ZAP/OLX/Site</div>'+
+      '</div>'+
+    '</div>'+
+
+    // Filtros
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'+
+      filtroBtn('todos','📋 Todos',total,'todos')+
+      filtroBtn('completos','✅ Completos',completos,'completos')+
+      filtroBtn('sem-fotos','📷 Sem Fotos',semFotos,'sem-fotos')+
+      filtroBtn('sem-video','🎥 Sem Vídeo',semVideo,'sem-video')+
+      filtroBtn('sem-contrato','📋 Sem Contrato',semContrato,'sem-contrato')+
+      filtroBtn('sem-portal','🌐 Sem Portal',semPortal,'sem-portal')+
+    '</div>'+
+
+    // Tabela
+    '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
+      '<div style="padding:12px 16px;border-bottom:1px solid #edf2f7;background:#fafbfd;display:flex;align-items:center;justify-content:space-between">'+
+        '<div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">'+listaFiltrada.length+' imóveis</div>'+
+        '<input id="ac-si" placeholder="🔍 Buscar por proprietário, endereço, corretor..." style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;width:280px">'+
+      '</div>'+
+      '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">'+
+        '<thead style="background:#fafbfd"><tr>'+
+          th('IA')+th('ID')+th('Tipo')+th('Proprietário')+th('Endereço')+th('Corretor')+
+          th('Fotos')+th('Vídeo')+th('Contrato')+th('IG')+th('Site')+th('ZAP')+th('OLX')+th('Tráfego')+
+          th('Situação')+th('Ações')+
+        '</tr></thead>'+
+        '<tbody id="ac-b">'+r+'</tbody>'+
+      '</table></div>'+
+    '</div>';
+
+  document.getElementById('ac-si').oninput=function(){
+    var q=this.value.toLowerCase();
+    document.querySelectorAll('#ac-b tr').forEach(function(row){
+      row.style.display=(row.dataset.sr||'').includes(q)?'':'none';
+    });
+  };
 }
+
+function relAcoes(){
+  var filtro = window._acoesFiltro || 'todos';
+  var lista;
+  if(filtro==='sem-fotos') lista=ivD.filter(function(iv){return !iv.fotos;});
+  else if(filtro==='sem-video') lista=ivD.filter(function(iv){return !iv.video;});
+  else if(filtro==='sem-contrato') lista=ivD.filter(function(iv){return !iv.contrato;});
+  else if(filtro==='completos') lista=ivD.filter(function(iv){return iv.fotos&&iv.video&&iv.contrato&&iv.site&&iv.zap;});
+  else if(filtro==='sem-portal') lista=ivD.filter(function(iv){return !iv.site&&!iv.zap&&!iv.olx;});
+  else lista=ivD;
+
+  var titulos={'todos':'Todos os Imóveis','sem-fotos':'Imóveis sem Fotos','sem-video':'Imóveis sem Vídeo',
+    'sem-contrato':'Imóveis sem Contrato','completos':'Imóveis Completos','sem-portal':'Imóveis sem Portal'};
+  var titulo=titulos[filtro]||'Imóveis';
+  var hoje=new Date().toLocaleDateString('pt-BR');
+
+  var linhas=lista.map(function(iv){
+    function ck(v){ return v?'<span style="color:#1a6e3a;font-weight:700">✓</span>':'<span style="color:#b91c1c">✗</span>'; }
+    return '<tr style="border-bottom:1px solid #f0f0f0">'+
+      '<td style="padding:8px 10px;font-weight:700;color:#003DA5">'+iv.id+'</td>'+
+      '<td style="padding:8px 10px;font-size:11px">'+iv.tipo+'</td>'+
+      '<td style="padding:8px 10px;font-size:11px;font-weight:600">'+iv.prop+'</td>'+
+      '<td style="padding:8px 10px;font-size:10px;color:#555">'+iv.end+'</td>'+
+      '<td style="padding:8px 10px;font-size:11px">'+iv.corretor+'</td>'+
+      '<td style="padding:8px 10px;text-align:center">'+ck(iv.fotos)+'</td>'+
+      '<td style="padding:8px 10px;text-align:center">'+ck(iv.video)+'</td>'+
+      '<td style="padding:8px 10px;text-align:center">'+ck(iv.contrato)+'</td>'+
+      '<td style="padding:8px 10px;text-align:center">'+ck(iv.ig)+'</td>'+
+      '<td style="padding:8px 10px;text-align:center">'+ck(iv.site)+'</td>'+
+      '<td style="padding:8px 10px;text-align:center">'+ck(iv.zap)+'</td>'+
+      '<td style="padding:8px 10px;text-align:center">'+ck(iv.olx)+'</td>'+
+      '<td style="padding:8px 10px;font-size:10px;color:#777">'+(iv.sit||'-')+'</td>'+
+    '</tr>';
+  }).join('');
+
+  var html='<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>'+titulo+' — RE/MAX Space</title>'+
+    '<style>@page{margin:2cm}body{font-family:Arial,sans-serif;font-size:11pt;color:#000;margin:0;padding:24px}'+
+    '.logo{color:#003DA5;font-size:18pt;font-weight:900;letter-spacing:2px;margin-bottom:4px}'+
+    'h1{font-size:13pt;text-transform:uppercase;margin:0 0 4px;letter-spacing:1px}'+
+    '.sub{font-size:10pt;color:#555;margin-bottom:20px;padding-bottom:10px;border-bottom:2px solid #003DA5}'+
+    'table{width:100%;border-collapse:collapse;font-size:10pt}'+
+    'th{background:#0d1f4e;color:#fff;padding:8px 10px;text-align:left;font-size:9pt;text-transform:uppercase;letter-spacing:.5px}'+
+    'tr:nth-child(even){background:#f9fafb}'+
+    '.noprint{background:#0d1f4e;color:#fff;padding:10px 20px;margin:-24px -24px 24px;display:flex;align-items:center;justify-content:space-between}'+
+    '@media print{.noprint{display:none}}</style></head><body>'+
+    '<div class="noprint">'+
+      '<span style="font-size:13px;font-weight:700">📊 '+titulo+' — RE/MAX Space</span>'+
+      '<button onclick="window.print()" style="background:#D42028;color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:12px;font-weight:700;cursor:pointer">🖨️ Imprimir / Salvar PDF</button>'+
+    '</div>'+
+    '<div class="logo">RE/MAX SPACE — Caldas Novas</div>'+
+    '<h1>Relatório: '+titulo+'</h1>'+
+    '<div class="sub">Gerado em '+hoje+' · '+lista.length+' imóveis</div>'+
+    '<table><thead><tr>'+
+      '<th>ID</th><th>Tipo</th><th>Proprietário</th><th>Endereço</th><th>Corretor</th>'+
+      '<th>Fotos</th><th>Vídeo</th><th>Contrato</th><th>IG</th><th>Site</th><th>ZAP</th><th>OLX</th><th>Situação</th>'+
+    '</tr></thead><tbody>'+linhas+'</tbody></table>'+
+    '<div style="margin-top:20px;font-size:10pt;color:#555;text-align:right">RE/MAX Space · Caldas Novas — GO · '+hoje+'</div>'+
+    '</body></html>';
+
+  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;
+  a.download='Relatorio_'+titulo.replace(/ /g,'_')+'_'+new Date().toISOString().slice(0,10)+'.html';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function togF(i,f){ivD[i][f]=!ivD[i][f]; salvarTudo(); pAcoes();}
 function excluirImovelSaida(i){
   var iv = ivD[i];

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Limpando cache...</title></head>
+<body>
+<p style="font-family:Arial;text-align:center;margin-top:100px;font-size:18px">🔄 Limpando cache... aguarde...</p>
+<script>
+async function clear(){
+  if('serviceWorker' in navigator){
+    var regs = await navigator.serviceWorker.getRegistrations();
+    for(var r of regs) await r.unregister();
+  }
+  if(window.caches){
+    var keys = await caches.keys();
+    for(var k of keys) await caches.delete(k);
+  }
+  window.location.href = 'https://remax-space.github.io/remax-space/?v=108&cleared='+Date.now();
+}
+clear();
+</script>
+</body></html>

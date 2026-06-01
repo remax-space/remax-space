@@ -8277,7 +8277,7 @@ function abrirDescontos(prop, mes, ano, totalBruto, totalAdm){
     });
 
 
-    var mb = document.getElementById('mb');
+    var mb = document.getElementById('desc-container');
     if(!mb) return;
     mb.innerHTML =
       '<div style="margin-bottom:16px">'+
@@ -8337,7 +8337,7 @@ function abrirDescontos(prop, mes, ano, totalBruto, totalAdm){
   }
 
   oM('💰 Descontos Autorizados — '+prop+' · '+meses[mes]+'/'+ano,
-    '<div id="mb"></div>', null, null, true);
+    '<div id="desc-container"></div>', null, null, true);
   
   setTimeout(function(){
     renderLista();
@@ -8347,7 +8347,7 @@ function abrirDescontos(prop, mes, ano, totalBruto, totalAdm){
       var btnAdd = document.getElementById('btn-add-desc');
       if(btnAdd) btnAdd.onclick = function(){ addDesconto(prop, mes, ano); };
     }, 100);
-    var mb2=document.getElementById('mb');
+    var mb2=document.getElementById('desc-container');
     if(mb2) mb2.addEventListener('click', function(e){
       var btn=e.target.closest('.btn-rm-desc');
       if(btn){
@@ -8461,8 +8461,7 @@ function pExtrato(selMes, selAno){
       +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">'
       +'<div style="background:#f0fdf4;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--lm)">Aluguel bruto</div><div style="font-size:16px;font-weight:700;color:#166534">'+fmt(totalBruto)+'</div></div>'
       +'<div style="background:#fef2f2;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--lm)">ADM 10%</div><div style="font-size:16px;font-weight:700;color:#dc2626">'+fmt(totalAdm)+'</div></div>'
-      +(function(){var td=totalDescontos(prop,mesAtual,anoAtual);return td>0?'<div style="background:#fef9c3;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--lm)">Descontos</div><div style="font-size:16px;font-weight:700;color:#b45309">- '+fmt(td)+'</div></div>':'';})()+
-      +'<div style="background:#eff6ff;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--lm)">Repasse líq.</div><div style="font-size:16px;font-weight:700;color:#1d4ed8">'+fmt(totalLiq-totalDescontos(prop,mesAtual,anoAtual))+'</div></div>'
+      +'<div style="background:#eff6ff;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--lm)">Repasse líq.</div><div style="font-size:16px;font-weight:700;color:#1d4ed8">'+fmt(totalLiq)+'</div></div>'
       +'<div style="background:#fefce8;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--lm)">Status</div><div style="font-size:13px;font-weight:700">'+recebidos+'/'+contratos.length+'<span style="font-size:10px;color:var(--lm)"> rec.</span></div></div>'
       +'</div>'
       +'<div class="tw"><table><thead><tr><th>CT</th><th>Inquilino</th><th>Tipo</th><th style="text-align:right">Aluguel</th><th style="text-align:right">Repasse</th><th>Venc</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>'

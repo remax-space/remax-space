@@ -1,4 +1,4 @@
-const CACHE = 'remax-space-v48';
+const CACHE = 'remax-space-v103';
 self.addEventListener('install', e => { self.skipWaiting(); });
 self.addEventListener('activate', e => {
   e.waitUntil(

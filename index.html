@@ -984,13 +984,13 @@ function fStD(el,cid,val){
 // ===== SIDEBAR =====
 var NAV = [
   {s:'Principal'},{id:'dashboard',l:'Dashboard'},{id:'whatsapp',l:'📱 WhatsApp'},{id:'leads',l:'Leads'},
-  {s:'Venda'},{id:'prosp',l:'Prospeccao'},{id:'agenda',l:'📅 Agenda'},{id:'visitas',l:'Visitas'},{id:'acm',l:'ACM'},{id:'docs',l:'Documentacao'},{id:'contratos',l:'Contratos'},{id:'modelos',l:'📁 Modelos',a:true},{id:'modelos-cor',l:'📄 Representação'},{id:'acoes',l:'Acoes no Imovel'},{id:'mcmv',l:'MCMV'},
-  {s:'Locacao'},{id:'loc-c',l:'Contratos Ativos'},{id:'repasses',l:'💰 Repasses',a:true},{id:'loc-l',l:'Leads Locacao'},{id:'loc-v',l:'Vistorias'},{id:'boletos',l:'📨 Boletos',a:true},{id:'extrato',l:'📄 Extrato Prop.',a:true},{id:'os',l:'🔧 Ordens Serviço'},
-  {s:'Portfolio'},{id:'vitrine',l:'🏠 Vitrine Imóveis'},{id:'iv',l:'Imoveis Venda'},{id:'prop',l:'Proprietarios'},
+  {s:'Venda'},{id:'prosp',l:'Prospecção'},{id:'agenda',l:'📅 Agenda'},{id:'visitas',l:'Visitas'},{id:'acm',l:'ACM'},{id:'docs',l:'Documentação'},{id:'contratos',l:'Contratos'},{id:'modelos',l:'📁 Modelos',a:true},{id:'modelos-cor',l:'📄 Representação'},{id:'Ações no Imóvel',l:'Ações no Imóvel'},{id:'mcmv',l:'MCMV'},
+  {s:'Locação'},{id:'loc-c',l:'Contratos Ativos'},{id:'repasses',l:'💰 Repasses',a:true},{id:'loc-l',l:'Leads Locação'},{id:'loc-v',l:'Vistorias'},{id:'boletos',l:'📨 Boletos',a:true},{id:'extrato',l:'📄 Extrato Prop.',a:true},{id:'os',l:'🔧 Ordens Serviço'},
+  {s:'Portfolio'},{id:'vitrine',l:'🏠 Vitrine Imóveis'},{id:'iv',l:'Imóveis Venda'},{id:'prop',l:'Proprietarios'},
   {s:'Marketing'},{id:'mkt',l:'🎨 Marketing'},
   {s:'Financeiro',a:true},{id:'fd',l:'Dashboard Financeiro',a:true},{id:'dre',l:'📊 DRE + Comissões',a:true},{id:'fr',l:'A Receber',a:true},{id:'fp',l:'Contas a Pagar',a:true},
   {s:'Cadastros',a:true},{id:'cad-cor',l:'Corretores',a:true},{id:'cad-prop',l:'Proprietarios Cad.',a:true},{id:'cad-inq',l:'Inquilinos',a:true},
-  {s:'Equipe',a:true},{id:'rank',l:'Ranking',a:true},{id:'metas',l:'Metas',a:true},{id:'historico',l:'Historico Mensal',a:true},{id:'relat',l:'📊 Relatorios',a:true},{id:'recrut',l:'🎯 Recrutamento',a:true},
+  {s:'Equipe',a:true},{id:'rank',l:'Ranking',a:true},{id:'metas',l:'Metas',a:true},{id:'historico',l:'Histórico Mensal',a:true},{id:'relat',l:'📊 Relatorios',a:true},{id:'recrut',l:'🎯 Recrutamento',a:true},
 ];
 
 function calcNavBadges(){
@@ -1020,12 +1020,12 @@ function calcNavBadges(){
   return badges;
 }
 var TITLES = {
-  dashboard:'Dashboard Geral',leads:'Leads',prosp:'Prospeccao',visitas:'Agenda de Visitas',
-  acm:'ACM',docs:'Documentacao',contratos:'Contratos',acoes:'Acoes no Imovel',mcmv:'MCMV',
+  dashboard:'Dashboard Geral',leads:'Leads',prosp:'Prospecção',visitas:'Agenda de Visitas',
+  acm:'ACM',docs:'Documentação',contratos:'Contratos',acoes:'Ações no Imóvel',mcmv:'MCMV',
   'loc-c':'Contratos de Locacao','repasses':'Repasses — Visão Unificada','loc-l':'Leads de Locacao','extrato':'Extrato do Proprietário','os':'Ordens de Serviço','loc-v':'Vistorias','boletos':'Envio de Boletos',
   iv:'Imoveis para Venda',prop:'Proprietarios',vitrine:'🏠 Vitrine de Imóveis',mkt:'🎨 Marketing',
   fd:'Dashboard Financeiro',fr:'Contas a Receber',fp:'Contas a Pagar',frp:'Repasses a Proprietarios',
-  'cad-cor':'Cadastro de Corretores','cad-prop':'Cadastro de Proprietarios','cad-inq':'Cadastro de Inquilinos',
+  'cad-cor':'Cadastro de Corretores','cad-prop':'Cadastro de Proprietários','cad-inq':'Cadastro de Inquilinos',
   rank:'Ranking',
   relat:'Relatórios Gerenciais',
   modelos:'Modelos de Contratos',
@@ -2503,7 +2503,7 @@ function pPermissoes(){
   var mods = [
     {id:'dashboard',l:'Dashboard'},{id:'leads',l:'Leads'},{id:'prosp',l:'Prospecção'},
     {id:'agenda',l:'Agenda'},{id:'visitas',l:'Visitas'},{id:'acm',l:'ACM'},{id:'contratos',l:'Contratos'},
-    {id:'acoes',l:'Ações Imóvel'},{id:'mcmv',l:'MCMV'},{id:'loc-c',l:'Locação'},
+    {id:'acoes',l:'Ações no Imóvel'},{id:'mcmv',l:'MCMV'},{id:'loc-c',l:'Locação'},
     {id:'repasses',l:'Repasses'},{id:'boletos',l:'Boletos'},{id:'vitrine',l:'Vitrine Imóveis'},{id:'iv',l:'Imóveis Venda'},
     {id:'fd',l:'Fin. Dashboard'},{id:'fr',l:'A Receber'},{id:'fp',l:'Contas Pagar'},
     {id:'dre',l:'DRE'},{id:'rank',l:'Ranking'},{id:'relat',l:'Relatórios'}
@@ -4571,10 +4571,10 @@ function excluirImovelSaida(i){
 function eAcoes(i){
   var iv=ivD[i];
   var checks=[
-    {f:'contrato',l:'Contrato assinado'},{f:'fotos',l:'Fotos feitas'},{f:'video',l:'Video feito'},
+    {f:'contrato',l:'Contrato assinado'},{f:'fotos',l:'Fotos feitas'},{f:'video',l:'Vídeo feito'},
     {f:'acm',l:'ACM feito'},{f:'acm_apres',l:'ACM apresentado'},{f:'ilist',l:'No iList'},
-    {f:'site',l:'Site RE/MAX'},{f:'zap',l:'ZAP Imoveis'},{f:'olx',l:'OLX'},
-    {f:'ig',l:'Instagram'},{f:'trafego',l:'Trafego pago'},{f:'gestao',l:'Gestao RE/MAX'}
+    {f:'site',l:'Site RE/MAX'},{f:'zap',l:'ZAP Imóveis'},{f:'olx',l:'OLX'},
+    {f:'ig',l:'Instagram'},{f:'trafego',l:'Tráfego pago'},{f:'gestao',l:'Gestão RE/MAX'}
   ];
   var ckHtml='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px">';
   checks.forEach(function(c){
@@ -4583,11 +4583,11 @@ function eAcoes(i){
       '<input type="checkbox" id="ea-'+c.f+'" '+checked+' style="width:15px;height:15px;cursor:pointer"> '+c.l+'</label>';
   });
   ckHtml+='</div>';
-  oM('Acoes - '+iv.tipo+' #'+iv.id,
+  oM('Ações — '+iv.tipo+' #'+iv.id,
     '<div style="background:#f0f9ff;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px">'+
     '<b>'+iv.tipo+'</b> &nbsp;|&nbsp; Prop: <b>'+iv.prop+'</b> &nbsp;|&nbsp; Tel: <b>'+(iv.tel||'N/I')+'</b> &nbsp;|&nbsp; Corretor: <b>'+iv.corretor+'</b></div>'+
     ckHtml+
-    '<div class="fg"><label>Situacao / Observacoes</label><textarea id="ea-sit" rows="3">'+iv.sit+'</textarea></div>',
+    '<div class="fg"><label>Situação / Observações</label><textarea id="ea-sit" rows="3">'+iv.sit+'</textarea></div>',
     function(){
       checks.forEach(function(c){ivD[i][c.f]=document.getElementById('ea-'+c.f).checked;});
       ivD[i].sit=document.getElementById('ea-sit').value;

@@ -8891,6 +8891,63 @@ var MODELOS_ADM = [
   }
 ];
 
+// ===== STORAGE DE MODELOS =====
+var modelosUpload = {}; // cache local dos uploads
+
+async function uploadModelo(nome, file){
+  if(!sb){ alert('Supabase não conectado'); return; }
+  try{
+    var slug = nome.replace(/[^a-zA-Z0-9]/g,'_').toLowerCase();
+    var ext = file.name.split('.').pop();
+    var path = 'modelos/' + slug + '.' + ext;
+    var {data, error} = await sb.storage.from('documentos').upload(path, file, {upsert:true});
+    if(error) throw error;
+    modelosUpload[nome] = path;
+    // Salvar referência no localStorage
+    var refs = JSON.parse(localStorage.getItem('modelos_refs')||'{}');
+    refs[nome] = {path:path, nome:file.name, data:new Date().toLocaleDateString('pt-BR')};
+    localStorage.setItem('modelos_refs', JSON.stringify(refs));
+    return path;
+  }catch(e){
+    console.error('Upload erro:', e);
+    // Fallback: salvar só o nome localmente
+    var refs = JSON.parse(localStorage.getItem('modelos_refs')||'{}');
+    refs[nome] = {path:null, nome:file.name, data:new Date().toLocaleDateString('pt-BR'), local:true};
+    localStorage.setItem('modelos_refs', JSON.stringify(refs));
+    return null;
+  }
+}
+
+async function downloadModeloReal(nome){
+  var refs = JSON.parse(localStorage.getItem('modelos_refs')||'{}');
+  var ref = refs[nome];
+  if(!ref){ baixarModelo(nome); return; }
+  if(ref.path && sb){
+    try{
+      var {data} = await sb.storage.from('documentos').createSignedUrl(ref.path, 3600);
+      if(data&&data.signedUrl){ window.open(data.signedUrl,'_blank'); return; }
+    }catch(e){}
+  }
+  alert('Arquivo "'+ref.nome+'" cadastrado em '+ref.data+'. Para baixar, acesse o Supabase Storage ou refaça o upload.');
+}
+
+function triggerUploadModelo(nome){
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.doc,.docx,.pdf';
+  input.onchange = async function(){
+    var file = input.files[0]; if(!file) return;
+    var btn = document.getElementById('upload-btn-'+nome.replace(/[^a-z0-9]/gi,'_'));
+    if(btn){ btn.textContent = '⏳ Enviando...'; btn.disabled=true; }
+    await uploadModelo(nome, file);
+    if(btn){ btn.textContent = '✅ '+file.name.substring(0,20)+(file.name.length>20?'...':''); btn.style.background='#f0fdf4'; btn.style.color='#1a6e3a'; btn.disabled=false; }
+    // Atualizar o botão de baixar
+    var dlBtn = document.getElementById('dl-btn-'+nome.replace(/[^a-z0-9]/gi,'_'));
+    if(dlBtn){ dlBtn.style.background='#0d1f4e'; dlBtn.style.color='#fff'; dlBtn.textContent='⬇ Baixar'; }
+  };
+  input.click();
+}
+
 function pModelos(){
   if(!isA()){
     document.getElementById('pc').innerHTML='<div style="text-align:center;padding:60px;color:#94a3b8">Acesso restrito ao administrador.</div>';
@@ -8909,17 +8966,32 @@ function pModelos(){
     card.appendChild(head);
     var body=document.createElement('div');
     cat.docs.forEach(function(doc){
+      var refs=JSON.parse(localStorage.getItem('modelos_refs')||'{}');
+      var ref=refs[doc.nome];
+      var slugId=doc.nome.replace(/[^a-z0-9]/gi,'_');
       var row=document.createElement('div');
-      row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #f8fafc;cursor:pointer';
+      row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #f8fafc';
       var info=document.createElement('div');
-      info.innerHTML='<div style="font-size:12px;font-weight:600;color:#0d1829">'+doc.nome+'</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">'+doc.desc+'</div>';
-      var btn=document.createElement('button');
-      btn.textContent='⬇ Baixar';
-      btn.style.cssText='background:#eff6ff;color:#0d1f4e;border:none;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer;flex-shrink:0;margin-left:8px';
-      btn.onclick=function(e){e.stopPropagation();baixarModelo(doc.nome);};
+      info.style.cssText='flex:1;min-width:0';
+      info.innerHTML='<div style="font-size:12px;font-weight:600;color:#0d1829">'+doc.nome+'</div>'+
+        '<div style="font-size:10px;color:#94a3b8;margin-top:1px">'+doc.desc+'</div>'+
+        (ref?'<div style="font-size:10px;color:#1a6e3a;margin-top:2px">✅ '+ref.nome+' · '+ref.data+'</div>':'');
+      var btns=document.createElement('div');
+      btns.style.cssText='display:flex;gap:5px;flex-shrink:0;margin-left:8px';
+      var dlBtn=document.createElement('button');
+      dlBtn.id='dl-btn-'+slugId;
+      dlBtn.textContent=ref?'⬇ Baixar':'⬇ Modelo';
+      dlBtn.style.cssText='background:'+(ref?'#0d1f4e':'#eff6ff')+';color:'+(ref?'#fff':'#0d1f4e')+';border:none;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer';
+      dlBtn.onclick=function(e){e.stopPropagation(); ref?downloadModeloReal(doc.nome):baixarModelo(doc.nome);};
+      var upBtn=document.createElement('button');
+      upBtn.id='upload-btn-'+slugId;
+      upBtn.textContent=ref?'🔄 Trocar':'📎 Upload';
+      upBtn.style.cssText='background:'+(ref?'#f0fdf4':'#fafbfd')+';color:'+(ref?'#1a6e3a':'#64748b')+';border:1px solid '+(ref?'#bbf7d0':'#e2e8f0')+';border-radius:6px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer';
+      upBtn.onclick=function(e){e.stopPropagation();triggerUploadModelo(doc.nome);};
+      btns.appendChild(dlBtn);
+      btns.appendChild(upBtn);
       row.appendChild(info);
-      row.appendChild(btn);
-      row.onclick=function(){abrirModelo(doc.nome);};
+      row.appendChild(btns);
       body.appendChild(row);
     });
     card.appendChild(body);

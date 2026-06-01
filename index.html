@@ -4318,160 +4318,203 @@ function delDocs(i){
 
 // ===== ACOES NO IMOVEL (com tipo, proprietario e EXCLUIR) =====
 function pAcoes(){
-  document.getElementById('pa').innerHTML=
-    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
-      '<button onclick="pIV()" style="background:#fff;color:#0d1f4e;border:1px solid #0d1f4e;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">📋 Ver todos os imóveis</button>'+
-      '<button onclick="relAcoes()" style="background:#0d1f4e;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">🖨️ Gerar Relatório PDF</button>'+
-    '</div>';
+  document.getElementById('pa').innerHTML='';
+  var paEl=document.getElementById('pa');
 
-  // Filtro atual
-  var filtroAtual = window._acoesFiltro || 'todos';
+  // Botões de ação no topo
+  var btnVer=document.createElement('button');
+  btnVer.textContent='📋 Ver todos os imóveis';
+  btnVer.style.cssText='background:#fff;color:#0d1f4e;border:1px solid #0d1f4e;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;margin-right:8px';
+  btnVer.onclick=function(){gP('iv');};
+  var btnRel=document.createElement('button');
+  btnRel.textContent='🖨️ Gerar Relatório PDF';
+  btnRel.style.cssText='background:#0d1f4e;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer';
+  btnRel.onclick=relAcoes;
+  paEl.appendChild(btnVer);
+  paEl.appendChild(btnRel);
 
-  var total = ivD.length;
-  var semFotos = ivD.filter(function(iv){return !iv.fotos;}).length;
-  var semVideo = ivD.filter(function(iv){return !iv.video;}).length;
-  var semContrato = ivD.filter(function(iv){return !iv.contrato;}).length;
-  var completos = ivD.filter(function(iv){return iv.fotos&&iv.video&&iv.contrato&&iv.site&&iv.zap;}).length;
-  var semPortal = ivD.filter(function(iv){return !iv.site&&!iv.zap&&!iv.olx;}).length;
+  window._acoesFiltro=window._acoesFiltro||'todos';
+  var f=window._acoesFiltro;
 
-  function buildRows(lista){
-    var tbody = document.createElement('tbody');
-    tbody.id = 'ac-b';
-    lista.forEach(function(iv){
-      var i=ivD.indexOf(iv);
-      var tr=document.createElement('tr');
-      tr.style.borderBottom='1px solid #f4f6f8';
-      tr.dataset.sr=(iv.prop+iv.end+iv.tipo+(iv.corretor||'')).toLowerCase();
-      function td(html,css){var t=document.createElement('td');t.style.cssText='padding:10px 12px;'+(css||'');t.innerHTML=html;return t;}
-      tr.appendChild(td(sem(iv)));
-      tr.appendChild(td('<b style="color:#0d1f4e">'+iv.id+'</b>'));
-      tr.appendChild(td('<span style="background:#f1f5f9;color:#334155;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px">'+iv.tipo+'</span>'));
-      tr.appendChild(td(iv.prop,'font-weight:600;font-size:12px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'));
-      tr.appendChild(td(iv.end,'font-size:11px;color:#4a5568;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'));
-      tr.appendChild(td(iv.corretor,'font-size:11px'));
-      ['fotos','video','contrato','ig','site','zap','olx','trafego'].forEach(function(f){
-        var cell=document.createElement('td');
-        cell.style.cssText='padding:10px 12px;text-align:center';
-        var span=document.createElement('span');
-        span.style.cssText='cursor:pointer;font-size:14px';
-        span.textContent=iv[f]?'✅':'❌';
-        span.onclick=(function(idx,field){return function(){togF(idx,field);};})(i,f);
-        cell.appendChild(span);
-        tr.appendChild(cell);
-      });
-      tr.appendChild(td(iv.sit||'-','font-size:10px;color:#94a3b8;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'));
-      var acTd=document.createElement('td');
-      acTd.style.padding='10px 12px';
-      var btnE=document.createElement('button');
-      btnE.textContent='Editar';
-      btnE.style.cssText='background:#eff6ff;color:#0d1f4e;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px';
-      btnE.onclick=(function(idx){return function(){eAcoes(idx);};})(i);
-      var btnD=document.createElement('button');
-      btnD.textContent='✕';
-      btnD.style.cssText='background:#fef2f2;color:#b91c1c;border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer';
-      btnD.onclick=(function(idx){return function(){excluirImovelSaida(idx);};})(i);
-      acTd.appendChild(btnE);
-      acTd.appendChild(btnD);
-      tr.appendChild(acTd);
-      tbody.appendChild(tr);
-    });
-    return tbody;
-  }
-    function filtroBtn(id, label, count, ativo){
-    var active = filtroAtual===id;
-    return '<button onclick="window._acoesFiltro=''+id+'';pAcoes()" style="background:'+(active?'#0d1f4e':'#fff')+';color:'+(active?'#fff':'#0d1f4e')+';border:1px solid '+(active?'#0d1f4e':'#e2e8f0')+';border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px">'+
-      label+' <span style="background:'+(active?'rgba(255,255,255,.2)':'#f1f5f9')+';color:'+(active?'#fff':'#64748b')+';font-size:10px;font-weight:800;padding:1px 7px;border-radius:20px">'+count+'</span>'+
-    '</button>';
-  }
+  var sf=ivD.filter(function(x){return !x.fotos;}).length;
+  var sv=ivD.filter(function(x){return !x.video;}).length;
+  var sc=ivD.filter(function(x){return !x.contrato;}).length;
+  var ok=ivD.filter(function(x){return x.fotos&&x.video&&x.contrato&&x.site&&x.zap;}).length;
+  var sp=ivD.filter(function(x){return !x.site&&!x.zap&&!x.olx;}).length;
 
-  function th(t){ return '<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #edf2f7;white-space:nowrap">'+t+'</th>'; }
+  var lista=f==='sem-fotos'?ivD.filter(function(x){return !x.fotos;}):
+            f==='sem-video'?ivD.filter(function(x){return !x.video;}):
+            f==='sem-contrato'?ivD.filter(function(x){return !x.contrato;}):
+            f==='completos'?ivD.filter(function(x){return x.fotos&&x.video&&x.contrato&&x.site&&x.zap;}):
+            f==='sem-portal'?ivD.filter(function(x){return !x.site&&!x.zap&&!x.olx;}):ivD;
 
   var pc=document.getElementById('pc');
-  pc.innerHTML=
+  pc.innerHTML='';
 
-    // KPIs
-    '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px">'+
-      '<div style="background:#fff;border-radius:12px;padding:16px 18px;border:1px solid #e8edf2;border-top:3px solid #0d1f4e">'+
-        '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Total</div>'+
-        '<div style="font-size:26px;font-weight:900;color:#0d1829">'+total+'</div>'+
-        '<div style="font-size:10px;color:#64748b">imóveis na carteira</div>'+
-      '</div>'+
-      '<div style="background:#fff;border-radius:12px;padding:16px 18px;border:1px solid #e8edf2;border-top:3px solid #1a6e3a">'+
-        '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Completos</div>'+
-        '<div style="font-size:26px;font-weight:900;color:#1a6e3a">'+completos+'</div>'+
-        '<div style="font-size:10px;color:#64748b">fotos+vídeo+contrato+portais</div>'+
-      '</div>'+
-      '<div style="background:#fff;border-radius:12px;padding:16px 18px;border:1px solid #e8edf2;border-top:3px solid #b91c1c">'+
-        '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Sem Fotos</div>'+
-        '<div style="font-size:26px;font-weight:900;color:#b91c1c">'+semFotos+'</div>'+
-        '<div style="font-size:10px;color:#64748b">precisam de fotos</div>'+
-      '</div>'+
-      '<div style="background:#fff;border-radius:12px;padding:16px 18px;border:1px solid #e8edf2;border-top:3px solid #b45309">'+
-        '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Sem Contrato</div>'+
-        '<div style="font-size:26px;font-weight:900;color:#b45309">'+semContrato+'</div>'+
-        '<div style="font-size:10px;color:#64748b">sem contrato assinado</div>'+
-      '</div>'+
-      '<div style="background:#fff;border-radius:12px;padding:16px 18px;border:1px solid #e8edf2;border-top:3px solid #5b21b6">'+
-        '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Sem Portal</div>'+
-        '<div style="font-size:26px;font-weight:900;color:#5b21b6">'+semPortal+'</div>'+
-        '<div style="font-size:10px;color:#64748b">sem ZAP/OLX/Site</div>'+
-      '</div>'+
-    '</div>'+
+  // KPIs
+  var kpiData=[
+    {l:'Total',v:ivD.length,s:'na carteira',c:'#0d1f4e'},
+    {l:'Completos',v:ok,s:'fotos+vídeo+portais',c:'#1a6e3a'},
+    {l:'Sem Fotos',v:sf,s:'precisam de fotos',c:'#b91c1c'},
+    {l:'Sem Contrato',v:sc,s:'sem contrato',c:'#b45309'},
+    {l:'Sem Portal',v:sp,s:'sem ZAP/OLX/Site',c:'#5b21b6'}
+  ];
+  var kpiGrid=document.createElement('div');
+  kpiGrid.style.cssText='display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px';
+  kpiData.forEach(function(k){
+    var d=document.createElement('div');
+    d.style.cssText='background:#fff;border-radius:12px;padding:16px 18px;border:1px solid #e8edf2;border-top:3px solid '+k.c;
+    d.innerHTML='<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">'+k.l+'</div>'+
+      '<div style="font-size:26px;font-weight:900;color:'+k.c+'">'+k.v+'</div>'+
+      '<div style="font-size:10px;color:#64748b">'+k.s+'</div>';
+    kpiGrid.appendChild(d);
+  });
+  pc.appendChild(kpiGrid);
 
-    // Filtros
-    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'+
-      filtroBtn('todos','📋 Todos',total,'todos')+
-      filtroBtn('completos','✅ Completos',completos,'completos')+
-      filtroBtn('sem-fotos','📷 Sem Fotos',semFotos,'sem-fotos')+
-      filtroBtn('sem-video','🎥 Sem Vídeo',semVideo,'sem-video')+
-      filtroBtn('sem-contrato','📋 Sem Contrato',semContrato,'sem-contrato')+
-      filtroBtn('sem-portal','🌐 Sem Portal',semPortal,'sem-portal')+
-    '</div>'+
+  // Filtros
+  var filtros=[
+    {id:'todos',l:'Todos',v:ivD.length},
+    {id:'completos',l:'✅ Completos',v:ok},
+    {id:'sem-fotos',l:'📷 Sem Fotos',v:sf},
+    {id:'sem-video',l:'🎥 Sem Vídeo',v:sv},
+    {id:'sem-contrato',l:'📋 Sem Contrato',v:sc},
+    {id:'sem-portal',l:'🌐 Sem Portal',v:sp}
+  ];
+  var filtroBar=document.createElement('div');
+  filtroBar.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px';
+  filtros.forEach(function(ft){
+    var btn=document.createElement('button');
+    var ativo=f===ft.id;
+    btn.style.cssText='background:'+(ativo?'#0d1f4e':'#fff')+';color:'+(ativo?'#fff':'#0d1f4e')+
+      ';border:1px solid '+(ativo?'#0d1f4e':'#e2e8f0')+';border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer';
+    btn.innerHTML=ft.l+' <span style="background:'+(ativo?'rgba(255,255,255,.2)':'#f1f5f9')+
+      ';color:'+(ativo?'#fff':'#64748b')+';font-size:10px;font-weight:800;padding:1px 7px;border-radius:20px">'+ft.v+'</span>';
+    btn.onclick=(function(id){return function(){window._acoesFiltro=id;pAcoes();};})(ft.id);
+    filtroBar.appendChild(btn);
+  });
+  pc.appendChild(filtroBar);
 
-    // Tabela
-    '<div style="background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden">'+
-      '<div style="padding:12px 16px;border-bottom:1px solid #edf2f7;background:#fafbfd;display:flex;align-items:center;justify-content:space-between">'+
-        '<div style="font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase">'+listaFiltrada.length+' imóveis</div>'+
-        '<input id="ac-si" placeholder="🔍 Buscar por proprietário, endereço, corretor..." style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;width:280px">'+
-      '</div>'+
-      '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">'+
-        '<thead style="background:#fafbfd"><tr>'+
-          th('IA')+th('ID')+th('Tipo')+th('Proprietário')+th('Endereço')+th('Corretor')+
-          th('Fotos')+th('Vídeo')+th('Contrato')+th('IG')+th('Site')+th('ZAP')+th('OLX')+th('Tráfego')+
-          th('Situação')+th('Ações')+
-        '</tr></thead>'+
-        
-      '</table></div>'+
-    '</div>';
+  // Container da tabela
+  var card=document.createElement('div');
+  card.style.cssText='background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden';
 
-  var tbodyEl=buildRows(listaFiltrada);
-  document.querySelector('#ac-b') && document.querySelector('#ac-b').replaceWith(tbodyEl);
-  document.querySelector('table') && !document.getElementById('ac-b') && document.querySelector('table').appendChild(tbodyEl);
-  document.getElementById('ac-si').oninput=function(){
+  // Header com busca
+  var header=document.createElement('div');
+  header.style.cssText='padding:12px 16px;border-bottom:1px solid #edf2f7;background:#fafbfd;display:flex;align-items:center;justify-content:space-between';
+  var countEl=document.createElement('div');
+  countEl.style.cssText='font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1.5px;text-transform:uppercase';
+  countEl.textContent=lista.length+' imóveis';
+  var busca=document.createElement('input');
+  busca.id='ac-si';
+  busca.placeholder='🔍 Buscar por proprietário, endereço, corretor...';
+  busca.style.cssText='padding:7px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;width:280px';
+  header.appendChild(countEl);
+  header.appendChild(busca);
+  card.appendChild(header);
+
+  // Tabela
+  var wrap=document.createElement('div');
+  wrap.style.cssText='overflow-x:auto';
+  var table=document.createElement('table');
+  table.style.cssText='width:100%;border-collapse:collapse';
+
+  // Cabeçalho
+  var thead=document.createElement('thead');
+  var headRow=document.createElement('tr');
+  headRow.style.background='#fafbfd';
+  ['IA','ID','Tipo','Proprietário','Endereço','Corretor','Fotos','Vídeo','Contrato','IG','Site','ZAP','OLX','Tráfego','Situação','Ações'].forEach(function(h){
+    var th=document.createElement('th');
+    th.style.cssText='padding:10px 12px;text-align:left;font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #edf2f7;white-space:nowrap';
+    th.textContent=h;
+    headRow.appendChild(th);
+  });
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  // Corpo
+  var tbody=document.createElement('tbody');
+  tbody.id='ac-b';
+  lista.forEach(function(iv){
+    var i=ivD.indexOf(iv);
+    var tr=document.createElement('tr');
+    tr.style.borderBottom='1px solid #f4f6f8';
+    tr.dataset.sr=(iv.prop+iv.end+iv.tipo+(iv.corretor||'')).toLowerCase();
+
+    function addTd(html,css){
+      var td=document.createElement('td');
+      td.style.cssText='padding:10px 12px;'+(css||'');
+      td.innerHTML=html;
+      return td;
+    }
+
+    tr.appendChild(addTd(sem(iv)));
+    tr.appendChild(addTd('<b style="color:#0d1f4e">'+iv.id+'</b>'));
+    tr.appendChild(addTd('<span style="background:#f1f5f9;color:#334155;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px">'+iv.tipo+'</span>'));
+    tr.appendChild(addTd(iv.prop,'font-weight:600;font-size:12px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'));
+    tr.appendChild(addTd(iv.end,'font-size:11px;color:#4a5568;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'));
+    tr.appendChild(addTd(iv.corretor||'-','font-size:11px'));
+
+    // Checkboxes de ações
+    ['fotos','video','contrato','ig','site','zap','olx','trafego'].forEach(function(campo){
+      var td=document.createElement('td');
+      td.style.cssText='padding:10px 12px;text-align:center';
+      var span=document.createElement('span');
+      span.style.cssText='cursor:pointer;font-size:14px';
+      span.textContent=iv[campo]?'✅':'❌';
+      span.onclick=(function(idx,c){return function(){togF(idx,c);};})(i,campo);
+      td.appendChild(span);
+      tr.appendChild(td);
+    });
+
+    tr.appendChild(addTd(iv.sit||'-','font-size:10px;color:#94a3b8;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'));
+
+    // Botões
+    var acTd=document.createElement('td');
+    acTd.style.padding='10px 12px';
+    var div=document.createElement('div');
+    div.style.cssText='display:flex;gap:4px';
+    var btnE=document.createElement('button');
+    btnE.textContent='Editar';
+    btnE.style.cssText='background:#eff6ff;color:#0d1f4e;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer';
+    btnE.onclick=(function(idx){return function(){eAcoes(idx);};})(i);
+    var btnX=document.createElement('button');
+    btnX.textContent='✕';
+    btnX.style.cssText='background:#fef2f2;color:#b91c1c;border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer';
+    btnX.onclick=(function(idx){return function(){excluirImovelSaida(idx);};})(i);
+    div.appendChild(btnE);
+    div.appendChild(btnX);
+    acTd.appendChild(div);
+    tr.appendChild(acTd);
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  card.appendChild(wrap);
+  pc.appendChild(card);
+
+  // Filtro de busca
+  busca.oninput=function(){
     var q=this.value.toLowerCase();
-    document.querySelectorAll('#ac-b tr').forEach(function(row){
+    tbody.querySelectorAll('tr').forEach(function(row){
       row.style.display=(row.dataset.sr||'').includes(q)?'':'none';
     });
   };
 }
 
 function relAcoes(){
-  var filtro = window._acoesFiltro || 'todos';
-  var lista;
-  if(filtro==='sem-fotos') lista=ivD.filter(function(iv){return !iv.fotos;});
-  else if(filtro==='sem-video') lista=ivD.filter(function(iv){return !iv.video;});
-  else if(filtro==='sem-contrato') lista=ivD.filter(function(iv){return !iv.contrato;});
-  else if(filtro==='completos') lista=ivD.filter(function(iv){return iv.fotos&&iv.video&&iv.contrato&&iv.site&&iv.zap;});
-  else if(filtro==='sem-portal') lista=ivD.filter(function(iv){return !iv.site&&!iv.zap&&!iv.olx;});
-  else lista=ivD;
-
-  var titulos={'todos':'Todos os Imóveis','sem-fotos':'Imóveis sem Fotos','sem-video':'Imóveis sem Vídeo',
-    'sem-contrato':'Imóveis sem Contrato','completos':'Imóveis Completos','sem-portal':'Imóveis sem Portal'};
-  var titulo=titulos[filtro]||'Imóveis';
+  var f=window._acoesFiltro||'todos';
+  var titulos={todos:'Todos os Imóveis','sem-fotos':'Imóveis sem Fotos','sem-video':'Imóveis sem Vídeo',
+    'sem-contrato':'Imóveis sem Contrato',completos:'Imóveis Completos','sem-portal':'Imóveis sem Portal'};
+  var lista=f==='sem-fotos'?ivD.filter(function(x){return !x.fotos;}):
+            f==='sem-video'?ivD.filter(function(x){return !x.video;}):
+            f==='sem-contrato'?ivD.filter(function(x){return !x.contrato;}):
+            f==='completos'?ivD.filter(function(x){return x.fotos&&x.video&&x.contrato&&x.site&&x.zap;}):
+            f==='sem-portal'?ivD.filter(function(x){return !x.site&&!x.zap&&!x.olx;}):ivD;
+  var titulo=titulos[f]||'Imóveis';
   var hoje=new Date().toLocaleDateString('pt-BR');
-
+  function ck(v){return v?'<span style="color:#1a6e3a;font-weight:700">✓</span>':'<span style="color:#b91c1c">✗</span>';}
   var linhas=lista.map(function(iv){
-    function ck(v){ return v?'<span style="color:#1a6e3a;font-weight:700">✓</span>':'<span style="color:#b91c1c">✗</span>'; }
     return '<tr style="border-bottom:1px solid #f0f0f0">'+
       '<td style="padding:8px 10px;font-weight:700;color:#003DA5">'+iv.id+'</td>'+
       '<td style="padding:8px 10px;font-size:11px">'+iv.tipo+'</td>'+
@@ -4488,36 +4531,30 @@ function relAcoes(){
       '<td style="padding:8px 10px;font-size:10px;color:#777">'+(iv.sit||'-')+'</td>'+
     '</tr>';
   }).join('');
-
-  var html='<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>'+titulo+' — RE/MAX Space</title>'+
+  var html='<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>'+titulo+'</title>'+
     '<style>@page{margin:2cm}body{font-family:Arial,sans-serif;font-size:11pt;color:#000;margin:0;padding:24px}'+
-    '.logo{color:#003DA5;font-size:18pt;font-weight:900;letter-spacing:2px;margin-bottom:4px}'+
-    'h1{font-size:13pt;text-transform:uppercase;margin:0 0 4px;letter-spacing:1px}'+
-    '.sub{font-size:10pt;color:#555;margin-bottom:20px;padding-bottom:10px;border-bottom:2px solid #003DA5}'+
+    '.logo{color:#003DA5;font-size:18pt;font-weight:900;letter-spacing:2px}'+
+    'h1{font-size:13pt;text-transform:uppercase;margin:4px 0}'+
+    '.sub{font-size:10pt;color:#555;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #003DA5}'+
     'table{width:100%;border-collapse:collapse;font-size:10pt}'+
-    'th{background:#0d1f4e;color:#fff;padding:8px 10px;text-align:left;font-size:9pt;text-transform:uppercase;letter-spacing:.5px}'+
+    'th{background:#0d1f4e;color:#fff;padding:8px 10px;text-align:left;font-size:9pt;text-transform:uppercase}'+
     'tr:nth-child(even){background:#f9fafb}'+
     '.noprint{background:#0d1f4e;color:#fff;padding:10px 20px;margin:-24px -24px 24px;display:flex;align-items:center;justify-content:space-between}'+
     '@media print{.noprint{display:none}}</style></head><body>'+
-    '<div class="noprint">'+
-      '<span style="font-size:13px;font-weight:700">📊 '+titulo+' — RE/MAX Space</span>'+
-      '<button onclick="window.print()" style="background:#D42028;color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:12px;font-weight:700;cursor:pointer">🖨️ Imprimir / Salvar PDF</button>'+
-    '</div>'+
-    '<div class="logo">RE/MAX SPACE — Caldas Novas</div>'+
-    '<h1>Relatório: '+titulo+'</h1>'+
-    '<div class="sub">Gerado em '+hoje+' · '+lista.length+' imóveis</div>'+
-    '<table><thead><tr>'+
-      '<th>ID</th><th>Tipo</th><th>Proprietário</th><th>Endereço</th><th>Corretor</th>'+
-      '<th>Fotos</th><th>Vídeo</th><th>Contrato</th><th>IG</th><th>Site</th><th>ZAP</th><th>OLX</th><th>Situação</th>'+
-    '</tr></thead><tbody>'+linhas+'</tbody></table>'+
-    '<div style="margin-top:20px;font-size:10pt;color:#555;text-align:right">RE/MAX Space · Caldas Novas — GO · '+hoje+'</div>'+
+    '<div class="noprint"><span style="font-size:13px;font-weight:700">📊 '+titulo+'</span>'+
+    '<button onclick="window.print()" style="background:#D42028;color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:12px;font-weight:700;cursor:pointer">🖨️ Imprimir / PDF</button></div>'+
+    '<div class="logo">RE/MAX SPACE</div><h1>'+titulo+'</h1>'+
+    '<div class="sub">'+hoje+' · '+lista.length+' imóveis</div>'+
+    '<table><thead><tr><th>ID</th><th>Tipo</th><th>Proprietário</th><th>Endereço</th><th>Corretor</th>'+
+    '<th>Fotos</th><th>Vídeo</th><th>Contrato</th><th>IG</th><th>Site</th><th>ZAP</th><th>OLX</th><th>Situação</th></tr></thead>'+
+    '<tbody>'+linhas+'</tbody></table>'+
+    '<div style="margin-top:16px;font-size:10pt;color:#555;text-align:right">RE/MAX Space · Caldas Novas — '+hoje+'</div>'+
     '</body></html>';
-
   var blob=new Blob([html],{type:'text/html;charset=utf-8'});
   var url=URL.createObjectURL(blob);
   var a=document.createElement('a');
   a.href=url;
-  a.download='Relatorio_'+titulo.replace(/ /g,'_')+'_'+new Date().toISOString().slice(0,10)+'.html';
+  a.download='Imoveis_'+titulo.replace(/ /g,'_')+'_'+new Date().toISOString().slice(0,10)+'.html';
   a.click();
   URL.revokeObjectURL(url);
 }

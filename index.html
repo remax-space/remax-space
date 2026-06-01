@@ -2,9 +2,6 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 <script>
 // Limpar service workers antigos automaticamente
 if('serviceWorker' in navigator){
@@ -1197,10 +1194,7 @@ function imprimirContrato(){
   var id = window._contratoId || '';
   var inq = window._contratoInq || '';
   var w = window.open('','_blank');
-  w.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">'+
+  w.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'+
     '<title>Contrato '+id+' — '+inq+'</title>'+
     '<style>'+
       'body{font-family:Times New Roman,serif;font-size:12pt;line-height:1.8;margin:3cm 2.5cm;color:#000}'+
@@ -2155,10 +2149,7 @@ function gerarRelatorioMensal(){
   }).join('');
 
   var w=window.open('','_blank');
-  w.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">'+
+  w.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'+
     '<title>Relatório Mensal — '+mes+'</title>'+
     '<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;background:#f8fafc;color:#1e293b;padding:24px}'+
     '.header{background:#0f1a35;color:#fff;padding:24px;border-radius:12px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}'+
@@ -2314,10 +2305,7 @@ function gerarHTML(titulo, conteudo){
     '.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;}'+
     '.bg{background:#dcfce7;color:#166534;}.br{background:#fee2e2;color:#991b1b;}.by{background:#fef9c3;color:#92400e;}'+
     '@media print{button{display:none!important;}}';
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0"><title>'+titulo+'</title><style>'+css+'</style></head><body>'+
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+titulo+'</title><style>'+css+'</style></head><body>'+
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">'+
     '<div><h1>RE/MAX Space</h1><div class="info">'+titulo+' &nbsp;|&nbsp; Caldas Novas GO &nbsp;|&nbsp; CRECI 41.377-J &nbsp;|&nbsp; Gerado em '+new Date().toLocaleDateString('pt-BR')+' às '+new Date().toLocaleTimeString('pt-BR')+'</div></div>'+
     '<button onclick="window.print()" style="background:#D42028;color:#fff;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;font-size:13px;font-weight:700">🖨️ Imprimir / PDF</button>'+
@@ -3877,10 +3865,7 @@ function gerarPDFAcm(i){
   }).join('');
 
   var w=window.open('','_blank');
-  w.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">'+
+  w.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'+
     '<title>ACM — '+a.im+'</title>'+
     '<style>'+
     '*{box-sizing:border-box;margin:0;padding:0}'+
@@ -4558,10 +4543,7 @@ function relAcoes(){
       '<td style="padding:8px 10px;font-size:10px;color:#777">'+(iv.sit||'-')+'</td>'+
     '</tr>';
   }).join('');
-  var html='<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0"><title>'+titulo+'</title>'+
+  var html='<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>'+titulo+'</title>'+
     '<style>@page{margin:2cm}body{font-family:Arial,sans-serif;font-size:11pt;color:#000;margin:0;padding:24px}'+
     '.logo{color:#003DA5;font-size:18pt;font-weight:900;letter-spacing:2px}'+
     'h1{font-size:13pt;text-transform:uppercase;margin:4px 0}'+
@@ -4776,10 +4758,7 @@ function relatorioContratos(){
   var rowsAtivos = ativos.map(function(c){return row(c);}).join('');
   var rowsEnc = encerrados.map(function(c){return row(c);}).join('');
 
-  var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0"><title>Contratos de Locação — RE/MAX Space</title>'
+  var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Contratos de Locação — RE/MAX Space</title>'
     + '<style>'
     + '@page{margin:2cm}'
     + 'body{font-family:Arial,sans-serif;font-size:10pt;color:#000;margin:0;padding:24px}'
@@ -5782,10 +5761,7 @@ function fichaImovel(i){
   }).join('');
   var qr = 'https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=' + encodeURIComponent('https://wa.me/556499000000?text=Interesse+no+imóvel+'+encodeURIComponent(tipo+' '+iv.end));
   var w = window.open('','_blank');
-  w.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">'+
+  w.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'+
     '<title>Ficha do Imóvel — '+tipo+' | '+iv.end+'</title>'+
     '<style>*{box-sizing:border-box;margin:0;padding:0}'+
     'body{font-family:Arial,sans-serif;background:#fff;color:#1e293b;max-width:800px;margin:0 auto;padding:0}'+
@@ -6144,10 +6120,7 @@ function gerarPost(i){
     // Use html2canvas if available, else open in new window
     var w = window.open('','_blank');
     var html = renderPost();
-    w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0"><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#f8fafc;display:flex;flex-direction:column;align-items:center;padding:20px;font-family:Arial,sans-serif}</style></head><body>'+
+    w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#f8fafc;display:flex;flex-direction:column;align-items:center;padding:20px;font-family:Arial,sans-serif}</style></head><body>'+
       '<div style="margin-bottom:16px">'+html+'</div>'+
       '<div style="font-size:12px;color:#64748b;margin-bottom:12px">Clique com botão direito na imagem → Salvar imagem como...</div>'+
       '<button onclick="window.print()" style="background:#D42028;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px">🖨️ Imprimir / Salvar</button>'+
@@ -7222,10 +7195,7 @@ function pFD(){
 
 function exportDRE(){
   var ta=ctD.reduce(function(s,c){return s+c.valor;},0),adm=ta*.1,tpag=cpD.reduce(function(s,c){return s+c.val;},0);
-  var html='<!DOCTYPE html><html><head><meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0"><title>DRE RE/MAX Space</title>'+
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>DRE RE/MAX Space</title>'+
   '<style>body{font-family:Arial;padding:40px;max-width:700px;margin:0 auto;}h1{color:#D42028;}table{width:100%;border-collapse:collapse;}td{padding:8px;border-bottom:1px solid #e5e7eb;font-size:13px;}td:last-child{text-align:right;}.total{font-weight:700;border-top:2px solid #111;}.res{font-weight:700;font-size:16px;border-top:3px solid #111;}.pos{color:#059669;}.neg{color:#dc2626;}</style>'+
   '</head><body><h1>RE/MAX Space - DRE Simplificado</h1><p><b>'+mesAno()+'</b> — Caldas Novas GO - Gerado em '+new Date().toLocaleDateString('pt-BR')+'</p>'+
   '<table><tr><td colspan="2"><b>RECEITAS</b></td></tr>'+
@@ -9065,10 +9035,7 @@ function pdfACM(i){
     '<div style="flex:1;border:1px solid #e2e5ed;border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase">Competitivo</div><div style="font-size:17px;font-weight:900">'+fBRL(res.comp)+'</div></div>'+
     '<div style="flex:1;border:2px solid #003DA5;border-radius:6px;padding:10px;text-align:center;background:#f0f4ff"><div style="font-size:9px;font-weight:700;color:#003DA5;text-transform:uppercase">Mercado</div><div style="font-size:17px;font-weight:900;color:#003DA5">'+fBRL(res.merc)+'</div></div>'+
     '<div style="flex:1;border:1px solid #e2e5ed;border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase">Otimista</div><div style="font-size:17px;font-weight:900">'+fBRL(res.otim)+'</div></div></div>':'<p>Sem amostras.</p>';
-  var h='<!DOCTYPE html><html><head><meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0"><style>body{font-family:Arial,sans-serif;font-size:12px;color:#111;margin:0}.c{background:#0f1a35;color:#fff;padding:32px 40px}.s{padding:16px 40px;border-bottom:1px solid #e2e5ed}.s h2{font-size:11px;font-weight:800;color:#D42028;text-transform:uppercase;margin-bottom:8px}table{width:100%;border-collapse:collapse;font-size:11px}th{background:#f0f4ff;padding:5px 8px;text-align:left;font-size:9px;text-transform:uppercase}td{padding:5px 8px;border-bottom:1px solid #e2e5ed}.ft{background:#0f1a35;color:#fff;padding:8px 40px;font-size:9px;display:flex;justify-content:space-between}@media print{body{-webkit-print-color-adjust:exact}}</style></head><body>'+
+  var h='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;font-size:12px;color:#111;margin:0}.c{background:#0f1a35;color:#fff;padding:32px 40px}.s{padding:16px 40px;border-bottom:1px solid #e2e5ed}.s h2{font-size:11px;font-weight:800;color:#D42028;text-transform:uppercase;margin-bottom:8px}table{width:100%;border-collapse:collapse;font-size:11px}th{background:#f0f4ff;padding:5px 8px;text-align:left;font-size:9px;text-transform:uppercase}td{padding:5px 8px;border-bottom:1px solid #e2e5ed}.ft{background:#0f1a35;color:#fff;padding:8px 40px;font-size:9px;display:flex;justify-content:space-between}@media print{body{-webkit-print-color-adjust:exact}}</style></head><body>'+
     '<div class="c"><div style="font-size:15px;font-weight:900;letter-spacing:2px">RE/MAX SPACE</div><div style="font-size:10px;opacity:.6;margin-bottom:12px">CRECI 41.377-J - Caldas Novas GO</div><div style="font-size:19px;font-weight:900">ESTUDO DE MERCADO</div><div style="opacity:.7;font-size:12px;margin-top:3px">'+a.im+'</div></div>'+
     '<div class="s"><h2>Imovel</h2><table><tr><th>Proprietário</th><th>Tipo</th><th>Area</th><th>Corretor</th></tr><tr><td>'+a.prop+'</td><td>'+a.tipo+'</td><td>'+(a.area||'-')+'m2</td><td>'+a.cor+'</td></tr></table></div>'+
     '<div class="s"><h2>Cenarios</h2>'+cens+'</div>'+
@@ -9453,10 +9420,7 @@ function pdfCT(i,semCapa){
     '</div>'
   ].join('');
 
-  var h = '<!DOCTYPE html><html><head><meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0"><title>Contrato RE/MAX Space</title><style>'+CSS+'</style></head><body>' +
+  var h = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Contrato RE/MAX Space</title><style>'+CSS+'</style></head><body>' +
     CAPA +
     PG2 +
     '<div class="corpo">' +
@@ -9692,10 +9656,7 @@ function gerarModeloRep(){
   var corNome=g('mod-cor-nome'),corCreci=g('mod-cor-creci');
   var hoje=new Date().toLocaleDateString('pt-BR');
 
-  var html='<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0"><title>Contrato de Representação — '+nome+'</title>'+
+  var html='<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Contrato de Representação — '+nome+'</title>'+
     '<style>@page{margin:3cm 2.5cm}body{font-family:Arial,sans-serif;font-size:11pt;line-height:1.8;color:#000;max-width:800px;margin:40px auto;padding:40px}'+
     'h1{text-align:center;font-size:13pt;text-transform:uppercase;margin-bottom:4px}'+
     '.sub{text-align:center;font-size:10pt;color:#555;margin-bottom:24px;border-bottom:2px solid #000;padding-bottom:10px}'+
@@ -9900,10 +9861,7 @@ function abrirModelo(nome){
 
 function baixarModelo(nome){
   var hoje = new Date().toLocaleDateString('pt-BR');
-  var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">'+
+  var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'+
     '<title>'+nome+'</title>'+
     '<style>'+
       '@page{margin:3cm 2.5cm}'+
@@ -9976,10 +9934,7 @@ function gerarModeloRep(){
   var corNome=g('mod-cor-nome')||U.nome, corCreci=g('mod-cor-creci');
   var hoje=new Date().toLocaleDateString('pt-BR');
 
-  var doc='<!DOCTYPE html><html><head><meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">'+
+  var doc='<!DOCTYPE html><html><head><meta charset="UTF-8">'+
     '<style>body{font-family:Arial,sans-serif;font-size:11pt;line-height:1.8;margin:2.5cm;color:#000}'+
     'h1{text-align:center;font-size:13pt;text-transform:uppercase;margin-bottom:6px}'+
     '.sub{text-align:center;font-size:10pt;color:#444;margin-bottom:30px}'+

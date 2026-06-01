@@ -8077,7 +8077,7 @@ function abrirDescontos(prop, mes, ano, totalBruto, totalAdm){
           '<span style="background:#fffbeb;color:#b45309;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px">⏳ Pendente</span>')+
         '</td>'+
         '<td style="padding:8px 12px;text-align:center">'+
-          '<button onclick="removerDesconto(''+prop.replace(/'/g,"\'")+'',' +mes+','+ano+','+i+')" '+
+          '<button data-idx="'+i+'" style="background:#fef2f2;color:#b91c1c;border:none;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer">✕</button>'+'
           'style="background:#fef2f2;color:#b91c1c;border:none;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer">✕</button>'+
         '</td>'+
       '</tr>';
@@ -8145,7 +8145,24 @@ function abrirDescontos(prop, mes, ano, totalBruto, totalAdm){
   oM('💰 Descontos Autorizados — '+prop+' · '+meses[mes]+'/'+ano,
     '<div id="mb"></div>', null, null, true);
   
-  setTimeout(renderLista, 50);
+  setTimeout(function(){
+    renderLista();
+    // Event delegation para botões remover
+    var mb=document.getElementById('mb');
+    if(mb) mb.addEventListener('click', function(e){
+      var btn=e.target.closest('button[data-idx]');
+      if(btn){
+        var idx=parseInt(btn.dataset.idx);
+        if(!confirm('Remover este desconto?')) return;
+        var lista=getDescontos(prop,mes,ano);
+        lista.splice(idx,1);
+        saveDescontos(prop,mes,ano,lista);
+        var contratos=ctD.filter(function(c){return c.prop===prop&&c.status!=='Inativo';});
+        var tb=contratos.reduce(function(s,c){return s+c.valor;},0);
+        abrirDescontos(prop,mes,ano,tb,tb*.1);
+      }
+    });
+  }, 50);
   window._descProp=prop; window._descMes=mes; window._descAno=ano;
 }
 
@@ -8165,15 +8182,7 @@ function addDesconto(prop, mes, ano){
   abrirDescontos(prop,mes,ano,tb,tb*.1);
 }
 
-function removerDesconto(prop,mes,ano,idx){
-  if(!confirm('Remover este desconto?')) return;
-  var lista=getDescontos(prop,mes,ano);
-  lista.splice(idx,1);
-  saveDescontos(prop,mes,ano,lista);
-  var contratos=ctD.filter(function(c){return c.prop===prop&&c.status!=='Inativo';});
-  var tb=contratos.reduce(function(s,c){return s+c.valor;},0);
-  abrirDescontos(prop,mes,ano,tb,tb*.1);
-}
+// removerDesconto movida para event delegation
 
 
 function pExtrato(selMes, selAno){

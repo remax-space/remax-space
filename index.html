@@ -8132,8 +8132,8 @@ function abrirDescontos(prop, mes, ano, totalBruto, totalAdm){
             '<input id="desc-aut" type="checkbox" checked style="width:16px;height:16px;cursor:pointer">'+
             '<label for="desc-aut" style="font-size:12px;color:#4a5568;cursor:pointer">Proprietário autorizou este desconto</label>'+
           '</div>'+
-          '<button onclick="addDesconto(''+prop.replace(/'/g,"\'")+'','+mes+','+ano+')" '+
-            'style="background:#0d1f4e;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;width:100%">'+
+          '<button id="btn-add-desc" style="background:#0d1f4e;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;width:100%">+ Lançar Desconto</button>'+
+
             '+ Lançar Desconto'+
           '</button>'+
         '</div>'+
@@ -8146,6 +8146,11 @@ function abrirDescontos(prop, mes, ano, totalBruto, totalAdm){
   setTimeout(function(){
     renderLista();
     // Event delegation para botões remover
+    // Botão adicionar desconto
+    setTimeout(function(){
+      var btnAdd = document.getElementById('btn-add-desc');
+      if(btnAdd) btnAdd.onclick = function(){ addDesconto(prop, mes, ano); };
+    }, 100);
     var mb2=document.getElementById('mb');
     if(mb2) mb2.addEventListener('click', function(e){
       var btn=e.target.closest('.btn-rm-desc');

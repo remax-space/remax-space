@@ -4804,99 +4804,198 @@ function relatorioContratos(){
 }
 
 function pLC(){
-  document.getElementById('pa').innerHTML='<button class="btn btn-red" onclick="nCT()">+ Novo Contrato</button> <button class="btn btn-primary" onclick="pReajustes()" style="background:#7c3aed">📈 Reajustes</button> <button class="btn btn-primary" onclick="relatorioContratos()" style="background:#0d1f4e">🖨️ Relatório</button>';
-  var tot=ctD.reduce(function(s,c){return s+c.valor;},0);
-  var adm=tot*0.1, liq=tot*0.9;
-  var recMes=ctD.filter(function(c){return c.rs&&c.rs[new Date().getMonth()]==='R';}).reduce(function(s,c){return s+c.valor;},0);
-  var pendMes=ctD.filter(function(c){return c.rs&&c.rs[new Date().getMonth()]!=='R';}).reduce(function(s,c){return s+c.valor;},0);
-  var saldoAdm=recMes*0.1;
-  var hoje=new Date(); hoje.setHours(0,0,0,0);
-  var vencendo=ctD.filter(function(c){
-    if(c.status==='Inativo'||!c.fim) return false;
-    var fim=new Date(c.fim);
-    var dias=Math.round((fim-hoje)/86400000);
-    return dias>=0&&dias<=60;
+  var pa = document.getElementById('pa');
+  pa.innerHTML = '';
+
+  var btnNovo = document.createElement('button');
+  btnNovo.textContent = '+ Novo Contrato';
+  btnNovo.style.cssText = 'background:#D42028;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;margin-right:6px';
+  btnNovo.onclick = function(){ nCT(); };
+  var btnRej = document.createElement('button');
+  btnRej.textContent = '📈 Reajustes';
+  btnRej.style.cssText = 'background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;margin-right:6px';
+  btnRej.onclick = function(){ pReajustes(); };
+  var btnRel = document.createElement('button');
+  btnRel.textContent = '🖨️ Relatório PDF';
+  btnRel.style.cssText = 'background:#0d1f4e;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;margin-right:6px';
+  btnRel.onclick = function(){ relatorioContratos(); };
+  var btnWA = document.createElement('button');
+  btnWA.textContent = '📱 WhatsApp';
+  btnWA.style.cssText = 'background:#25D366;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer';
+  btnWA.onclick = function(){ gP('whatsapp'); };
+  [btnNovo,btnRej,btnRel,btnWA].forEach(function(b){pa.appendChild(b);});
+
+  var hoje = new Date(); hoje.setHours(0,0,0,0);
+  var mi = hoje.getMonth();
+  var ativos = ctD.filter(function(c){return c.status!=='Inativo'&&c.status!=='Encerrada';});
+  var tot = ativos.reduce(function(s,c){return s+c.valor;},0);
+  var adm = tot*0.1, liq = tot*0.9;
+  var recMes = ctD.filter(function(c){return c.rs&&c.rs[mi]==='R';}).reduce(function(s,c){return s+c.valor;},0);
+  var pendMes = Math.max(0, tot - recMes);
+
+  var pc = document.getElementById('pc');
+  pc.innerHTML = '';
+
+  // KPIs
+  var kpiGrid = document.createElement('div');
+  kpiGrid.style.cssText = 'display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px';
+  [
+    {l:'Contratos Ativos',v:ativos.length,s:ctD.length+' total carteira',c:'#0d1f4e'},
+    {l:'Receita Mensal',v:fmt(tot),s:ativos.length+' contratos',c:'#1a6e3a'},
+    {l:'ADM 10%',v:fmt(adm),s:'repasse '+fmt(liq),c:'#b45309'},
+    {l:'Recebido '+mesAno(),v:fmt(recMes),s:'pendente '+fmt(pendMes),c:recMes>0?'#1a6e3a':'#b91c1c'},
+  ].forEach(function(k){
+    var d = document.createElement('div');
+    d.style.cssText = 'background:#fff;border-radius:12px;padding:20px 22px;border:1px solid #e8edf2;border-top:3px solid '+k.c;
+    d.innerHTML = '<div style="font-size:9px;font-weight:800;color:#4a5568;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">'+k.l+'</div>'+
+      '<div style="font-size:26px;font-weight:900;color:'+k.c+';letter-spacing:-1px;margin-bottom:4px">'+k.v+'</div>'+
+      '<div style="font-size:11px;color:#64748b">'+k.s+'</div>';
+    kpiGrid.appendChild(d);
   });
-  var vencBlock='';
-  if(vencendo.length>0){
-    var vRows=vencendo.map(function(c){
-      var dias=Math.round((new Date(c.fim)-hoje)/86400000);
-      var cor=dias<=15?'#dc2626':dias<=30?'#d97706':'#2563eb';
-      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--lb)">'+
-        '<div style="background:'+cor+';color:#fff;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;min-width:60px;text-align:center">'+dias+'d</div>'+
-        '<div style="flex:1"><b>'+c.id+'</b> — '+c.prop+' / '+c.inq+'</div>'+
-        '<div style="font-size:11px;color:var(--lm)">vence '+new Date(c.fim).toLocaleDateString('pt-BR')+'</div>'+
-        '<button class="btn btn-xs btn-blue" onclick="eCT('+ctD.indexOf(c)+')">Renovar</button>'+
-      '</div>';
-    }).join('');
-    vencBlock='<div class="card" style="border-left:4px solid #d97706;margin-bottom:10px">'+
-      '<div class="chd"><h3 style="color:#d97706">⚠️ Contratos vencendo em 60 dias ('+vencendo.length+')</h3></div>'+
-      '<div class="cbd" style="padding:0 16px">'+vRows+'</div>'+
-    '</div>';
+  pc.appendChild(kpiGrid);
+
+  // Alertas vencimento
+  var vencendo = ctD.filter(function(c){
+    if(c.status==='Inativo'||c.status==='Encerrada'||!c.fim) return false;
+    return Math.round((new Date(c.fim)-hoje)/86400000)<=60;
+  });
+  if(vencendo.length){
+    var alertDiv = document.createElement('div');
+    alertDiv.style.cssText = 'background:#fff;border-radius:12px;border:1px solid #fde68a;border-left:4px solid #d97706;padding:16px 20px;margin-bottom:16px';
+    alertDiv.innerHTML = '<div style="font-size:11px;font-weight:800;color:#b45309;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Contratos vencendo em 60 dias ('+vencendo.length+')</div>';
+    vencendo.forEach(function(c){
+      var dias = Math.round((new Date(c.fim)-hoje)/86400000);
+      var cor = dias<=15?'#D42028':dias<=30?'#d97706':'#003DA5';
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #fef3c7';
+      row.innerHTML = '<span style="background:'+cor+';color:#fff;border-radius:6px;padding:2px 10px;font-size:11px;font-weight:800;min-width:50px;text-align:center">'+dias+'d</span>'+
+        '<div style="flex:1;font-size:12px;font-weight:600;color:#0d1829"><b>'+c.id+'</b> — '+c.prop+' / '+c.inq+'</div>'+
+        '<div style="font-size:11px;color:#64748b">vence '+new Date(c.fim).toLocaleDateString('pt-BR')+'</div>';
+      var btnR = document.createElement('button');
+      btnR.textContent = 'Renovar';
+      btnR.style.cssText = 'background:#0d1f4e;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer';
+      btnR.onclick = (function(i){return function(){eCT(i);};})(ctD.indexOf(c));
+      row.appendChild(btnR);
+      alertDiv.appendChild(row);
+    });
+    pc.appendChild(alertDiv);
   }
-  var r='';
-  ctD.forEach(function(c,i){
-    r+='<tr data-st="'+c.status+'" data-sr="'+(c.prop+c.inq+c.end).toLowerCase()+'">';
-    r+='<td style="font-weight:700;color:var(--navy)">'+c.id+'</td>';
-    r+='<td id="cp-'+i+'" style="font-weight:600">'+c.prop+'</td>';
-    r+='<td id="ci-'+i+'">'+c.inq+'</td>';
-    r+='<td><span class="badge bb">'+c.tipo+'</span></td>';
-    r+='<td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px">'+c.end+'</td>';
-    r+='<td id="cv-'+i+'" style="font-weight:700">'+fmt(c.valor)+'</td>';
-    r+='<td>dia '+c.venc+'</td>';
-    r+='<td style="font-size:10px">'+c.inicio+'</td>';
-    r+='<td style="font-size:10px">'+c.fim+'</td>';
-    r+='<td style="font-size:10.5px">'+(c.corretor||'-')+'</td>';
-    r+='<td>'+sBadge(c.status)+'</td>';
-    r+='<td style="display:flex;gap:3px"><button class="btn btn-sm btn-blue" onclick="eCT('+i+')">Editar</button><button class="btn btn-sm" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;font-size:10px" onclick="gerarContratoIA('+i+')">🤖</button><button class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366;font-size:10px" onclick="msgCobranca('+i+')">Cobrar</button><button class="btn btn-sm btn-gray" onclick="excluirCT('+i+')">Del</button></td>';
-    r+='</tr>';
+
+  // Resumo mensal
+  var resumo = document.createElement('div');
+  resumo.style.cssText = 'background:#0d1f4e;border-radius:12px;padding:16px 24px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap';
+  resumo.innerHTML = '<div style="font-size:10px;font-weight:800;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase">Resumo '+mesAno().toUpperCase()+'</div>';
+  [{l:'Aluguel Bruto',v:fmt(tot)},{l:'ADM 10%',v:fmt(adm)},{l:'Repasse Proprietários',v:fmt(liq)},{l:'Recebido',v:fmt(recMes)}].forEach(function(item){
+    var d = document.createElement('div');
+    d.style.cssText = 'background:rgba(255,255,255,.08);border-radius:8px;padding:8px 16px;text-align:center';
+    d.innerHTML = '<div style="font-size:9px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px">'+item.l+'</div>'+
+      '<div style="font-size:15px;font-weight:800;color:#fff;margin-top:2px">'+item.v+'</div>';
+    resumo.appendChild(d);
   });
-  document.getElementById('pc').innerHTML=
-    '<div class="g4">'+
-    '<div class="kc blue"><div class="kc-l">Contratos</div><div class="kc-v">'+ctD.length+'</div></div>'+
-    '<div class="kc green"><div class="kc-l">Total do Mes</div><div class="kc-v">'+fmt(tot)+'</div><div class="kc-s">'+ctD.length+' contratos ativos</div></div>'+
-    '<div class="kc gold"><div class="kc-l">ADM 10%</div><div class="kc-v">'+fmt(adm)+'</div><div class="kc-s">recebido '+fmt(saldoAdm)+'</div></div>'+
-    '<div class="kc '+(recMes>0?'green':'warn')+'"><div class="kc-l">Saldo Recebido '+mesAno()+'</div><div class="kc-v">'+fmt(recMes)+'</div><div class="kc-s">pendente '+fmt(pendMes)+'</div></div>'+
-    '</div>'+
-    (vencBlock||'')+
-    '<div class="card" style="background:#0f1a35;color:#fff;border-color:#1e3a5f"><div style="padding:12px 16px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">'+
-    '<div style="font-size:12px;font-weight:700">RESUMO '+mesAno().toUpperCase()+'</div>'+
-    '<div style="background:rgba(255,255,255,.1);border-radius:8px;padding:6px 12px"><div style="font-size:9px;opacity:.7">Aluguel bruto</div><div style="font-size:16px;font-weight:700">'+fmt(tot)+'</div></div>'+
-    '<div style="background:rgba(255,255,255,.1);border-radius:8px;padding:6px 12px"><div style="font-size:9px;opacity:.7">ADM 10%</div><div style="font-size:16px;font-weight:700;color:#86efac">'+fmt(adm)+'</div></div>'+
-    '<div style="background:rgba(255,255,255,.1);border-radius:8px;padding:6px 12px"><div style="font-size:9px;opacity:.7">Repasse proprietarios</div><div style="font-size:16px;font-weight:700;color:#fde047">'+fmt(liq)+'</div></div>'+
-    '<div style="background:rgba(255,255,255,.1);border-radius:8px;padding:6px 12px"><div style="font-size:9px;opacity:.7">Recebido no mes</div><div style="font-size:16px;font-weight:700;color:#6ee7b7">'+fmt(recMes)+'</div></div>'+
-    '</div></div>'+
-    '<div style="display:flex;justify-content:flex-end;margin-bottom:10px">'+
-    '<button onclick="relatorioContratos()" style="background:#0d1f4e;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer">🖨️ Gerar Relatório PDF</button>'+
-    '</div>'+
-    '<div class="card"><div class="fbar"><input class="sinp" placeholder="Buscar..." id="ct-si"><div class="chip on" onclick="fSt(this,\'ct-b\',\'todos\')">Todos</div><div class="chip" onclick="fSt(this,\'ct-b\',\'Ativa\')">Ativos</div><div class="chip" onclick="fSt(this,\'ct-b\',\'Encerrada\')">Encerrados</div></div>'+
-    '<div class="tw"><table><thead><tr><th>ID</th><th>Proprietário</th><th>Inquilino</th><th>Tipo</th><th>Endereço</th><th>Valor</th><th>Venc</th><th>Início</th><th>Fim</th><th>Corretor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="ct-b">'+r+'</tbody></table></div></div>';
-  document.getElementById('ct-si').oninput=function(){var q=this.value.toLowerCase();document.querySelectorAll('#ct-b tr').forEach(function(r){r.style.display=r.dataset.sr.indexOf(q)>=0?'':'none';});};
-  ctD.forEach(function(c,i){
-    ied(document.getElementById('cp-'+i), c.prop, function(v){ctD[i].prop=v;});
-    ied(document.getElementById('ci-'+i), c.inq, function(v){ctD[i].inq=v;});
-    iedNum(document.getElementById('cv-'+i), c.valor, function(v){ctD[i].valor=v;});
+  pc.appendChild(resumo);
+
+  // Tabela
+  var tableCard = document.createElement('div');
+  tableCard.style.cssText = 'background:#fff;border-radius:12px;border:1px solid #e8edf2;overflow:hidden';
+
+  var filterBar = document.createElement('div');
+  filterBar.style.cssText = 'padding:12px 16px;border-bottom:1px solid #edf2f7;background:#fafbfd;display:flex;align-items:center;gap:8px;flex-wrap:wrap';
+
+  var busca = document.createElement('input');
+  busca.placeholder = 'Buscar proprietário, inquilino...';
+  busca.style.cssText = 'padding:7px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;flex:1;min-width:160px';
+  filterBar.appendChild(busca);
+
+  var filtroAtual = window._lcFiltro || 'Ativos';
+  ['Todos','Ativos','Encerrados'].forEach(function(f){
+    var btn = document.createElement('button');
+    btn.textContent = f;
+    var ativo = filtroAtual === f;
+    btn.style.cssText = 'background:'+(ativo?'#0d1f4e':'#fff')+';color:'+(ativo?'#fff':'#0d1f4e')+
+      ';border:1px solid '+(ativo?'#0d1f4e':'#e2e8f0')+';border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer';
+    btn.onclick = (function(filtro){return function(){window._lcFiltro=filtro;pLC();};})(f);
+    filterBar.appendChild(btn);
   });
-}
-function excluirCT(i){
-  var c = ctD[i];
-  excluirComSenha(
-    'Contrato '+c.id,
-    'Arquivar contrato <b>'+c.id+'</b> — '+c.prop+' / '+c.inq+' ('+fmt(c.valor)+'/mês)?<br><small style="color:#64748b">O contrato será marcado como Encerrado e ficará no histórico.</small>',
-    function(){
-      ctD[i].status = 'Encerrada';
-      ctD[i].encerradoEm = new Date().toISOString().slice(0,10);
-      salvarTudo();
-      pLC();
+  tableCard.appendChild(filterBar);
+
+  var wrap = document.createElement('div');
+  wrap.style.cssText = 'overflow-x:auto';
+  var table = document.createElement('table');
+  table.style.cssText = 'width:100%;border-collapse:collapse';
+  var thead = document.createElement('thead');
+  var headRow = document.createElement('tr');
+  headRow.style.background = '#fafbfd';
+  ['ID','Proprietário','Inquilino','Tipo','Endereço','Valor','Venc.','Início','Fim','Corretor','Status','Ações'].forEach(function(h){
+    var th = document.createElement('th');
+    th.style.cssText = 'padding:10px 12px;text-align:left;font-size:10px;font-weight:800;color:#4a5568;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #edf2f7;white-space:nowrap';
+    th.textContent = h;
+    headRow.appendChild(th);
+  });
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  var tbody = document.createElement('tbody');
+  tbody.id = 'ct-b';
+
+  var lista = ctD.filter(function(c){
+    if(filtroAtual==='Ativos') return c.status!=='Inativo'&&c.status!=='Encerrada';
+    if(filtroAtual==='Encerrados') return c.status==='Encerrada'||c.status==='Inativo';
+    return true;
+  });
+
+  lista.forEach(function(c){
+    var i = ctD.indexOf(c);
+    var tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid #f4f6f8';
+    tr.dataset.sr = (c.prop+c.inq+c.end).toLowerCase();
+
+    function addTd(html,css){
+      var td=document.createElement('td');
+      td.style.cssText='padding:10px 12px;'+(css||'');
+      td.innerHTML=html;
+      return td;
     }
-  );
+
+    var stCor=c.status==='Ativa'?'#1a6e3a':c.status==='Encerrada'?'#64748b':'#b91c1c';
+    var stBg=c.status==='Ativa'?'#f0fdf4':c.status==='Encerrada'?'#f8fafc':'#fef2f2';
+
+    tr.appendChild(addTd('<b style="color:#003DA5">'+c.id+'</b>'));
+    tr.appendChild(addTd('<span style="font-weight:600;font-size:12px">'+c.prop+'</span>','max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'));
+    tr.appendChild(addTd(c.inq,'font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'));
+    tr.appendChild(addTd('<span style="background:#f1f5f9;color:#334155;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px">'+c.tipo+'</span>'));
+    tr.appendChild(addTd(c.end,'font-size:11px;color:#4a5568;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'));
+    tr.appendChild(addTd('<b>'+fmt(c.valor)+'</b>','white-space:nowrap'));
+    tr.appendChild(addTd('dia '+c.venc,'font-size:11px;white-space:nowrap'));
+    tr.appendChild(addTd(c.inicio||'-','font-size:11px;white-space:nowrap'));
+    tr.appendChild(addTd(c.fim||'-','font-size:11px;white-space:nowrap'));
+    tr.appendChild(addTd(c.corretor||'-','font-size:11px'));
+    tr.appendChild(addTd('<span style="background:'+stBg+';color:'+stCor+';font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px">'+c.status+'</span>'));
+
+    var acTd=document.createElement('td');
+    acTd.style.padding='10px 12px';
+    var acDiv=document.createElement('div');
+    acDiv.style.cssText='display:flex;gap:4px';
+    var bE=document.createElement('button');bE.textContent='Editar';bE.style.cssText='background:#eff6ff;color:#0d1f4e;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer';bE.onclick=(function(i){return function(){eCT(i);};})(i);
+    var bI=document.createElement('button');bI.textContent='🤖';bI.style.cssText='background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer';bI.onclick=(function(i){return function(){gerarContratoIA(i);};})(i);
+    var bC=document.createElement('button');bC.textContent='📱';bC.style.cssText='background:#25D366;color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer';bC.onclick=(function(i){return function(){msgCobranca(i);};})(i);
+    var bD=document.createElement('button');bD.textContent='Enc.';bD.style.cssText='background:#fef2f2;color:#b91c1c;border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer';bD.onclick=(function(i){return function(){excluirCT(i);};})(i);
+    [bE,bI,bC,bD].forEach(function(b){acDiv.appendChild(b);});
+    acTd.appendChild(acDiv);
+    tr.appendChild(acTd);
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  tableCard.appendChild(wrap);
+  pc.appendChild(tableCard);
+
+  busca.oninput=function(){
+    var q=this.value.toLowerCase();
+    tbody.querySelectorAll('tr').forEach(function(row){row.style.display=(row.dataset.sr||'').includes(q)?'':'none';});
+  };
 }
-function eCT(i){
-  var c=ctD[i];
-  oM('Editar - '+c.id,'<div class="fg2"><div class="fg"><label>Proprietario</label><input id="ec-p" value="'+c.prop+'"></div><div class="fg"><label>Inquilino</label><input id="ec-i" value="'+c.inq+'"></div></div><div class="fg3"><div class="fg"><label>Valor R$</label><input id="ec-v" type="number" value="'+c.valor+'"></div><div class="fg"><label>Venc dia</label><input id="ec-ve" type="number" value="'+c.venc+'"></div><div class="fg"><label>Status</label><select id="ec-s"><option>Ativa</option><option>Encerrada</option></select></div></div><div class="fg2"><div class="fg"><label>Inicio</label><input type="date" id="ec-in" value="'+c.inicio+'"></div><div class="fg"><label>Fim</label><input type="date" id="ec-fi" value="'+c.fim+'"></div></div><div class="fg"><label>Corretor</label><select id="ec-c">'+corrSel(c.corretor)+'</select></div>',
-  function(){ctD[i].prop=document.getElementById('ec-p').value;ctD[i].inq=document.getElementById('ec-i').value;ctD[i].valor=parseFloat(document.getElementById('ec-v').value)||c.valor;ctD[i].venc=parseInt(document.getElementById('ec-ve').value)||c.venc;ctD[i].status=document.getElementById('ec-s').value;ctD[i].inicio=document.getElementById('ec-in').value;ctD[i].fim=document.getElementById('ec-fi').value;ctD[i].corretor=document.getElementById('ec-c').value;cM();salvarTudo();pLC();});
-  setTimeout(function(){document.getElementById('ec-s').value=c.status||'Ativa';},50);
-}
+
 function nCT(){
   oM('Novo Contrato','<div class="fg2"><div class="fg"><label>Proprietario</label><input id="nc-p"></div><div class="fg"><label>Inquilino</label><input id="nc-i"></div></div><div class="fg"><label>Endereco</label><input id="nc-e"></div><div class="fg3"><div class="fg"><label>Tipo</label><select id="nc-t"><option>Casa</option><option>Apartamento</option><option>Kitnet</option><option>Sala Comercial</option><option>Chale</option></select></div><div class="fg"><label>Valor R$</label><input id="nc-v" type="number"></div><div class="fg"><label>Venc dia</label><input id="nc-ve" type="number" value="10"></div></div><div class="fg2"><div class="fg"><label>Inicio</label><input type="date" id="nc-in"></div><div class="fg"><label>Fim</label><input type="date" id="nc-fi"></div></div><div class="fg"><label>Corretor</label><select id="nc-c">'+corrSel()+'</select></div>',
   function(){var nid='CT-0'+String(ctD.length+1).padStart(2,'0');ctD.push({id:nid,prop:document.getElementById('nc-p').value,inq:document.getElementById('nc-i').value,tipo:document.getElementById('nc-t').value,end:document.getElementById('nc-e').value,valor:parseFloat(document.getElementById('nc-v').value)||0,venc:parseInt(document.getElementById('nc-ve').value)||10,inicio:document.getElementById('nc-in').value,fim:document.getElementById('nc-fi').value,corretor:document.getElementById('nc-c').value,status:'Ativa',rs:Array(12).fill('N'),forma:'PIX',banco:'',obs:''});cM();salvarTudo();pLC();});
